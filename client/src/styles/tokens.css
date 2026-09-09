@@ -1,0 +1,88 @@
+/* ==========================================================================
+   OSS COMMAND CENTER DESIGN TOKENS
+   Aesthetic Archetype: Tactical Telemetry & Declassified Blueprint
+   Strict token consumption only. No arbitrary hexes or px overrides in components.
+   ========================================================================== */
+
+:root {
+  /* Substrates & Structural Panels */
+  --color-bg-base: #0a0b0e;
+  --color-bg-surface: #11141a;
+  --color-bg-surface-elevated: #181d26;
+  --color-bg-surface-active: #202733;
+
+  /* Dividing Lines & Structural Framing */
+  --color-border-subtle: #1e2430;
+  --color-border-bold: #2f384a;
+  --color-border-active: #4a5670;
+
+  /* Typography / Phosphor Hierarchy */
+  --color-text-primary: #ededed;
+  --color-text-secondary: #9aa5b8;
+  --color-text-muted: #5e697a;
+  --color-text-dim: #3d4554;
+
+  /* Semantic Status Tokens (One exact hue per status, used nowhere else) */
+  --color-status-merged: #3b82f6;        /* Cobalt Telemetry */
+  --color-status-in-review: #8b5cf6;     /* Hyper Violet */
+  --color-status-awaiting-reply: #06b6d4;/* Cyan Telemetry */
+  --color-status-action-needed: #ef4444; /* Hazard Red */
+  --color-status-draft: #6b7280;         /* Muted Lead */
+  --color-status-open: #10b981;          /* Active Emerald */
+  --color-status-bounty: #f59e0b;        /* Amber Reward */
+
+  /* Platform Tokens */
+  --color-platform-github: #ededed;
+  --color-platform-gitlab: #fc6d26;
+
+  /* Typographic Families */
+  --font-family-display: 'Space Grotesk', -apple-system, sans-serif;
+  --font-family-telemetry: 'JetBrains Mono', monospace;
+  --font-family-body: 'IBM Plex Sans', -apple-system, sans-serif;
+
+  /* Rigid Geometric Metric Scale (Zero border-radius, absolute 90-degree corners) */
+  --radius-none: 0px;
+
+  /* Standard Spacing Scale */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+}
+
+/* Global Reset & Tactical Defaults */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.45;
+  overflow-x: hidden;
+}
+
+/* Custom Tactical Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-bold);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-active);
+}
