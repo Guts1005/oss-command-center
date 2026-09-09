@@ -6,6 +6,8 @@ import { FilterRail } from './components/FilterRail';
 import { ContributionList } from './components/ContributionList';
 import { SlideOverDetail } from './components/SlideOverDetail';
 import { CommandPalette } from './components/CommandPalette';
+import { TrackContributionModal } from './components/TrackContributionModal';
+import { QuickGuideModal } from './components/QuickGuideModal';
 
 export const App: React.FC = () => {
   const [contributions, setContributions] = useState<Contribution[]>([]);
@@ -20,9 +22,11 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('recent');
 
-  // Drawer and Command Palette state
+  // Modals state
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
+  const [isTrackModalOpen, setIsTrackModalOpen] = useState<boolean>(false);
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
 
   // Fetch telemetry stats
   const fetchStats = useCallback(async () => {
@@ -75,14 +79,29 @@ export const App: React.FC = () => {
     }
   };
 
-  // Global keyboard shortcuts (Ctrl+K, Esc)
+  // Global keyboard shortcuts (Ctrl+K, Esc, ?)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        if (e.key === 'Escape') {
+          target.blur();
+        }
+        return;
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+      } else if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setIsGuideModalOpen(true);
       } else if (e.key === 'Escape') {
-        if (isCommandPaletteOpen) {
+        if (isTrackModalOpen) {
+          setIsTrackModalOpen(false);
+        } else if (isGuideModalOpen) {
+          setIsGuideModalOpen(false);
+        } else if (isCommandPaletteOpen) {
           setIsCommandPaletteOpen(false);
         } else if (selectedId) {
           setSelectedId(null);
@@ -92,12 +111,18 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCommandPaletteOpen, selectedId]);
+  }, [isCommandPaletteOpen, isTrackModalOpen, isGuideModalOpen, selectedId]);
 
   return (
     <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-surface-active selection:text-white antialiased overflow-hidden">
-      {/* Telemetry Header */}
-      <HeaderTelemetry stats={stats} onSync={handleSync} isSyncing={isSyncing} />
+      {/* Header with Quick Guide and Track buttons */}
+      <HeaderTelemetry
+        stats={stats}
+        onSync={handleSync}
+        isSyncing={isSyncing}
+        onOpenTrackModal={() => setIsTrackModalOpen(true)}
+        onOpenGuideModal={() => setIsGuideModalOpen(true)}
+      />
 
       {/* Filter and Query Rail */}
       <FilterRail
@@ -113,13 +138,14 @@ export const App: React.FC = () => {
         onSortChange={setSortBy}
       />
 
-      {/* Main Dense Scannable Stream */}
+      {/* Main Scannable Contribution Stream */}
       <main className="flex-1 flex flex-col min-h-0 relative">
         <ContributionList
           items={contributions}
           selectedId={selectedId}
           onSelectItem={(id) => setSelectedId(id)}
           isLoading={isLoading}
+          onOpenTrackModal={() => setIsTrackModalOpen(true)}
         />
       </main>
 
@@ -133,7 +159,7 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Command Palette Modal */}
+      {/* Command Palette Modal (Ctrl+K) */}
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
@@ -143,7 +169,25 @@ export const App: React.FC = () => {
           setIsCommandPaletteOpen(false);
         }}
       />
+
+      {/* Track Contribution Modal */}
+      <TrackContributionModal
+        isOpen={isTrackModalOpen}
+        onClose={() => setIsTrackModalOpen(false)}
+        onSuccess={(newId) => {
+          fetchStats();
+          fetchContributions();
+          setSelectedId(newId);
+        }}
+      />
+
+      {/* Quick Guide & Status Legend Modal */}
+      <QuickGuideModal
+        isOpen={isGuideModalOpen}
+        onClose={() => setIsGuideModalOpen(false)}
+      />
     </div>
   );
 };
+
 export default App;

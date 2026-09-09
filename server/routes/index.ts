@@ -1,4 +1,5 @@
 import express from 'express';
+import axios from 'axios';
 import { db } from '../db.js';
 import { runSync, getLastSyncTime } from '../sync/engine.js';
 import { z } from 'zod';
@@ -171,5 +172,207 @@ apiRouter.post('/ingest', (req, res) => {
     res.status(201).json({ success: true, id });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// POST /api/track-url - Ingest any GitHub/GitLab URL directly from UI
+apiRouter.post('/track-url', async (req, res) => {
+  const { url } = req.body;
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'A valid URL is required' });
+  }
+
+  const trimmed = url.trim();
+
+  // GitHub Pattern: https://github.com/:owner/:repo/(pull|issues)/:number
+  const ghMatch = trimmed.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(pull|issues)\/(\d+)/i);
+
+  // GitLab Pattern: https://:host/:namespace/:repo/-/(merge_requests|issues)/:number
+  const glMatch = trimmed.match(/^https?:\/\/([^\/]+)\/(.+?)\/-\/(merge_requests|issues)\/(\d+)/i);
+
+  if (!ghMatch && !glMatch) {
+    return res.status(400).json({
+      error: 'Unsupported link. Please paste a GitHub Pull Request/Issue or GitLab Merge Request/Issue URL.'
+    });
+  }
+
+  const now = new Date().toISOString();
+
+  if (ghMatch) {
+    const [, owner, repoName, rawType, rawNumber] = ghMatch;
+    const repo = `${owner}/${repoName}`;
+    const number = parseInt(rawNumber, 10);
+    const type: 'pr' | 'issue' = rawType.toLowerCase() === 'pull' ? 'pr' : 'issue';
+    const id = `gh:${repo}#${number}`;
+
+    let title = `${repo}#${number}`;
+    let author = owner;
+    let status = 'open';
+    let body = '';
+    let createdAt = now;
+    let updatedAt = now;
+
+    try {
+      const endpoint = type === 'pr'
+        ? `https://api.github.com/repos/${repo}/pulls/${number}`
+        : `https://api.github.com/repos/${repo}/issues/${number}`;
+
+      const headers: Record<string, string> = {
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'oss-command-center'
+      };
+      const token = process.env.GITHUB_TOKEN;
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const resp = await axios.get(endpoint, { headers, timeout: 8000 });
+      if (resp.data) {
+        title = resp.data.title || title;
+        author = resp.data.user?.login || author;
+        createdAt = resp.data.created_at || createdAt;
+        updatedAt = resp.data.updated_at || updatedAt;
+        body = resp.data.body || '';
+
+        if (resp.data.state === 'closed') {
+          status = resp.data.merged ? 'merged' : 'closed';
+        } else if (resp.data.draft) {
+          status = 'draft';
+        } else {
+          status = 'open';
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[Track URL] GitHub live fetch warning: ${err.message}`);
+    }
+
+    db.prepare(`
+      INSERT INTO contributions (
+        id, platform, repo, number, title, type, url, author, status,
+        action_needed, difficulty, bounty_amount, created_at, last_activity_at,
+        last_synced_at, unread, notes
+      ) VALUES (
+        @id, 'github', @repo, @number, @title, @type, @url, @author, @status,
+        'none', 'medium', null, @createdAt, @updatedAt, @now, 1, null
+      )
+      ON CONFLICT(id) DO UPDATE SET
+        title = excluded.title,
+        status = excluded.status,
+        last_activity_at = excluded.last_activity_at,
+        last_synced_at = excluded.last_synced_at,
+        unread = 1
+    `).run({
+      id,
+      repo,
+      number,
+      title,
+      type,
+      url: trimmed,
+      author,
+      status,
+      createdAt,
+      updatedAt,
+      now
+    });
+
+    db.prepare(`
+      INSERT OR REPLACE INTO activity_events (
+        id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
+      ) VALUES (
+        @id, @contribution_id, @actor, null, 'status-change', null, @body_excerpt, @created_at
+      )
+    `).run({
+      id: `init_${id}`,
+      contribution_id: id,
+      actor: author,
+      body_excerpt: body ? body.slice(0, 500) : `Tracked contribution: ${title}`,
+      created_at: createdAt
+    });
+
+    const item = db.prepare('SELECT * FROM contributions WHERE id = ?').get(id);
+    return res.status(201).json({ success: true, item });
+  }
+
+  if (glMatch) {
+    const [, host, projectPath, rawType, rawNumber] = glMatch;
+    const number = parseInt(rawNumber, 10);
+    const type: 'pr' | 'issue' = rawType.toLowerCase() === 'merge_requests' ? 'pr' : 'issue';
+    const repo = projectPath;
+    const id = `gl:${repo}!${number}`;
+
+    let title = `${repo}!${number}`;
+    let author = 'GitLab User';
+    let status = 'open';
+    let body = '';
+    let createdAt = now;
+    let updatedAt = now;
+
+    try {
+      const endpoint = `https://${host}/api/v4/projects/${encodeURIComponent(projectPath)}/${rawType}/${number}`;
+      const resp = await axios.get(endpoint, { timeout: 8000 });
+      if (resp.data) {
+        title = resp.data.title || title;
+        author = resp.data.author?.username || author;
+        createdAt = resp.data.created_at || createdAt;
+        updatedAt = resp.data.updated_at || updatedAt;
+        body = resp.data.description || '';
+
+        if (resp.data.state === 'merged') {
+          status = 'merged';
+        } else if (resp.data.state === 'closed') {
+          status = 'closed';
+        } else if (resp.data.draft || resp.data.work_in_progress) {
+          status = 'draft';
+        } else {
+          status = 'open';
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[Track URL] GitLab live fetch warning: ${err.message}`);
+    }
+
+    db.prepare(`
+      INSERT INTO contributions (
+        id, platform, repo, number, title, type, url, author, status,
+        action_needed, difficulty, bounty_amount, created_at, last_activity_at,
+        last_synced_at, unread, notes
+      ) VALUES (
+        @id, 'gitlab', @repo, @number, @title, @type, @url, @author, @status,
+        'none', 'medium', null, @createdAt, @updatedAt, @now, 1, null
+      )
+      ON CONFLICT(id) DO UPDATE SET
+        title = excluded.title,
+        status = excluded.status,
+        last_activity_at = excluded.last_activity_at,
+        last_synced_at = excluded.last_synced_at,
+        unread = 1
+    `).run({
+      id,
+      repo,
+      number,
+      title,
+      type,
+      url: trimmed,
+      author,
+      status,
+      createdAt,
+      updatedAt,
+      now
+    });
+
+    db.prepare(`
+      INSERT OR REPLACE INTO activity_events (
+        id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
+      ) VALUES (
+        @id, @contribution_id, @actor, null, 'status-change', null, @body_excerpt, @created_at
+      )
+    `).run({
+      id: `init_${id}`,
+      contribution_id: id,
+      actor: author,
+      body_excerpt: body ? body.slice(0, 500) : `Tracked contribution: ${title}`,
+      created_at: createdAt
+    });
+
+    const item = db.prepare('SELECT * FROM contributions WHERE id = ?').get(id);
+    return res.status(201).json({ success: true, item });
   }
 });
