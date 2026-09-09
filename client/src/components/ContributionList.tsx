@@ -91,16 +91,16 @@ export const ContributionList: React.FC<ContributionListProps> = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-base">
-      {/* Subheader / Table column telemetry */}
-      <div className="flex items-center justify-between border-b border-border-bold bg-surface-elevated px-6 py-2 font-telemetry text-[11px] font-semibold text-text-muted select-none">
-        <div className="flex items-center gap-4">
-          <span className="w-2" />
-          <span>PL</span>
+      {/* Subheader / Table column telemetry (Hidden on mobile card view) */}
+      <div className="hidden md:flex items-center justify-between border-b border-border-bold bg-surface-elevated px-6 py-2 font-telemetry text-[11px] font-semibold text-text-muted select-none">
+        <div className="flex items-center gap-3">
+          <span className="w-10 text-center text-[10px]">NEW</span>
+          <span className="w-7 text-center">PL</span>
           <span className="w-4" />
           <span>TARGET IDENTIFIER & TITLE</span>
         </div>
         <div className="flex items-center gap-6">
-          <span>ACTION STATE</span>
+          <span>ACTION STATE & STATUS</span>
           <span className="w-16 text-right">ACTIVITY</span>
         </div>
       </div>

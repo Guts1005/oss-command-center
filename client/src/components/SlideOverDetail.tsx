@@ -100,12 +100,17 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
               <span className="border border-border-bold bg-surface-elevated px-2 py-0.5 text-text-secondary">
                 AUTHOR: {data.item.author}
               </span>
-              <span className="border border-border-bold bg-surface-elevated px-2 py-0.5 text-status-awaiting-reply">
-                STATUS: {data.item.status.toUpperCase()}
+              <span className="border border-border-bold bg-surface-elevated px-2 py-0.5 text-status-awaiting-reply font-bold">
+                STATUS: {(data.item.status === 'opened' ? 'OPEN' : data.item.status).toUpperCase()}
               </span>
               {data.item.bounty_amount && (
                 <span className="border border-status-bounty/60 bg-status-bounty/10 px-2 py-0.5 text-status-bounty font-bold">
                   BOUNTY: {data.item.bounty_amount}
+                </span>
+              )}
+              {Math.floor((Date.now() - new Date(data.item.last_activity_at).getTime()) / (1000 * 60 * 60 * 24)) >= 30 && (
+                <span className="border border-amber-500/60 bg-amber-500/10 px-2 py-0.5 text-amber-500 font-bold">
+                  INACTIVE FOR {Math.floor((Date.now() - new Date(data.item.last_activity_at).getTime()) / (1000 * 60 * 60 * 24))}d
                 </span>
               )}
             </div>
@@ -115,7 +120,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
 
           {/* Triage & Operational Controls */}
           <div className="border border-border-bold bg-base p-4 space-y-3 font-telemetry text-xs">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span className="font-bold text-text-secondary uppercase">Operational Action State:</span>
               <div className="flex items-center gap-1.5">
                 {(['none', 'reply', 'push-changes'] as const).map((mode) => (
@@ -162,7 +167,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="font-telemetry text-xs font-bold text-text-secondary uppercase">
-                Activity Stream ({data.events.length} events)
+                Activity Stream ({data.events.length} {data.events.length === 1 ? 'EVENT' : 'EVENTS'})
               </span>
             </div>
 

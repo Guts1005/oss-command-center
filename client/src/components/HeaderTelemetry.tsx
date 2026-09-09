@@ -23,21 +23,21 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({ stats, isSynci
   return (
     <header className="border-b border-border-subtle bg-surface px-6 py-4">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        {/* Brand & System Title */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center border border-border-bold bg-base text-text-primary">
-            <Terminal className="h-5 w-5" />
+        {/* Brand & System Title with High Editorial Impact */}
+        <div className="flex items-center gap-3.5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center border-2 border-border-bold bg-base text-text-primary">
+            <Terminal className="h-6 w-6 text-status-awaiting-reply" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-display text-lg font-bold tracking-tight text-text-primary uppercase">
+            <div className="flex items-center gap-2.5">
+              <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight text-text-primary uppercase">
                 OSS Command Center
               </h1>
-              <span className="border border-border-bold bg-surface-elevated px-1.5 py-0.5 font-telemetry text-[10px] text-text-muted">
+              <span className="border border-border-bold bg-surface-elevated px-2 py-0.5 font-telemetry text-[10px] font-semibold text-text-muted">
                 v1.0.0
               </span>
             </div>
-            <p className="font-telemetry text-xs text-text-muted">
+            <p className="font-telemetry text-xs tracking-wider text-text-muted mt-0.5">
               MULTI-PLATFORM TRIAGE & MERGE DECK // GITHUB & GITLAB
             </p>
           </div>

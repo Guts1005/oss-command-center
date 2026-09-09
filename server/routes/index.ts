@@ -38,8 +38,14 @@ apiRouter.get('/contributions', (req, res) => {
   }
 
   if (status && status !== 'all') {
-    query += ' AND status = ?';
-    params.push(status);
+    if (status === 'active') {
+      query += ' AND status IN ("open", "opened") AND (julianday("now") - julianday(last_activity_at)) < 30';
+    } else if (status === 'stale') {
+      query += ' AND status IN ("open", "opened") AND (julianday("now") - julianday(last_activity_at)) >= 30';
+    } else {
+      query += ' AND status = ?';
+      params.push(status);
+    }
   }
 
   if (actionParam && actionParam !== 'all') {

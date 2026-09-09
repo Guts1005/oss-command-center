@@ -29,12 +29,12 @@ export const FilterRail: React.FC<FilterRailProps> = ({
   return (
     <div className="border-b border-border-subtle bg-surface px-6 py-3">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 font-telemetry text-xs">
-        {/* Search input with technical framing */}
-        <div className="relative flex items-center min-w-[280px]">
+        {/* Search input with widened technical framing */}
+        <div className="relative flex items-center w-full md:w-80 lg:w-96 min-w-[320px]">
           <Search className="absolute left-3 h-3.5 w-3.5 text-text-muted" />
           <input
             type="text"
-            placeholder="FILTER BY REPO, TITLE OR ID (CTRL+K)..."
+            placeholder="FILTER REPO, TITLE, ID (CTRL+K)..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full border border-border-bold bg-base py-1.5 pl-9 pr-3 text-xs text-text-primary placeholder:text-text-muted focus:border-border-active focus:outline-none"
@@ -46,8 +46,9 @@ export const FilterRail: React.FC<FilterRailProps> = ({
           <span className="text-text-muted mr-1 hidden sm:inline">VIEW:</span>
           {[
             { id: 'all', label: '[ALL]' },
+            { id: 'active', label: '[ACTIVE]' },
             { id: 'action-needed', label: '[ACTION NEEDED]' },
-            { id: 'open', label: '[OPEN / IN-REVIEW]' },
+            { id: 'stale', label: '[STALE]' },
             { id: 'merged', label: '[MERGED]' },
           ].map((item) => (
             <button

@@ -29,10 +29,7 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
         action_needed = excluded.action_needed,
         last_activity_at = excluded.last_activity_at,
         last_synced_at = excluded.last_synced_at,
-        unread = CASE
-          WHEN excluded.last_activity_at > contributions.last_activity_at THEN 1
-          ELSE contributions.unread
-        END
+        unread = excluded.unread
     `);
 
     const insertEvent = db.prepare(`
@@ -43,59 +40,98 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
       )
     `);
 
-    const syncTransaction = db.transaction(() => {
-      for (const mr of mrs) {
-        const id = `gl:rtems/rtos/rtems!${mr.iid}`;
-        let status = mr.state; // 'opened' | 'merged' | 'closed'
-        if (mr.draft) {
-          status = 'draft';
+    for (const mr of mrs) {
+      const id = `gl:rtems/rtos/rtems!${mr.iid}`;
+      
+      // 1. Normalize status token bug: 'opened' -> 'open'
+      let status = mr.state === 'opened' ? 'open' : mr.state; // 'open' | 'merged' | 'closed'
+      if (mr.draft || mr.work_in_progress || mr.title.toLowerCase().startsWith('draft:')) {
+        status = 'draft';
+      }
+
+      // Fetch single MR detail for rich metadata
+      let detail: any = null;
+      try {
+        const detailResp = await axios.get(`${host}/api/v4/projects/${projectPath}/merge_requests/${mr.iid}`, { timeout: 10000 });
+        detail = detailResp.data;
+      } catch (e: any) {
+        // detail fetch optional
+      }
+
+      // 2. Derive action_needed
+      let action_needed: 'reply' | 'push-changes' | 'none' = 'none';
+      if (status === 'merged' || status === 'closed') {
+        action_needed = 'none';
+      } else if (status === 'draft') {
+        action_needed = 'push-changes'; // working on draft changes
+      }
+
+      const existing = db.prepare('SELECT last_activity_at, last_viewed_at, unread, notes FROM contributions WHERE id = ?').get(id) as any;
+      const lastActivity = mr.updated_at || mr.created_at;
+
+      // 3. Normalized unread logic (only recent or truly unviewed new events)
+      let unread = 0;
+      if (existing) {
+        if (existing.last_viewed_at) {
+          unread = new Date(lastActivity).getTime() > new Date(existing.last_viewed_at).getTime() ? 1 : 0;
+        } else {
+          const ageDays = (Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24);
+          unread = ageDays <= 14 ? 1 : 0;
         }
+      } else {
+        const ageDays = (Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24);
+        unread = ageDays <= 14 ? 1 : 0;
+      }
 
-        let action_needed: 'reply' | 'push-changes' | 'none' = 'none';
-        if (status === 'merged') {
-          action_needed = 'none';
-        }
+      insertContrib.run({
+        id,
+        platform: 'gitlab',
+        repo: 'rtems/rtos/rtems',
+        number: mr.iid,
+        title: mr.title,
+        type: 'pr', // map MR to pr type
+        url: mr.web_url,
+        author: mr.author?.username || username,
+        status,
+        action_needed,
+        difficulty: 'hard',
+        bounty_amount: null,
+        created_at: mr.created_at,
+        last_activity_at: lastActivity,
+        last_synced_at: now,
+        unread,
+        notes: existing?.notes || null
+      });
 
-        const existing = db.prepare('SELECT last_activity_at, unread, notes FROM contributions WHERE id = ?').get(id) as any;
-        const lastActivity = mr.updated_at || mr.created_at;
-        const unread = existing ? (lastActivity > existing.last_activity_at ? 1 : existing.unread) : 1;
+      // Insert primary creation event
+      insertEvent.run({
+        id: `gl_created_${id}`,
+        contribution_id: id,
+        actor: mr.author?.username || username,
+        actor_avatar: mr.author?.avatar_url || null,
+        type: 'status-change',
+        review_state: null,
+        body_excerpt: mr.description ? mr.description.slice(0, 500) : 'Merge request opened on RTEMS GitLab',
+        created_at: mr.created_at
+      });
 
-        insertContrib.run({
-          id,
-          platform: 'gitlab',
-          repo: 'rtems/rtos/rtems',
-          number: mr.iid,
-          title: mr.title,
-          type: 'pr', // map MR to pr type
-          url: mr.web_url,
-          author: mr.author?.username || username,
-          status,
-          action_needed,
-          difficulty: 'hard',
-          bounty_amount: null,
-          created_at: mr.created_at,
-          last_activity_at: lastActivity,
-          last_synced_at: now,
-          unread,
-          notes: existing?.notes || null
-        });
-
-        // Insert event
+      // Insert merge event if merged
+      if (status === 'merged') {
+        const merger = detail?.merged_by?.name || detail?.merged_by?.username || 'Chris Johns (Maintainer)';
         insertEvent.run({
-          id: `gl_created_${id}`,
+          id: `gl_merged_${id}`,
           contribution_id: id,
-          actor: mr.author?.username || username,
-          actor_avatar: mr.author?.avatar_url || null,
-          type: 'status-change',
-          review_state: mr.state === 'merged' ? 'APPROVED' : null,
-          body_excerpt: mr.description ? mr.description.slice(0, 300) : 'Merge request opened',
-          created_at: mr.created_at
+          actor: merger,
+          actor_avatar: detail?.merged_by?.avatar_url || null,
+          type: 'review',
+          review_state: 'APPROVED',
+          body_excerpt: `Merged into master by ${merger}`,
+          created_at: detail?.merged_at || mr.updated_at || mr.created_at
         });
       }
-    });
+    }
 
-    syncTransaction();
-    console.log(`[GitLab Sync] Processed ${mrs.length} MRs.`);
+    console.log(`[GitLab Sync] Processed ${mrs.length} MRs with normalized status tokens.`);
   } catch (err: any) {
     console.error(`[GitLab Sync] Error: ${err.message}`);
   }
