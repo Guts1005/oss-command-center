@@ -87,12 +87,23 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
         // discussions.json fetch optional
       }
 
-      // 2. Derive action_needed
+      // 2. Derive action_needed dynamically based on latest conversational speaker
       let action_needed: 'reply' | 'push-changes' | 'none' = 'none';
       if (status === 'merged' || status === 'closed') {
         action_needed = 'none';
-      } else if (status === 'draft' || maintainerFeedbackDetected) {
-        action_needed = 'push-changes'; // maintainer requested changes or working on draft
+      } else if (status === 'draft') {
+        action_needed = 'push-changes';
+      } else if (fetchedNotes.length > 0) {
+        // Sort notes chronologically to check who spoke last
+        const sortedNotes = [...fetchedNotes].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        const lastNote = sortedNotes[sortedNotes.length - 1];
+        if (lastNote && lastNote.isMaintainer) {
+          action_needed = 'push-changes'; // maintainer requested action/changes
+        } else {
+          action_needed = 'none'; // author replied or pushed changes -> awaiting maintainer review
+        }
       }
 
       const existing = db.prepare('SELECT last_activity_at, last_viewed_at, unread, notes FROM contributions WHERE id = ?').get(id) as any;
