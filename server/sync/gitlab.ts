@@ -58,12 +58,41 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
         // detail fetch optional
       }
 
+      // Fetch discussions from public discussions.json endpoint
+      let maintainerFeedbackDetected = false;
+      const fetchedNotes: any[] = [];
+      try {
+        const discResp = await axios.get(`${host}/rtems/rtos/rtems/-/merge_requests/${mr.iid}/discussions.json`, { timeout: 10000 });
+        const discussions = discResp.data || [];
+        for (const disc of discussions) {
+          for (const note of (disc.notes || [])) {
+            if (!note.system && note.author) {
+              const noteActor = note.author.username || note.author.name || 'Maintainer';
+              const isMaintainer = noteActor.toLowerCase() !== username.toLowerCase();
+              if (isMaintainer) {
+                maintainerFeedbackDetected = true;
+              }
+              fetchedNotes.push({
+                id: `gl_note_${note.id}`,
+                actor: noteActor,
+                avatar: note.author.avatar_url || null,
+                body: note.note || '',
+                created_at: note.created_at,
+                isMaintainer
+              });
+            }
+          }
+        }
+      } catch (e: any) {
+        // discussions.json fetch optional
+      }
+
       // 2. Derive action_needed
       let action_needed: 'reply' | 'push-changes' | 'none' = 'none';
       if (status === 'merged' || status === 'closed') {
         action_needed = 'none';
-      } else if (status === 'draft') {
-        action_needed = 'push-changes'; // working on draft changes
+      } else if (status === 'draft' || maintainerFeedbackDetected) {
+        action_needed = 'push-changes'; // maintainer requested changes or working on draft
       }
 
       const existing = db.prepare('SELECT last_activity_at, last_viewed_at, unread, notes FROM contributions WHERE id = ?').get(id) as any;
@@ -127,6 +156,20 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
           review_state: 'APPROVED',
           body_excerpt: `Merged into master by ${merger}`,
           created_at: detail?.merged_at || mr.updated_at || mr.created_at
+        });
+      }
+
+      // Insert maintainer discussion notes
+      for (const note of fetchedNotes) {
+        insertEvent.run({
+          id: note.id,
+          contribution_id: id,
+          actor: note.actor,
+          actor_avatar: note.avatar,
+          type: 'comment',
+          review_state: note.isMaintainer ? 'CHANGES_REQUESTED' : null,
+          body_excerpt: note.body.slice(0, 1000),
+          created_at: note.created_at
         });
       }
     }
