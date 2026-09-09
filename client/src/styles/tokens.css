@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ==========================================================================
    OSS COMMAND CENTER DESIGN TOKENS
    Aesthetic Archetype: Tactical Telemetry & Declassified Blueprint
