@@ -150,6 +150,39 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
     if (status === 'merged' || status === 'closed') {
       action_needed = 'none';
     } else {
+      // Collect all conversational items from humans
+      const humanEvents: { actor: string; created_at: string }[] = [];
+
+      // Initial submission
+      humanEvents.push({ actor: item.user?.login || username, created_at: item.created_at });
+
+      // Issue comments from non-bots
+      for (const c of comments) {
+        const author = c.user?.login;
+        if (author && !isBot(author)) {
+          humanEvents.push({ actor: author, created_at: c.created_at });
+        }
+      }
+
+      // Review comments from non-bots
+      for (const rc of reviewComments) {
+        const author = rc.user?.login;
+        if (author && !isBot(author)) {
+          humanEvents.push({ actor: author, created_at: rc.created_at });
+        }
+      }
+
+      // Reviews with non-empty body from non-bots
+      for (const rv of reviews) {
+        const author = rv.user?.login;
+        if (author && !isBot(author) && rv.body) {
+          humanEvents.push({ actor: author, created_at: rv.submitted_at });
+        }
+      }
+
+      humanEvents.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      const latestHuman = humanEvents[humanEvents.length - 1];
+
       // Check latest reviews from non-authors
       const nonAuthorReviews = reviews
         .filter((r) => r.user && r.user.login && r.user.login.toLowerCase() !== username.toLowerCase())
@@ -157,48 +190,23 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
 
       const latestReview = nonAuthorReviews[nonAuthorReviews.length - 1];
 
-      // Check if changes requested
+      // Check if changes requested, but account for author responses/commits after the review
       if (latestReview && latestReview.state === 'CHANGES_REQUESTED') {
-        action_needed = 'push-changes';
-      } else {
-        // Collect all conversational items from humans
-        const humanEvents: { actor: string; created_at: string }[] = [];
+        const reviewTime = new Date(latestReview.submitted_at || 0).getTime();
+        const authorEvents = humanEvents.filter(e => e.actor.toLowerCase() === username.toLowerCase());
+        const latestAuthorEvent = authorEvents[authorEvents.length - 1];
+        const authorTime = latestAuthorEvent ? new Date(latestAuthorEvent.created_at).getTime() : 0;
 
-        // Initial submission
-        humanEvents.push({ actor: item.user?.login || username, created_at: item.created_at });
-
-        // Issue comments from non-bots
-        for (const c of comments) {
-          const author = c.user?.login;
-          if (author && !isBot(author)) {
-            humanEvents.push({ actor: author, created_at: c.created_at });
-          }
-        }
-
-        // Review comments from non-bots
-        for (const rc of reviewComments) {
-          const author = rc.user?.login;
-          if (author && !isBot(author)) {
-            humanEvents.push({ actor: author, created_at: rc.created_at });
-          }
-        }
-
-        // Reviews with non-empty body from non-bots
-        for (const rv of reviews) {
-          const author = rv.user?.login;
-          if (author && !isBot(author) && rv.body) {
-            humanEvents.push({ actor: author, created_at: rv.submitted_at });
-          }
-        }
-
-        humanEvents.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        const latestHuman = humanEvents[humanEvents.length - 1];
-
-        if (latestHuman && latestHuman.actor.toLowerCase() !== username.toLowerCase()) {
-          action_needed = 'reply';
+        if (authorTime > reviewTime) {
+          // Author already responded or pushed changes after the review
+          action_needed = 'none'; // Waiting for maintainer re-review
         } else {
-          action_needed = 'none';
+          action_needed = 'push-changes'; // Still owes changes to the maintainer
         }
+      } else if (latestHuman && latestHuman.actor.toLowerCase() !== username.toLowerCase()) {
+        action_needed = 'reply';
+      } else {
+        action_needed = 'none';
       }
     }
 
