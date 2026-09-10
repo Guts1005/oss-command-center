@@ -1,18 +1,35 @@
 import express from 'express';
 import axios from 'axios';
 import { db } from '../db.js';
-import { runSync, getLastSyncTime } from '../sync/engine.js';
+import { syncUser, getLastSyncTime } from '../sync/multi_engine.js';
+import { authRouter } from './auth.js';
+import { integrationsRouter } from './integrations.js';
+import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 
 export const apiRouter = express.Router();
 
+// Mount Auth and Integrations sub-routers
+apiRouter.use('/auth', authRouter);
+apiRouter.use('/integrations', integrationsRouter);
+
+// Apply optionalAuth to all remaining contribution endpoints
+apiRouter.use(optionalAuth);
+
+function getEffectiveUserId(req: AuthenticatedRequest): string {
+  if (req.user) return req.user.id;
+  // Local fallback for dev/CLI scripts
+  return 'default-local-user';
+}
+
 // GET /api/stats - High-level operational metrics
-apiRouter.get('/stats', (req, res) => {
-  const total = (db.prepare('SELECT COUNT(*) as count FROM contributions').get() as any).count;
-  const actionNeeded = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE action_needed != 'none'").get() as any).count;
-  const awaitingMaintainer = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE status IN ('open', 'opened', 'submitted', 'awaiting-reply') AND action_needed = 'none'").get() as any).count;
-  const merged = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE status = 'merged'").get() as any).count;
-  const unreadCount = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE unread = 1').get() as any).count;
+apiRouter.get('/stats', (req: AuthenticatedRequest, res) => {
+  const userId = getEffectiveUserId(req);
+  const total = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ?').get(userId) as any).count;
+  const actionNeeded = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND action_needed != 'none'").get(userId) as any).count;
+  const awaitingMaintainer = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status IN ('open', 'opened', 'submitted', 'awaiting-reply') AND action_needed = 'none'").get(userId) as any).count;
+  const merged = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'merged'").get(userId) as any).count;
+  const unreadCount = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND unread = 1').get(userId) as any).count;
   const lastSync = getLastSyncTime();
 
   res.json({
@@ -25,13 +42,14 @@ apiRouter.get('/stats', (req, res) => {
   });
 });
 
-// GET /api/contributions - Filtered & sorted query
-apiRouter.get('/contributions', (req, res) => {
+// GET /api/contributions - Filtered & sorted query scoped to current user
+apiRouter.get('/contributions', (req: AuthenticatedRequest, res) => {
+  const userId = getEffectiveUserId(req);
   const { platform, status, search, sort } = req.query;
   const actionParam = (req.query.action_needed || req.query.action) as string | undefined;
 
-  let query = 'SELECT * FROM contributions WHERE 1=1';
-  const params: any[] = [];
+  let query = 'SELECT * FROM contributions WHERE user_id = ?';
+  const params: any[] = [userId];
 
   if (platform && platform !== 'all') {
     query += ' AND platform = ?';
@@ -74,31 +92,33 @@ apiRouter.get('/contributions', (req, res) => {
 });
 
 // GET /api/contributions/:id - Single item with event timeline & mark read
-apiRouter.get('/contributions/:id', (req, res) => {
+apiRouter.get('/contributions/:id', (req: AuthenticatedRequest, res) => {
+  const userId = getEffectiveUserId(req);
   const { id } = req.params;
-  const item = db.prepare('SELECT * FROM contributions WHERE id = ?').get(id) as any;
+  const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id) as any;
   if (!item) {
     return res.status(404).json({ error: 'Contribution not found' });
   }
 
   // Mark as read locally
   const now = new Date().toISOString();
-  db.prepare('UPDATE contributions SET unread = 0, last_viewed_at = ? WHERE id = ?').run(now, id);
+  db.prepare('UPDATE contributions SET unread = 0, last_viewed_at = ? WHERE user_id = ? AND id = ?').run(now, userId, id);
   item.unread = 0;
   item.last_viewed_at = now;
 
   // Fetch events
-  const events = db.prepare('SELECT * FROM activity_events WHERE contribution_id = ? ORDER BY created_at ASC').all(id);
+  const events = db.prepare('SELECT * FROM activity_events WHERE user_id = ? AND contribution_id = ? ORDER BY created_at ASC').all(userId, id);
 
   res.json({ item, events });
 });
 
 // PATCH /api/contributions/:id/notes - Add or update triage notes
-apiRouter.patch('/contributions/:id/notes', (req, res) => {
+apiRouter.patch('/contributions/:id/notes', (req: AuthenticatedRequest, res) => {
+  const userId = getEffectiveUserId(req);
   const { id } = req.params;
   const { notes, action_needed } = req.body;
 
-  const item = db.prepare('SELECT * FROM contributions WHERE id = ?').get(id);
+  const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
   if (!item) {
     return res.status(404).json({ error: 'Contribution not found' });
   }
@@ -107,16 +127,17 @@ apiRouter.patch('/contributions/:id/notes', (req, res) => {
     UPDATE contributions 
     SET notes = COALESCE(?, notes),
         action_needed = COALESCE(?, action_needed)
-    WHERE id = ?
-  `).run(notes !== undefined ? notes : null, action_needed !== undefined ? action_needed : null, id);
+    WHERE user_id = ? AND id = ?
+  `).run(notes !== undefined ? notes : null, action_needed !== undefined ? action_needed : null, userId, id);
 
-  const updated = db.prepare('SELECT * FROM contributions WHERE id = ?').get(id);
+  const updated = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
   res.json({ item: updated });
 });
 
-// POST /api/sync - Manual trigger
-apiRouter.post('/sync', async (req, res) => {
-  const result = await runSync();
+// POST /api/sync - Manual trigger for current user
+apiRouter.post('/sync', async (req: AuthenticatedRequest, res) => {
+  const userId = getEffectiveUserId(req);
+  const result = await syncUser(userId);
   res.json(result);
 });
 
@@ -136,23 +157,24 @@ const IngestSchema = z.object({
   notes: z.string().optional()
 });
 
-apiRouter.post('/ingest', (req, res) => {
+apiRouter.post('/ingest', (req: AuthenticatedRequest, res) => {
   try {
+    const userId = getEffectiveUserId(req);
     const data = IngestSchema.parse(req.body);
     const id = data.platform === 'github' ? `gh:${data.repo}#${data.number}` : `gl:${data.repo}!${data.number}`;
     const now = new Date().toISOString();
 
     db.prepare(`
       INSERT INTO contributions (
-        id, platform, repo, number, title, type, url, author, status,
+        user_id, id, platform, repo, number, title, type, url, author, status,
         action_needed, difficulty, bounty_amount, created_at, last_activity_at,
         last_synced_at, unread, notes
       ) VALUES (
-        @id, @platform, @repo, @number, @title, @type, @url, @author, @status,
+        @user_id, @id, @platform, @repo, @number, @title, @type, @url, @author, @status,
         @action_needed, @difficulty, @bounty_amount, @created_at, @last_activity_at,
         @last_synced_at, 1, @notes
       )
-      ON CONFLICT(id) DO UPDATE SET
+      ON CONFLICT(user_id, id) DO UPDATE SET
         title = excluded.title,
         status = excluded.status,
         action_needed = excluded.action_needed,
@@ -160,6 +182,7 @@ apiRouter.post('/ingest', (req, res) => {
         notes = COALESCE(excluded.notes, contributions.notes),
         unread = 1
     `).run({
+      user_id: userId,
       id,
       ...data,
       bounty_amount: data.bounty_amount || null,
@@ -176,7 +199,8 @@ apiRouter.post('/ingest', (req, res) => {
 });
 
 // POST /api/track-url - Ingest any GitHub/GitLab URL directly from UI
-apiRouter.post('/track-url', async (req, res) => {
+apiRouter.post('/track-url', async (req: AuthenticatedRequest, res) => {
+  const userId = getEffectiveUserId(req);
   const { url } = req.body;
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'A valid URL is required' });
@@ -246,20 +270,21 @@ apiRouter.post('/track-url', async (req, res) => {
 
     db.prepare(`
       INSERT INTO contributions (
-        id, platform, repo, number, title, type, url, author, status,
+        user_id, id, platform, repo, number, title, type, url, author, status,
         action_needed, difficulty, bounty_amount, created_at, last_activity_at,
         last_synced_at, unread, notes
       ) VALUES (
-        @id, 'github', @repo, @number, @title, @type, @url, @author, @status,
+        @user_id, @id, 'github', @repo, @number, @title, @type, @url, @author, @status,
         'none', 'medium', null, @createdAt, @updatedAt, @now, 1, null
       )
-      ON CONFLICT(id) DO UPDATE SET
+      ON CONFLICT(user_id, id) DO UPDATE SET
         title = excluded.title,
         status = excluded.status,
         last_activity_at = excluded.last_activity_at,
         last_synced_at = excluded.last_synced_at,
         unread = 1
     `).run({
+      user_id: userId,
       id,
       repo,
       number,
@@ -275,19 +300,20 @@ apiRouter.post('/track-url', async (req, res) => {
 
     db.prepare(`
       INSERT OR REPLACE INTO activity_events (
-        id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
+        id, user_id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
       ) VALUES (
-        @id, @contribution_id, @actor, null, 'status-change', null, @body_excerpt, @created_at
+        @id, @user_id, @contribution_id, @actor, null, 'status-change', null, @body_excerpt, @created_at
       )
     `).run({
       id: `init_${id}`,
+      user_id: userId,
       contribution_id: id,
       actor: author,
       body_excerpt: body ? body.slice(0, 500) : `Tracked contribution: ${title}`,
       created_at: createdAt
     });
 
-    const item = db.prepare('SELECT * FROM contributions WHERE id = ?').get(id);
+    const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
     return res.status(201).json({ success: true, item });
   }
 
@@ -331,20 +357,21 @@ apiRouter.post('/track-url', async (req, res) => {
 
     db.prepare(`
       INSERT INTO contributions (
-        id, platform, repo, number, title, type, url, author, status,
+        user_id, id, platform, repo, number, title, type, url, author, status,
         action_needed, difficulty, bounty_amount, created_at, last_activity_at,
         last_synced_at, unread, notes
       ) VALUES (
-        @id, 'gitlab', @repo, @number, @title, @type, @url, @author, @status,
+        @user_id, @id, 'gitlab', @repo, @number, @title, @type, @url, @author, @status,
         'none', 'medium', null, @createdAt, @updatedAt, @now, 1, null
       )
-      ON CONFLICT(id) DO UPDATE SET
+      ON CONFLICT(user_id, id) DO UPDATE SET
         title = excluded.title,
         status = excluded.status,
         last_activity_at = excluded.last_activity_at,
         last_synced_at = excluded.last_synced_at,
         unread = 1
     `).run({
+      user_id: userId,
       id,
       repo,
       number,
@@ -360,19 +387,20 @@ apiRouter.post('/track-url', async (req, res) => {
 
     db.prepare(`
       INSERT OR REPLACE INTO activity_events (
-        id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
+        id, user_id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
       ) VALUES (
-        @id, @contribution_id, @actor, null, 'status-change', null, @body_excerpt, @created_at
+        @id, @user_id, @contribution_id, @actor, null, 'status-change', null, @body_excerpt, @created_at
       )
     `).run({
       id: `init_${id}`,
+      user_id: userId,
       contribution_id: id,
       actor: author,
       body_excerpt: body ? body.slice(0, 500) : `Tracked contribution: ${title}`,
       created_at: createdAt
     });
 
-    const item = db.prepare('SELECT * FROM contributions WHERE id = ?').get(id);
+    const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
     return res.status(201).json({ success: true, item });
   }
 });

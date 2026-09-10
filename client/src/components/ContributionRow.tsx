@@ -107,9 +107,13 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
 
           {/* Type Icon */}
           {item.type === 'pr' ? (
-            <GitPullRequest className="h-3.5 w-3.5 text-text-muted shrink-0" title="Pull Request / Merge Request" />
+            <span title="Pull Request / Merge Request" className="inline-flex shrink-0">
+              <GitPullRequest className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            </span>
           ) : (
-            <CircleDot className="h-3.5 w-3.5 text-text-muted shrink-0" title="Issue" />
+            <span title="Issue" className="inline-flex shrink-0">
+              <CircleDot className="h-3.5 w-3.5 text-text-muted shrink-0" />
+            </span>
           )}
 
           {/* Repo & Number */}

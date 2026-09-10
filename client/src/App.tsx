@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Contribution, Stats } from './types';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HeaderTelemetry } from './components/HeaderTelemetry';
 import { FilterRail } from './components/FilterRail';
 import { ContributionList } from './components/ContributionList';
@@ -8,8 +9,12 @@ import { SlideOverDetail } from './components/SlideOverDetail';
 import { CommandPalette } from './components/CommandPalette';
 import { TrackContributionModal } from './components/TrackContributionModal';
 import { QuickGuideModal } from './components/QuickGuideModal';
+import { AuthModal } from './components/AuthModal';
+import { IntegrationsModal } from './components/IntegrationsModal';
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { user } = useAuth();
+
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -27,6 +32,8 @@ export const App: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState<boolean>(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState<boolean>(false);
 
   // Fetch telemetry stats
   const fetchStats = useCallback(async () => {
@@ -59,18 +66,22 @@ export const App: React.FC = () => {
     }
   }, [statusFilter, platformFilter, actionFilter, searchQuery, sortBy]);
 
-  // Initial load
+  // Initial load and user change reload
   useEffect(() => {
     fetchStats();
     fetchContributions();
-  }, [fetchStats, fetchContributions]);
+  }, [fetchStats, fetchContributions, user]);
 
   // Trigger sync
   const handleSync = async () => {
     if (isSyncing) return;
     setIsSyncing(true);
     try {
-      await axios.post('/api/sync');
+      if (user) {
+        await axios.post('/api/integrations/sync');
+      } else {
+        await axios.post('/api/sync');
+      }
       await Promise.all([fetchStats(), fetchContributions()]);
     } catch (err) {
       console.error('Sync failed:', err);
@@ -97,7 +108,11 @@ export const App: React.FC = () => {
         e.preventDefault();
         setIsGuideModalOpen(true);
       } else if (e.key === 'Escape') {
-        if (isTrackModalOpen) {
+        if (isAuthModalOpen) {
+          setIsAuthModalOpen(false);
+        } else if (isIntegrationsModalOpen) {
+          setIsIntegrationsModalOpen(false);
+        } else if (isTrackModalOpen) {
           setIsTrackModalOpen(false);
         } else if (isGuideModalOpen) {
           setIsGuideModalOpen(false);
@@ -111,17 +126,26 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCommandPaletteOpen, isTrackModalOpen, isGuideModalOpen, selectedId]);
+  }, [
+    isCommandPaletteOpen,
+    isTrackModalOpen,
+    isGuideModalOpen,
+    isAuthModalOpen,
+    isIntegrationsModalOpen,
+    selectedId,
+  ]);
 
   return (
     <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-surface-active selection:text-white antialiased overflow-hidden">
-      {/* Header with Quick Guide and Track buttons */}
+      {/* Header with Quick Guide, Auth and Track buttons */}
       <HeaderTelemetry
         stats={stats}
         onSync={handleSync}
         isSyncing={isSyncing}
         onOpenTrackModal={() => setIsTrackModalOpen(true)}
         onOpenGuideModal={() => setIsGuideModalOpen(true)}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
       />
 
       {/* Filter and Query Rail */}
@@ -186,7 +210,35 @@ export const App: React.FC = () => {
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}
       />
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          fetchStats();
+          fetchContributions();
+        }}
+      />
+
+      {/* Linked Accounts & Integrations Modal */}
+      <IntegrationsModal
+        isOpen={isIntegrationsModalOpen}
+        onClose={() => setIsIntegrationsModalOpen(false)}
+        onSyncTriggered={() => {
+          fetchStats();
+          fetchContributions();
+        }}
+      />
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 

@@ -9,12 +9,17 @@
     "dev:server": "tsx watch server/index.ts",
     "dev:client": "vite",
     "build": "tsc && vite build",
+    "start": "tsx server/index.ts",
+    "test": "tsx tests/crypto.test.ts && tsx tests/db.test.ts && tsx tests/api_integration.test.ts && tsx tests/multi_tenant.test.ts",
+    "test:crypto": "tsx tests/crypto.test.ts",
     "test:db": "tsx tests/db.test.ts",
-    "test:sync": "tsx tests/sync.test.ts"
+    "test:api": "tsx tests/api_integration.test.ts",
+    "test:multi": "tsx tests/multi_tenant.test.ts"
   },
   "dependencies": {
     "axios": "^1.7.9",
     "better-sqlite3": "^11.8.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -25,6 +30,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",

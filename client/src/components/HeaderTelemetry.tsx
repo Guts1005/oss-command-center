@@ -1,6 +1,19 @@
 import React from 'react';
 import { Stats } from '../types';
-import { RefreshCw, GitMerge, CheckCircle2, AlertCircle, Clock, PlusCircle, HelpCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  RefreshCw,
+  GitMerge,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  PlusCircle,
+  HelpCircle,
+  Lock,
+  LogOut,
+  Key,
+  User as UserIcon,
+} from 'lucide-react';
 
 interface HeaderTelemetryProps {
   stats: Stats | null;
@@ -8,6 +21,8 @@ interface HeaderTelemetryProps {
   onSync: () => void;
   onOpenTrackModal?: () => void;
   onOpenGuideModal?: () => void;
+  onOpenAuthModal?: () => void;
+  onOpenIntegrationsModal?: () => void;
 }
 
 export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
@@ -16,7 +31,11 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   onSync,
   onOpenTrackModal,
   onOpenGuideModal,
+  onOpenAuthModal,
+  onOpenIntegrationsModal,
 }) => {
+  const { user, logout, integrations } = useAuth();
+
   const formatTime = (isoString?: string | null) => {
     if (!isoString) return 'Never';
     const date = new Date(isoString);
@@ -42,25 +61,64 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
                 OSS Command Center
               </h1>
               <span className="border border-border-bold bg-surface-elevated px-1.5 py-0.2 font-telemetry text-[9px] font-semibold text-text-muted">
-                v1.1
+                v1.2 MULTI-TENANT
               </span>
             </div>
             <p className="font-telemetry text-xs text-text-muted mt-0.5">
-              Open Source Contribution Hub // Track, Triage & Merge on GitHub & GitLab
+              Encrypted Multi-User Open Source Hub // GitHub & GitLab
             </p>
           </div>
         </div>
 
         {/* Action Controls & Metrics */}
         <div className="flex flex-wrap items-center gap-2.5 font-telemetry text-xs">
+          {/* User Account / Authentication Controls */}
+          {user ? (
+            <div className="flex items-center gap-1 border border-border-bold bg-base p-0.5">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-text-primary">
+                <UserIcon className="h-3.5 w-3.5 text-status-merged" />
+                <span>{user.username}</span>
+              </div>
+              <button
+                onClick={onOpenIntegrationsModal}
+                className="flex items-center gap-1 border-l border-border-subtle bg-surface-elevated px-2.5 py-1 text-text-secondary hover:text-white transition-colors"
+                title="Manage linked GitHub and GitLab accounts"
+              >
+                <Key className="h-3.5 w-3.5 text-status-awaiting-reply" />
+                <span>Accounts ({integrations.length})</span>
+              </button>
+              <button
+                onClick={() => logout()}
+                className="flex items-center gap-1 border-l border-border-subtle px-2 py-1 text-text-muted hover:text-status-action-needed transition-colors"
+                title="Sign out of your session"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={onOpenAuthModal}
+                className="flex items-center gap-1.5 border border-status-awaiting-reply/80 bg-status-awaiting-reply/20 px-3 py-1.5 font-bold text-status-awaiting-reply hover:bg-status-awaiting-reply/30 transition-colors shadow-sm"
+                title="Sign in or register for a private encrypted workspace"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                <span>Sign In / Join</span>
+              </button>
+              <span className="hidden sm:inline-block border border-border-subtle bg-base px-2 py-1 text-[10px] text-text-muted">
+                Guest Mode (Local)
+              </span>
+            </div>
+          )}
+
           {/* Track Contribution Primary Button */}
           {onOpenTrackModal && (
             <button
               onClick={onOpenTrackModal}
-              className="flex items-center gap-1.5 border border-status-awaiting-reply/60 bg-status-awaiting-reply/15 px-3 py-1.5 font-bold text-status-awaiting-reply hover:bg-status-awaiting-reply/25 transition-colors shadow-sm"
+              className="flex items-center gap-1.5 border border-border-bold bg-surface-elevated px-3 py-1.5 font-bold text-text-primary hover:border-border-active hover:bg-surface-active transition-colors shadow-sm"
               title="Add a new PR or Issue by URL"
             >
-              <PlusCircle className="h-3.5 w-3.5" />
+              <PlusCircle className="h-3.5 w-3.5 text-status-awaiting-reply" />
               <span>+ Track PR / Issue</span>
             </button>
           )}
@@ -73,7 +131,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               title="Open quick guide and status legend"
             >
               <HelpCircle className="h-3.5 w-3.5" />
-              <span>Quick Guide (?)</span>
+              <span>Guide (?)</span>
             </button>
           )}
 

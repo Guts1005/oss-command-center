@@ -1,12 +1,12 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import { initDatabase } from './db.js';
-import { apiRouter } from './routes/index.js';
-import { runSync } from './sync/engine.js';
-
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { initDatabase } from './db.js';
+import { apiRouter } from './routes/index.js';
+import { startPeriodicSync, syncAllUsers } from './sync/multi_engine.js';
 
 dotenv.config();
 
@@ -17,10 +17,14 @@ const distPath = path.resolve(__dirname, '../dist');
 const app = express();
 const PORT = process.env.PORT || 3100;
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
-// Initialize SQLite schema
+// Initialize SQLite multi-tenant schema
 initDatabase();
 
 // Mount API router
@@ -36,10 +40,13 @@ app.get('*', (req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`\n======================================================`);
-  console.log(`⚙️  OSS Contribution Command Center Server Active`);
-  console.log(`📡  Listening on: http://localhost:${PORT}`);
+  console.log(`  OSS Contribution Command Center Multi-User Active`);
+  console.log(`  Listening on: http://localhost:${PORT}`);
   console.log(`======================================================\n`);
 
-  // Run initial sync on startup
-  runSync().catch(err => console.error('[Startup Sync Error]:', err));
+  // Start periodic background sync for active users
+  startPeriodicSync(30);
+
+  // Run initial sync cycle in background
+  syncAllUsers().catch(err => console.error('[Startup Sync Error]:', err));
 });

@@ -1,29 +1,39 @@
 import axios from 'axios';
 import { db } from '../db.js';
 
-export async function syncGitLab(host = 'https://gitlab.rtems.org', username = 'Sharvin') {
-  console.log(`[GitLab Sync] Querying authored MRs on ${host} for user: ${username}`);
+export async function syncGitLab(
+  userId: string,
+  host = 'https://gitlab.rtems.org',
+  username = 'Sharvin',
+  token?: string
+) {
+  console.log(`[GitLab Sync] Querying authored MRs on ${host} for user: ${username} (ID: ${userId})`);
   
-  // RTEMS upstream project: rtems/rtos/rtems
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['PRIVATE-TOKEN'] = token;
+  }
+
+  // Upstream project query (e.g. rtems/rtos/rtems)
   const projectPath = encodeURIComponent('rtems/rtos/rtems');
   const url = `${host}/api/v4/projects/${projectPath}/merge_requests?author_username=${username}&per_page=20`;
 
   try {
-    const resp = await axios.get(url, { timeout: 15000 });
+    const resp = await axios.get(url, { headers, timeout: 15000 });
     const mrs = resp.data || [];
     const now = new Date().toISOString();
 
     const insertContrib = db.prepare(`
       INSERT INTO contributions (
-        id, platform, repo, number, title, type, url, author, status,
+        user_id, id, platform, repo, number, title, type, url, author, status,
         action_needed, difficulty, bounty_amount, created_at, last_activity_at,
         last_synced_at, unread, notes
       ) VALUES (
-        @id, @platform, @repo, @number, @title, @type, @url, @author, @status,
+        @user_id, @id, @platform, @repo, @number, @title, @type, @url, @author, @status,
         @action_needed, @difficulty, @bounty_amount, @created_at, @last_activity_at,
         @last_synced_at, @unread, @notes
       )
-      ON CONFLICT(id) DO UPDATE SET
+      ON CONFLICT(user_id, id) DO UPDATE SET
         title = excluded.title,
         status = excluded.status,
         action_needed = excluded.action_needed,
@@ -34,16 +44,16 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
 
     const insertEvent = db.prepare(`
       INSERT OR REPLACE INTO activity_events (
-        id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
+        id, user_id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
       ) VALUES (
-        @id, @contribution_id, @actor, @actor_avatar, @type, @review_state, @body_excerpt, @created_at
+        @id, @user_id, @contribution_id, @actor, @actor_avatar, @type, @review_state, @body_excerpt, @created_at
       )
     `);
 
     for (const mr of mrs) {
       const id = `gl:rtems/rtos/rtems!${mr.iid}`;
       
-      // 1. Normalize status token bug: 'opened' -> 'open'
+      // 1. Normalize status token
       let status = mr.state === 'opened' ? 'open' : mr.state; // 'open' | 'merged' | 'closed'
       if (mr.draft || mr.work_in_progress || mr.title.toLowerCase().startsWith('draft:')) {
         status = 'draft';
@@ -52,17 +62,16 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
       // Fetch single MR detail for rich metadata
       let detail: any = null;
       try {
-        const detailResp = await axios.get(`${host}/api/v4/projects/${projectPath}/merge_requests/${mr.iid}`, { timeout: 10000 });
+        const detailResp = await axios.get(`${host}/api/v4/projects/${projectPath}/merge_requests/${mr.iid}`, { headers, timeout: 10000 });
         detail = detailResp.data;
       } catch (e: any) {
         // detail fetch optional
       }
 
       // Fetch discussions from public discussions.json endpoint
-      let maintainerFeedbackDetected = false;
       const fetchedNotes: any[] = [];
       try {
-        const discResp = await axios.get(`${host}/rtems/rtos/rtems/-/merge_requests/${mr.iid}/discussions.json`, { timeout: 10000 });
+        const discResp = await axios.get(`${host}/rtems/rtos/rtems/-/merge_requests/${mr.iid}/discussions.json`, { headers, timeout: 10000 });
         const discussions = discResp.data || [];
         for (const disc of discussions) {
           for (const note of (disc.notes || [])) {
@@ -79,9 +88,6 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
             if ((!note.system || isSignificantSystemNote) && note.author) {
               const noteActor = note.author.name || note.author.username || 'Maintainer';
               const isMaintainer = (note.author.username || '').toLowerCase() !== username.toLowerCase();
-              if (isMaintainer) {
-                maintainerFeedbackDetected = true;
-              }
 
               const isApproval = rawNoteText.includes('approved this merge request') || rawNoteText.includes('automatic merge');
               fetchedNotes.push({
@@ -98,7 +104,7 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
           }
         }
       } catch (e: any) {
-        // discussions.json fetch optional
+        // discussions fetch optional
       }
 
       // 2. Derive action_needed dynamically based on latest conversational speaker
@@ -108,26 +114,25 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
       } else if (status === 'draft') {
         action_needed = 'push-changes';
       } else if (fetchedNotes.length > 0) {
-        // Sort notes chronologically to check who spoke last
         const sortedNotes = [...fetchedNotes].sort(
           (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
         const lastNote = sortedNotes[sortedNotes.length - 1];
         if (lastNote && lastNote.isMaintainer) {
           if (lastNote.review_state === 'APPROVED') {
-            action_needed = 'none'; // Maintainer approved! Waiting for CI / merge
+            action_needed = 'none';
           } else {
-            action_needed = 'push-changes'; // maintainer requested action/changes
+            action_needed = 'push-changes';
           }
         } else {
-          action_needed = 'none'; // author replied or pushed changes -> awaiting maintainer review
+          action_needed = 'none';
         }
       }
 
-      const existing = db.prepare('SELECT last_activity_at, last_viewed_at, unread, notes FROM contributions WHERE id = ?').get(id) as any;
+      const existing = db.prepare('SELECT last_activity_at, last_viewed_at, unread, notes FROM contributions WHERE user_id = ? AND id = ?').get(userId, id) as any;
       const lastActivity = mr.updated_at || mr.created_at;
 
-      // 3. Normalized unread logic (only recent or truly unviewed new events)
+      // 3. Normalized unread logic
       let unread = 0;
       if (existing) {
         if (existing.last_viewed_at) {
@@ -142,12 +147,13 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
       }
 
       insertContrib.run({
+        user_id: userId,
         id,
         platform: 'gitlab',
         repo: 'rtems/rtos/rtems',
         number: mr.iid,
         title: mr.title,
-        type: 'pr', // map MR to pr type
+        type: 'pr',
         url: mr.web_url,
         author: mr.author?.username || username,
         status,
@@ -164,6 +170,7 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
       // Insert primary creation event
       insertEvent.run({
         id: `gl_created_${id}`,
+        user_id: userId,
         contribution_id: id,
         actor: mr.author?.username || username,
         actor_avatar: mr.author?.avatar_url || null,
@@ -178,6 +185,7 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
         const merger = detail?.merged_by?.name || detail?.merged_by?.username || 'Chris Johns (Maintainer)';
         insertEvent.run({
           id: `gl_merged_${id}`,
+          user_id: userId,
           contribution_id: id,
           actor: merger,
           actor_avatar: detail?.merged_by?.avatar_url || null,
@@ -192,6 +200,7 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
       for (const note of fetchedNotes) {
         insertEvent.run({
           id: note.id,
+          user_id: userId,
           contribution_id: id,
           actor: note.actor,
           actor_avatar: note.avatar,
@@ -203,8 +212,9 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
       }
     }
 
-    console.log(`[GitLab Sync] Processed ${mrs.length} MRs with normalized status tokens.`);
+    console.log(`[GitLab Sync] Processed ${mrs.length} MRs for user ${userId}.`);
   } catch (err: any) {
-    console.error(`[GitLab Sync] Error: ${err.message}`);
+    console.error(`[GitLab Sync] Error for user ${userId}: ${err.message}`);
+    throw err;
   }
 }

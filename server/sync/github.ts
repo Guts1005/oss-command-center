@@ -21,7 +21,7 @@ interface GitHubReview {
   submitted_at: string;
 }
 
-export async function syncGitHub(token?: string, username = 'Guts1005') {
+export async function syncGitHub(userId: string, token?: string, username = 'Guts1005') {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
   };
@@ -29,7 +29,7 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  console.log(`[GitHub Sync] Querying authored PRs and issues for user: ${username}`);
+  console.log(`[GitHub Sync] Querying authored PRs and issues for user: ${username} (ID: ${userId})`);
 
   // 1. Search for author PRs and issues
   const searchUrl = `https://api.github.com/search/issues?q=author:${username}&sort=updated&order=desc&per_page=30`;
@@ -38,23 +38,23 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
     const searchResp = await axios.get(searchUrl, { headers, timeout: 15000 });
     items = searchResp.data.items || [];
   } catch (err: any) {
-    console.error(`[GitHub Sync] Search query failed: ${err.message}`);
-    return;
+    console.error(`[GitHub Sync] Search query failed for user ${userId}: ${err.message}`);
+    throw err;
   }
 
   const now = new Date().toISOString();
 
   const insertContrib = db.prepare(`
     INSERT INTO contributions (
-      id, platform, repo, number, title, type, url, author, status,
+      user_id, id, platform, repo, number, title, type, url, author, status,
       action_needed, difficulty, bounty_amount, created_at, last_activity_at,
       last_synced_at, unread, notes
     ) VALUES (
-      @id, @platform, @repo, @number, @title, @type, @url, @author, @status,
+      @user_id, @id, @platform, @repo, @number, @title, @type, @url, @author, @status,
       @action_needed, @difficulty, @bounty_amount, @created_at, @last_activity_at,
       @last_synced_at, @unread, @notes
     )
-    ON CONFLICT(id) DO UPDATE SET
+    ON CONFLICT(user_id, id) DO UPDATE SET
       title = excluded.title,
       status = excluded.status,
       action_needed = excluded.action_needed,
@@ -66,9 +66,9 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
 
   const insertEvent = db.prepare(`
     INSERT OR REPLACE INTO activity_events (
-      id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
+      id, user_id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
     ) VALUES (
-      @id, @contribution_id, @actor, @actor_avatar, @type, @review_state, @body_excerpt, @created_at
+      @id, @user_id, @contribution_id, @actor, @actor_avatar, @type, @review_state, @body_excerpt, @created_at
     )
   `);
 
@@ -144,93 +144,101 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
       }
     }
 
-    // 4. Derive action_needed dynamically
+    // 4. Derive Action State & Last Activity
+    let lastActivityAt = item.created_at;
     let action_needed: 'reply' | 'push-changes' | 'none' = 'none';
 
-    if (status === 'merged' || status === 'closed') {
-      action_needed = 'none';
-    } else {
-      // Collect all conversational items from humans
-      const humanEvents: { actor: string; created_at: string }[] = [];
+    // Compile timeline of human events
+    interface TimelineEvent {
+      actor: string;
+      createdAt: string;
+      type: 'author' | 'maintainer';
+      state?: string;
+    }
+    const timeline: TimelineEvent[] = [];
 
-      // Initial submission
-      humanEvents.push({ actor: item.user?.login || username, created_at: item.created_at });
+    // Author created item
+    timeline.push({
+      actor: item.user?.login || username,
+      createdAt: item.created_at,
+      type: 'author',
+    });
 
-      // Issue comments from non-bots
-      for (const c of comments) {
-        const author = c.user?.login;
-        if (author && !isBot(author)) {
-          humanEvents.push({ actor: author, created_at: c.created_at });
-        }
+    // Add comments
+    for (const c of comments) {
+      const actor = c.user?.login || '';
+      if (!isBot(actor)) {
+        timeline.push({
+          actor,
+          createdAt: c.created_at,
+          type: actor.toLowerCase() === username.toLowerCase() ? 'author' : 'maintainer',
+        });
       }
+    }
 
-      // Review comments from non-bots
-      for (const rc of reviewComments) {
-        const author = rc.user?.login;
-        if (author && !isBot(author)) {
-          humanEvents.push({ actor: author, created_at: rc.created_at });
+    // Add reviews
+    let hasChangesRequested = false;
+    for (const r of reviews) {
+      const actor = r.user?.login || '';
+      if (!isBot(actor) && r.submitted_at) {
+        if (r.state === 'CHANGES_REQUESTED') {
+          hasChangesRequested = true;
         }
+        timeline.push({
+          actor,
+          createdAt: r.submitted_at,
+          type: actor.toLowerCase() === username.toLowerCase() ? 'author' : 'maintainer',
+          state: r.state,
+        });
       }
+    }
 
-      // Reviews with non-empty body from non-bots
-      for (const rv of reviews) {
-        const author = rv.user?.login;
-        if (author && !isBot(author) && rv.body) {
-          humanEvents.push({ actor: author, created_at: rv.submitted_at });
-        }
+    // Add review comments
+    for (const rc of reviewComments) {
+      const actor = rc.user?.login || '';
+      if (!isBot(actor)) {
+        timeline.push({
+          actor,
+          createdAt: rc.created_at,
+          type: actor.toLowerCase() === username.toLowerCase() ? 'author' : 'maintainer',
+        });
       }
+    }
 
-      humanEvents.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      const latestHuman = humanEvents[humanEvents.length - 1];
+    // Sort timeline chronologically
+    timeline.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-      // Check latest reviews from non-authors
-      const nonAuthorReviews = reviews
-        .filter((r) => r.user && r.user.login && r.user.login.toLowerCase() !== username.toLowerCase())
-        .sort((a, b) => new Date(a.submitted_at || 0).getTime() - new Date(b.submitted_at || 0).getTime());
+    if (timeline.length > 0) {
+      const lastEvent = timeline[timeline.length - 1];
+      lastActivityAt = lastEvent.createdAt;
 
-      const latestReview = nonAuthorReviews[nonAuthorReviews.length - 1];
-
-      // Check if changes requested, but account for author responses/commits after the review
-      if (latestReview && latestReview.state === 'CHANGES_REQUESTED') {
-        const reviewTime = new Date(latestReview.submitted_at || 0).getTime();
-        const authorEvents = humanEvents.filter(e => e.actor.toLowerCase() === username.toLowerCase());
-        const latestAuthorEvent = authorEvents[authorEvents.length - 1];
-        const authorTime = latestAuthorEvent ? new Date(latestAuthorEvent.created_at).getTime() : 0;
-
-        if (authorTime > reviewTime) {
-          // Author already responded or pushed changes after the review
-          action_needed = 'none'; // Waiting for maintainer re-review
+      if (status === 'open') {
+        if (hasChangesRequested) {
+          action_needed = 'push-changes';
+        } else if (lastEvent.type === 'maintainer') {
+          action_needed = 'reply';
         } else {
-          action_needed = 'push-changes'; // Still owes changes to the maintainer
+          action_needed = 'none'; // waiting on maintainer
         }
-      } else if (latestHuman && latestHuman.actor.toLowerCase() !== username.toLowerCase()) {
-        action_needed = 'reply';
       } else {
         action_needed = 'none';
       }
     }
 
-    // 5. Derive unread state
-    const existing = db.prepare('SELECT last_activity_at, last_viewed_at, unread, notes FROM contributions WHERE id = ?').get(id) as any;
-    const lastActivity = item.updated_at || item.created_at;
-
-    let unread = 0;
+    // 5. Check if user already viewed this item
+    const existing = db.prepare('SELECT last_activity_at, unread FROM contributions WHERE user_id = ? AND id = ?').get(userId, id) as any;
+    let unread = 1;
     if (existing) {
-      if (existing.last_viewed_at) {
-        unread = new Date(lastActivity).getTime() > new Date(existing.last_viewed_at).getTime() ? 1 : 0;
+      if (existing.last_activity_at === lastActivityAt) {
+        unread = existing.unread;
       } else {
-        // Not viewed yet: only mark unread if activity is within the last 14 days
-        const ageDays = (Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24);
-        unread = ageDays <= 14 ? 1 : 0;
+        unread = 1;
       }
-    } else {
-      // First time seeing item: mark unread only if active within 14 days
-      const ageDays = (Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24);
-      unread = ageDays <= 14 ? 1 : 0;
     }
 
-    // 6. Write contribution record
+    // 6. Insert/Update contribution scoped to user_id
     insertContrib.run({
+      user_id: userId,
       id,
       platform: 'github',
       repo,
@@ -244,19 +252,20 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
       difficulty: 'medium',
       bounty_amount: bounty_amount || null,
       created_at: item.created_at,
-      last_activity_at: lastActivity,
+      last_activity_at: lastActivityAt,
       last_synced_at: now,
       unread,
-      notes: existing?.notes || null,
+      notes: null,
     });
 
-    // 7. Write primary event (initial creation)
+    // 7. Write initial event into activity_events
     insertEvent.run({
-      id: `gh_created_${id}`,
+      id: `gh_init_${item.id}`,
+      user_id: userId,
       contribution_id: id,
       actor: item.user?.login || username,
       actor_avatar: item.user?.avatar_url || null,
-      type: 'status-change',
+      type: isPR ? 'commit' : 'comment',
       review_state: null,
       body_excerpt: item.body ? item.body.slice(0, 500) : 'Item opened',
       created_at: item.created_at,
@@ -267,6 +276,7 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
       try {
         insertEvent.run({
           id: `gh_comment_${c.id}`,
+          user_id: userId,
           contribution_id: id,
           actor: c.user?.login || 'unknown',
           actor_avatar: c.user?.avatar_url || null,
@@ -276,7 +286,7 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
           created_at: c.created_at,
         });
       } catch (err: any) {
-        console.warn(`[GitHub Sync] Error inserting comment event ${c.id}: ${err.message}`);
+        // ignore duplicate
       }
     }
 
@@ -285,6 +295,7 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
       try {
         insertEvent.run({
           id: `gh_review_${r.id}`,
+          user_id: userId,
           contribution_id: id,
           actor: r.user?.login || 'unknown',
           actor_avatar: r.user?.avatar_url || null,
@@ -294,7 +305,7 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
           created_at: r.submitted_at || item.created_at,
         });
       } catch (err: any) {
-        console.warn(`[GitHub Sync] Error inserting review event ${r.id}: ${err.message}`);
+        // ignore duplicate
       }
     }
 
@@ -303,6 +314,7 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
       try {
         insertEvent.run({
           id: `gh_revcomm_${rc.id}`,
+          user_id: userId,
           contribution_id: id,
           actor: rc.user?.login || 'unknown',
           actor_avatar: rc.user?.avatar_url || null,
@@ -312,10 +324,10 @@ export async function syncGitHub(token?: string, username = 'Guts1005') {
           created_at: rc.created_at,
         });
       } catch (err: any) {
-        console.warn(`[GitHub Sync] Error inserting review comment event ${rc.id}: ${err.message}`);
+        // ignore duplicate
       }
     }
   }
 
-  console.log(`[GitHub Sync] Successfully synced ${items.length} items with full conversation streams.`);
+  console.log(`[GitHub Sync] Successfully synced ${items.length} items for user ${userId}.`);
 }

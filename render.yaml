@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: oss-command-center
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_SECRET_KEY
+        generateValue: true
+      - key: DB_PATH
+        value: ./contributions.db

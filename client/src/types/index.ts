@@ -38,3 +38,22 @@ export interface Stats {
   unreadCount: number;
   lastSync: string | null;
 }
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  created_at: string;
+}
+
+export interface UserIntegration {
+  id: string;
+  platform: 'github' | 'gitlab';
+  username: string;
+  host?: string | null;
+  sync_status: string;
+  last_synced_at?: string | null;
+  last_error?: string | null;
+  created_at: string;
+  has_token: boolean;
+}
