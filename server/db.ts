@@ -197,6 +197,20 @@ export function initDatabase() {
       value TEXT
     );
   `);
+
+  // Ensure default-local-user exists in all environments
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT OR IGNORE INTO users (id, email, password_hash, display_name, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(
+    'default-local-user',
+    'admin@oss.local',
+    'local_dev_only:migrated_unhashed',
+    'Local Admin',
+    now,
+    now
+  );
 }
 
 export interface UserRecord {
