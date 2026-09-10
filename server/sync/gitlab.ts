@@ -66,19 +66,33 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
         const discussions = discResp.data || [];
         for (const disc of discussions) {
           for (const note of (disc.notes || [])) {
-            if (!note.system && note.author) {
-              const noteActor = note.author.username || note.author.name || 'Maintainer';
-              const isMaintainer = noteActor.toLowerCase() !== username.toLowerCase();
+            const rawNoteText = note.note || '';
+            const isSignificantSystemNote = Boolean(
+              note.system && (
+                rawNoteText.includes('approved this merge request') ||
+                rawNoteText.includes('automatic merge') ||
+                rawNoteText.includes('marked this merge request as') ||
+                rawNoteText.includes('merged')
+              )
+            );
+
+            if ((!note.system || isSignificantSystemNote) && note.author) {
+              const noteActor = note.author.name || note.author.username || 'Maintainer';
+              const isMaintainer = (note.author.username || '').toLowerCase() !== username.toLowerCase();
               if (isMaintainer) {
                 maintainerFeedbackDetected = true;
               }
+
+              const isApproval = rawNoteText.includes('approved this merge request') || rawNoteText.includes('automatic merge');
               fetchedNotes.push({
                 id: `gl_note_${note.id}`,
                 actor: noteActor,
                 avatar: note.author.avatar_url || null,
-                body: note.note || '',
+                body: rawNoteText,
                 created_at: note.created_at,
-                isMaintainer
+                isMaintainer,
+                type: isApproval ? 'review' : 'comment',
+                review_state: isApproval ? 'APPROVED' : (isMaintainer && !note.system ? 'CHANGES_REQUESTED' : null)
               });
             }
           }
@@ -100,7 +114,11 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
         );
         const lastNote = sortedNotes[sortedNotes.length - 1];
         if (lastNote && lastNote.isMaintainer) {
-          action_needed = 'push-changes'; // maintainer requested action/changes
+          if (lastNote.review_state === 'APPROVED') {
+            action_needed = 'none'; // Maintainer approved! Waiting for CI / merge
+          } else {
+            action_needed = 'push-changes'; // maintainer requested action/changes
+          }
         } else {
           action_needed = 'none'; // author replied or pushed changes -> awaiting maintainer review
         }
@@ -170,15 +188,15 @@ export async function syncGitLab(host = 'https://gitlab.rtems.org', username = '
         });
       }
 
-      // Insert maintainer discussion notes
+      // Insert maintainer discussion notes & reviews
       for (const note of fetchedNotes) {
         insertEvent.run({
           id: note.id,
           contribution_id: id,
           actor: note.actor,
           actor_avatar: note.avatar,
-          type: 'comment',
-          review_state: note.isMaintainer ? 'CHANGES_REQUESTED' : null,
+          type: note.type || 'comment',
+          review_state: note.review_state || null,
           body_excerpt: note.body.slice(0, 1000),
           created_at: note.created_at
         });
