@@ -6,14 +6,16 @@ interface IntegrationsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSyncTriggered?: () => void;
+  onAccountsChanged?: () => void;
 }
 
 export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
   isOpen,
   onClose,
   onSyncTriggered,
+  onAccountsChanged,
 }) => {
-  const { integrations, saveIntegration, deleteIntegration, triggerSync, isIntegrationsLoading } = useAuth();
+  const { user, integrations, saveIntegration, deleteIntegration, triggerSync, isIntegrationsLoading } = useAuth();
 
   const [platform, setPlatform] = useState<'github' | 'gitlab'>('github');
   const [username, setUsername] = useState('');
@@ -21,6 +23,8 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
   const [gitlabHost, setGitlabHost] = useState('https://gitlab.com');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSyncingNow, setIsSyncingNow] = useState(false);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [isDeletingNow, setIsDeletingNow] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const accountList = Array.isArray(integrations) ? integrations : [];
@@ -51,6 +55,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
       });
       setUsername('');
       setToken('');
+      onAccountsChanged?.();
     } catch (err: any) {
       setStatusMessage({
         type: 'error',
@@ -68,6 +73,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
       await triggerSync();
       setStatusMessage({ type: 'success', text: 'Synchronization started across all accounts.' });
       onSyncTriggered?.();
+      onAccountsChanged?.();
     } catch (err: any) {
       setStatusMessage({
         type: 'error',
@@ -78,13 +84,24 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to disconnect ${name}?`)) return;
+  const handleConfirmDelete = async (id: string, name: string) => {
+    setIsDeletingNow(true);
+    setStatusMessage(null);
     try {
-      await deleteIntegration(id);
-      setStatusMessage({ type: 'success', text: `Disconnected ${name}.` });
+      const res = await deleteIntegration(id);
+      setStatusMessage({
+        type: 'success',
+        text: res.message || `Disconnected ${name} successfully.`,
+      });
+      setConfirmingDeleteId(null);
+      onAccountsChanged?.();
     } catch (err: any) {
-      setStatusMessage({ type: 'error', text: 'Failed to disconnect integration' });
+      setStatusMessage({
+        type: 'error',
+        text: err.response?.data?.error || err.message || 'Failed to disconnect integration',
+      });
+    } finally {
+      setIsDeletingNow(false);
     }
   };
 
@@ -120,6 +137,19 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* Authentication Warning if Unauthenticated or Session Expired */}
+        {!user && (
+          <div className="mb-5 border border-status-action-needed/50 bg-status-action-needed/10 p-3 text-xs text-status-action-needed">
+            <div className="flex items-center gap-1.5 font-bold mb-1">
+              <AlertCircle className="h-4 w-4" />
+              <span>AUTHENTICATION REQUIRED</span>
+            </div>
+            <p className="text-[11px] text-text-secondary leading-relaxed">
+              Your session is unauthenticated or has expired. Please sign in or join to manage your linked accounts and credentials securely.
+            </p>
+          </div>
+        )}
 
         {/* Security Disclosure */}
         <div className="mb-5 border border-status-merged/40 bg-status-merged/10 p-3 text-[11px] text-text-secondary">
@@ -159,7 +189,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             {accountList.length > 0 && (
               <button
                 onClick={handleManualSync}
-                disabled={isSyncingNow}
+                disabled={isSyncingNow || !user}
                 className="flex items-center gap-1 text-[11px] border border-border-bold bg-surface-elevated px-2 py-1 text-text-secondary hover:text-white transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`h-3 w-3 ${isSyncingNow ? 'animate-spin text-status-awaiting-reply' : ''}`} />
@@ -177,44 +207,80 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
               {accountList.map((acc) => (
                 <div
                   key={acc.id}
-                  className="flex items-center justify-between border border-border-bold bg-base px-3.5 py-2.5"
+                  className="border border-border-bold bg-base px-3.5 py-2.5 transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-7 w-7 items-center justify-center border border-border-bold bg-surface-elevated text-text-primary">
-                      {acc.platform === 'github' ? (
-                        <Github className="h-4 w-4" />
-                      ) : (
-                        <Gitlab className="h-4 w-4 text-orange-400" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-text-primary">{acc.username}</span>
-                        <span className="border border-border-bold bg-surface-elevated px-1.5 text-[9px] uppercase text-text-muted">
-                          {acc.platform}
-                        </span>
-                        {acc.has_token && (
-                          <span className="border border-status-merged/40 bg-status-merged/10 px-1.5 text-[9px] text-status-merged">
-                            Token Encrypted
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 items-center justify-center border border-border-bold bg-surface-elevated text-text-primary">
+                        {acc.platform === 'github' ? (
+                          <Github className="h-4 w-4" />
+                        ) : (
+                          <Gitlab className="h-4 w-4 text-orange-400" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-text-primary">{acc.username}</span>
+                          <span className="border border-border-bold bg-surface-elevated px-1.5 text-[9px] uppercase text-text-muted">
+                            {acc.platform}
                           </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-text-muted flex items-center gap-2 mt-0.5">
-                        {acc.host && <span>Host: {acc.host}</span>}
-                        <span>Status: <span className="text-text-secondary font-semibold">{acc.sync_status}</span></span>
-                        {acc.last_synced_at && (
-                          <span>Last Sync: {new Date(acc.last_synced_at).toLocaleTimeString()}</span>
-                        )}
+                          {acc.has_token && (
+                            <span className="border border-status-merged/40 bg-status-merged/10 px-1.5 text-[9px] text-status-merged">
+                              Token Encrypted
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-text-muted flex items-center gap-2 mt-0.5">
+                          {acc.host && <span>Host: {acc.host}</span>}
+                          <span>Status: <span className="text-text-secondary font-semibold">{acc.sync_status}</span></span>
+                          {acc.last_synced_at && (
+                            <span>Last Sync: {new Date(acc.last_synced_at).toLocaleTimeString()}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <button
+                      onClick={() => setConfirmingDeleteId(confirmingDeleteId === acc.id ? null : acc.id)}
+                      className={`p-1.5 transition-colors ${
+                        confirmingDeleteId === acc.id
+                          ? 'text-status-action-needed bg-status-action-needed/10 border border-status-action-needed/30'
+                          : 'text-text-muted hover:text-status-action-needed'
+                      }`}
+                      title="Disconnect Account"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDelete(acc.id, `${acc.platform} (${acc.username})`)}
-                    className="p-1 text-text-muted hover:text-status-action-needed transition-colors"
-                    title="Disconnect Account"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+
+                  {confirmingDeleteId === acc.id && (
+                    <div className="mt-3 border border-status-action-needed/50 bg-status-action-needed/10 p-3 text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-status-action-needed mb-1">
+                        <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                        <span>Disconnect {acc.platform.toUpperCase()} ({acc.username})?</span>
+                      </div>
+                      <p className="text-[11px] text-text-secondary mb-3 leading-relaxed">
+                        This will remove this integration and purge all associated {acc.platform} PRs and issues from your dashboard.
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmDelete(acc.id, `${acc.platform} (${acc.username})`)}
+                          disabled={isDeletingNow}
+                          className="border border-status-action-needed bg-status-action-needed/30 px-3 py-1.5 text-[11px] font-bold uppercase text-status-action-needed hover:bg-status-action-needed/40 disabled:opacity-50 transition-colors shadow-sm"
+                        >
+                          {isDeletingNow ? 'Purging & Disconnecting...' : 'Confirm Disconnect & Purge'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingDeleteId(null)}
+                          disabled={isDeletingNow}
+                          className="border border-border-bold bg-surface-elevated px-3 py-1.5 text-[11px] font-bold uppercase text-text-secondary hover:text-white transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

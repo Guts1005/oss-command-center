@@ -1,13 +1,34 @@
 import assert from 'node:assert';
-
-const BASE_URL = 'http://localhost:3100';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import { apiRouter } from '../server/routes/index.js';
+import { initDatabase } from '../server/db.js';
+import { Server } from 'http';
 
 async function testApi() {
   console.log('🧪 Running OSS Command Center End-to-End API Integration Suite...\n');
 
-  // Test 1: GET /api/stats
-  console.log('Test 1: GET /api/stats');
-  const statsRes = await fetch(`${BASE_URL}/api/stats`);
+  initDatabase();
+
+  const app = express();
+  app.use(express.json());
+  app.use(cookieParser());
+  app.use('/api', apiRouter);
+
+  let server: Server;
+  const port = await new Promise<number>((resolve) => {
+    server = app.listen(0, () => {
+      const addr = server.address() as any;
+      resolve(addr.port);
+    });
+  });
+
+  const BASE_URL = `http://localhost:${port}`;
+
+  try {
+    // Test 1: GET /api/stats
+    console.log('Test 1: GET /api/stats');
+    const statsRes = await fetch(`${BASE_URL}/api/stats`);
   assert.strictEqual(statsRes.status, 200);
   const stats = await statsRes.json();
   assert.strictEqual(typeof stats.total, 'number');
@@ -93,6 +114,11 @@ async function testApi() {
   console.log('  ✓ Invalid payload rejected with 400 Bad Request');
 
   console.log('\n🎉 ALL 6 END-TO-END INTEGRATION TESTS PASSED CLEANLY!\n');
+  } finally {
+    if (server!) {
+      server.close();
+    }
+  }
 }
 
 testApi().catch((err) => {

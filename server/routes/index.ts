@@ -24,121 +24,154 @@ function getEffectiveUserId(req: AuthenticatedRequest): string {
 
 // GET /api/stats - High-level operational metrics
 apiRouter.get('/stats', (req: AuthenticatedRequest, res) => {
-  const userId = getEffectiveUserId(req);
-  const total = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ?').get(userId) as any).count;
-  const actionNeeded = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND action_needed != 'none'").get(userId) as any).count;
-  const awaitingMaintainer = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status IN ('open', 'opened', 'submitted', 'awaiting-reply') AND action_needed = 'none'").get(userId) as any).count;
-  const merged = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'merged'").get(userId) as any).count;
-  const unreadCount = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND unread = 1').get(userId) as any).count;
-  const lastSync = getLastSyncTime();
+  try {
+    const userId = getEffectiveUserId(req);
+    const total = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ?').get(userId) as any)?.count || 0;
+    const actionNeeded = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND action_needed != 'none'").get(userId) as any)?.count || 0;
+    const awaitingMaintainer = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status IN ('open', 'opened', 'submitted', 'awaiting-reply') AND action_needed = 'none'").get(userId) as any)?.count || 0;
+    const merged = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'merged'").get(userId) as any)?.count || 0;
+    const unreadCount = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND unread = 1').get(userId) as any)?.count || 0;
+    const lastSync = getLastSyncTime();
 
-  res.json({
-    total,
-    actionNeeded,
-    awaitingMaintainer,
-    merged,
-    unreadCount,
-    lastSync
-  });
+    return res.json({
+      total,
+      actionNeeded,
+      awaitingMaintainer,
+      merged,
+      unreadCount,
+      lastSync
+    });
+  } catch (err: any) {
+    console.error('[API /stats error]:', err);
+    return res.status(500).json({ error: 'Failed to retrieve stats', details: err.message });
+  }
 });
 
 // GET /api/contributions - Filtered & sorted query scoped to current user
 apiRouter.get('/contributions', (req: AuthenticatedRequest, res) => {
-  const userId = getEffectiveUserId(req);
-  const { platform, status, search, sort } = req.query;
-  const actionParam = (req.query.action_needed || req.query.action) as string | undefined;
+  try {
+    const userId = getEffectiveUserId(req);
+    const platform = typeof req.query.platform === 'string' ? req.query.platform : (Array.isArray(req.query.platform) ? String(req.query.platform[0]) : undefined);
+    const status = typeof req.query.status === 'string' ? req.query.status : (Array.isArray(req.query.status) ? String(req.query.status[0]) : undefined);
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : (Array.isArray(req.query.search) ? String(req.query.search[0]).trim() : undefined);
+    const sort = typeof req.query.sort === 'string' ? req.query.sort : (Array.isArray(req.query.sort) ? String(req.query.sort[0]) : undefined);
+    const rawAction = req.query.action_needed || req.query.action;
+    const actionParam = typeof rawAction === 'string' ? rawAction : (Array.isArray(rawAction) ? String(rawAction[0]) : undefined);
 
-  let query = 'SELECT * FROM contributions WHERE user_id = ?';
-  const params: any[] = [userId];
+    let query = 'SELECT * FROM contributions WHERE user_id = ?';
+    const params: any[] = [userId];
 
-  if (platform && platform !== 'all') {
-    query += ' AND platform = ?';
-    params.push(platform);
-  }
-
-  if (status && status !== 'all') {
-    if (status === 'active') {
-      query += ' AND status IN ("open", "opened") AND (julianday("now") - julianday(last_activity_at)) < 30';
-    } else if (status === 'stale') {
-      query += ' AND status IN ("open", "opened") AND (julianday("now") - julianday(last_activity_at)) >= 30';
-    } else {
-      query += ' AND status = ?';
-      params.push(status);
+    if (platform && platform !== 'all') {
+      query += ' AND platform = ?';
+      params.push(platform);
     }
-  }
 
-  if (actionParam && actionParam !== 'all') {
-    query += ' AND action_needed = ?';
-    params.push(actionParam);
-  }
+    if (status && status !== 'all') {
+      if (status === 'active') {
+        query += " AND status IN ('open', 'opened', 'submitted', 'in_review', 'awaiting-reply') AND (julianday('now') - julianday(COALESCE(last_activity_at, created_at, 'now'))) < 30";
+      } else if (status === 'stale') {
+        query += " AND status IN ('open', 'opened', 'submitted', 'in_review', 'awaiting-reply') AND (julianday('now') - julianday(COALESCE(last_activity_at, created_at, 'now'))) >= 30";
+      } else {
+        query += ' AND status = ?';
+        params.push(status);
+      }
+    }
 
-  if (search) {
-    query += ' AND (title LIKE ? OR repo LIKE ? OR id LIKE ?)';
-    const term = `%${search}%`;
-    params.push(term, term, term);
-  }
+    if (actionParam && actionParam !== 'all') {
+      if (actionParam === 'action-needed' || actionParam === 'needed' || actionParam === 'true') {
+        query += " AND action_needed != 'none'";
+      } else {
+        query += ' AND action_needed = ?';
+        params.push(actionParam);
+      }
+    }
 
-  // Sort logic
-  if (sort === 'unread') {
-    query += ' ORDER BY unread DESC, last_activity_at DESC';
-  } else if (sort === 'difficulty') {
-    query += ' ORDER BY CASE difficulty WHEN "hard" THEN 1 WHEN "medium" THEN 2 ELSE 3 END, last_activity_at DESC';
-  } else {
-    query += ' ORDER BY last_activity_at DESC';
-  }
+    if (search) {
+      query += ' AND (title LIKE ? OR repo LIKE ? OR id LIKE ?)';
+      const term = `%${search}%`;
+      params.push(term, term, term);
+    }
 
-  const items = db.prepare(query).all(...params);
-  res.json(items);
+    // Sort logic
+    if (sort === 'unread') {
+      query += ' ORDER BY unread DESC, last_activity_at DESC';
+    } else if (sort === 'difficulty') {
+      query += " ORDER BY CASE difficulty WHEN 'hard' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, last_activity_at DESC";
+    } else {
+      query += ' ORDER BY last_activity_at DESC';
+    }
+
+    const items = db.prepare(query).all(...params);
+    return res.json(items);
+  } catch (err: any) {
+    console.error('[API /contributions error]:', err);
+    return res.status(500).json({ error: 'Failed to retrieve contributions', details: err.message });
+  }
 });
 
 // GET /api/contributions/:id - Single item with event timeline & mark read
 apiRouter.get('/contributions/:id', (req: AuthenticatedRequest, res) => {
-  const userId = getEffectiveUserId(req);
-  const { id } = req.params;
-  const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id) as any;
-  if (!item) {
-    return res.status(404).json({ error: 'Contribution not found' });
+  try {
+    const userId = getEffectiveUserId(req);
+    const { id } = req.params;
+    const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id) as any;
+    if (!item) {
+      return res.status(404).json({ error: 'Contribution not found' });
+    }
+
+    // Mark as read locally
+    const now = new Date().toISOString();
+    db.prepare('UPDATE contributions SET unread = 0, last_viewed_at = ? WHERE user_id = ? AND id = ?').run(now, userId, id);
+    item.unread = 0;
+    item.last_viewed_at = now;
+
+    // Fetch events
+    const events = db.prepare('SELECT * FROM activity_events WHERE user_id = ? AND contribution_id = ? ORDER BY created_at ASC').all(userId, id);
+
+    return res.json({ item, events });
+  } catch (err: any) {
+    console.error('[API /contributions/:id error]:', err);
+    return res.status(500).json({ error: 'Failed to retrieve contribution detail', details: err.message });
   }
-
-  // Mark as read locally
-  const now = new Date().toISOString();
-  db.prepare('UPDATE contributions SET unread = 0, last_viewed_at = ? WHERE user_id = ? AND id = ?').run(now, userId, id);
-  item.unread = 0;
-  item.last_viewed_at = now;
-
-  // Fetch events
-  const events = db.prepare('SELECT * FROM activity_events WHERE user_id = ? AND contribution_id = ? ORDER BY created_at ASC').all(userId, id);
-
-  res.json({ item, events });
 });
 
 // PATCH /api/contributions/:id/notes - Add or update triage notes
 apiRouter.patch('/contributions/:id/notes', (req: AuthenticatedRequest, res) => {
-  const userId = getEffectiveUserId(req);
-  const { id } = req.params;
-  const { notes, action_needed } = req.body;
+  try {
+    const userId = getEffectiveUserId(req);
+    const { id } = req.params;
+    const { notes, action_needed } = req.body;
 
-  const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
-  if (!item) {
-    return res.status(404).json({ error: 'Contribution not found' });
+    const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
+    if (!item) {
+      return res.status(404).json({ error: 'Contribution not found' });
+    }
+
+    db.prepare(`
+      UPDATE contributions 
+      SET notes = COALESCE(?, notes),
+          action_needed = COALESCE(?, action_needed)
+      WHERE user_id = ? AND id = ?
+    `).run(notes !== undefined ? notes : null, action_needed !== undefined ? action_needed : null, userId, id);
+
+    const updated = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
+    return res.json({ item: updated });
+  } catch (err: any) {
+    console.error('[API /contributions/:id/notes error]:', err);
+    return res.status(500).json({ error: 'Failed to update notes', details: err.message });
   }
-
-  db.prepare(`
-    UPDATE contributions 
-    SET notes = COALESCE(?, notes),
-        action_needed = COALESCE(?, action_needed)
-    WHERE user_id = ? AND id = ?
-  `).run(notes !== undefined ? notes : null, action_needed !== undefined ? action_needed : null, userId, id);
-
-  const updated = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
-  res.json({ item: updated });
 });
 
 // POST /api/sync - Manual trigger for current user
 apiRouter.post('/sync', async (req: AuthenticatedRequest, res) => {
-  const userId = getEffectiveUserId(req);
-  const result = await syncUser(userId);
-  res.json(result);
+  try {
+    const userId = getEffectiveUserId(req);
+    const result = await syncUser(userId);
+    return res.json(result);
+  } catch (err: any) {
+    console.error('[API /sync error]:', err);
+    return res.status(500).json({ error: 'Sync failed', details: err.message });
+  }
 });
 
 // POST /api/ingest - Endpoint for /plan and triage pipeline to push newly found items

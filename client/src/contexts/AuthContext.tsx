@@ -17,8 +17,8 @@ interface AuthContextType {
     username: string;
     token?: string;
     host?: string;
-  }) => Promise<void>;
-  deleteIntegration: (id: string) => Promise<void>;
+  }) => Promise<any>;
+  deleteIntegration: (id: string, keepContributions?: boolean) => Promise<{ success: boolean; message: string; purgedCount?: number }>;
   triggerSync: () => Promise<void>;
 }
 
@@ -36,11 +36,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await axios.get('/api/auth/me');
       if (res.data?.authenticated && res.data.user) {
         setUser(res.data.user);
+        if (Array.isArray(res.data.integrations)) {
+          setIntegrations(res.data.integrations);
+        }
       } else {
         setUser(null);
+        setIntegrations([]);
       }
     } catch {
       setUser(null);
+      setIntegrations([]);
     } finally {
       setIsLoading(false);
     }
@@ -64,6 +69,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
+  // Handle unauthorized event across any API call
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      setIntegrations([]);
+      localStorage.removeItem('oss_session_token');
+    };
+
+    window.addEventListener('oss:auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('oss:auth:unauthorized', handleUnauthorized);
+  }, []);
+
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
@@ -78,16 +95,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (usernameOrEmail: string, password: string) => {
     const res = await axios.post('/api/auth/login', { usernameOrEmail, password });
+    if (res.data.token) {
+      localStorage.setItem('oss_session_token', res.data.token);
+    }
     setUser(res.data.user);
+    await refreshIntegrations();
   };
 
   const register = async (username: string, email: string, password: string) => {
     const res = await axios.post('/api/auth/register', { username, email, password });
+    if (res.data.token) {
+      localStorage.setItem('oss_session_token', res.data.token);
+    }
     setUser(res.data.user);
+    await refreshIntegrations();
   };
 
   const logout = async () => {
-    await axios.post('/api/auth/logout');
+    try {
+      await axios.post('/api/auth/logout');
+    } catch {}
+    localStorage.removeItem('oss_session_token');
     setUser(null);
     setIntegrations([]);
   };
@@ -98,13 +126,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     token?: string;
     host?: string;
   }) => {
-    await axios.post('/api/integrations', data);
+    const res = await axios.post('/api/integrations', data);
     await refreshIntegrations();
+    return res.data;
   };
 
-  const deleteIntegration = async (id: string) => {
-    await axios.delete(`/api/integrations/${id}`);
+  const deleteIntegration = async (id: string, keepContributions = false) => {
+    const res = await axios.delete(`/api/integrations/${id}`, {
+      params: { keep_contributions: keepContributions }
+    });
     await refreshIntegrations();
+    return res.data;
   };
 
   const triggerSync = async () => {

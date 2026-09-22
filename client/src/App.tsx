@@ -12,6 +12,8 @@ import { QuickGuideModal } from './components/QuickGuideModal';
 import { AuthModal } from './components/AuthModal';
 import { IntegrationsModal } from './components/IntegrationsModal';
 
+import { sendDesktopNotification } from './utils/notifications';
+
 const AppContent: React.FC = () => {
   const { user } = useAuth();
 
@@ -34,6 +36,8 @@ const AppContent: React.FC = () => {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState<boolean>(false);
+
+  const prevItemsRef = React.useRef<Map<string, { status: string; action_needed: string }>>(new Map());
 
   // Fetch telemetry stats
   const fetchStats = useCallback(async () => {
@@ -71,6 +75,74 @@ const AppContent: React.FC = () => {
     fetchStats();
     fetchContributions();
   }, [fetchStats, fetchContributions, user]);
+
+  // Handle unauthorized session expiration across the application
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setIsIntegrationsModalOpen(false);
+      setIsAuthModalOpen(true);
+    };
+    window.addEventListener('oss:auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('oss:auth:unauthorized', handleUnauthorized);
+  }, []);
+
+  // Check for updates and notify desktop/audio
+  useEffect(() => {
+    if (contributions.length > 0 && prevItemsRef.current.size > 0) {
+      for (const item of contributions) {
+        const prev = prevItemsRef.current.get(item.id);
+        if (prev) {
+          if (prev.status !== 'merged' && item.status === 'merged') {
+            sendDesktopNotification(
+              '🎉 PR Merged Upstream!',
+              `Your contribution to ${item.repo} was accepted and merged!`,
+              () => setSelectedId(item.id)
+            );
+          } else if (prev.action_needed === 'none' && item.action_needed !== 'none') {
+            const label = item.action_needed === 'push-changes' ? 'requested code updates' : 'left a reply';
+            sendDesktopNotification(
+              `🔔 Maintainer Action: ${item.repo}`,
+              `Maintainer ${label} on "${item.title}".`,
+              () => setSelectedId(item.id)
+            );
+          }
+        }
+      }
+    }
+
+    const nextMap = new Map();
+    for (const item of contributions) {
+      nextMap.set(item.id, { status: item.status, action_needed: item.action_needed });
+    }
+    prevItemsRef.current = nextMap;
+  }, [contributions]);
+
+  // 30s background polling
+  useEffect(() => {
+    const timer = setInterval(() => {
+      fetchStats();
+      fetchContributions();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [fetchStats, fetchContributions]);
+
+  // Direct filter routing from telemetry cards
+  const handleSelectFilter = (filterKey: string) => {
+    if (filterKey === 'action-needed') {
+      setStatusFilter('all');
+      setActionFilter('action-needed');
+    } else {
+      setActionFilter('all');
+      setStatusFilter(filterKey);
+    }
+  };
+
+  const handleResetFilters = () => {
+    setStatusFilter('all');
+    setActionFilter('all');
+    setPlatformFilter('all');
+    setSearchQuery('');
+  };
 
   // Trigger sync
   const handleSync = async () => {
@@ -137,7 +209,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-surface-active selection:text-white antialiased overflow-hidden">
-      {/* Header with Quick Guide, Auth and Track buttons */}
+      {/* Header with Quick Guide, Auth, Notification toggle and Track buttons */}
       <HeaderTelemetry
         stats={stats}
         onSync={handleSync}
@@ -146,6 +218,8 @@ const AppContent: React.FC = () => {
         onOpenGuideModal={() => setIsGuideModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
+        onSelectFilter={handleSelectFilter}
+        activeFilter={actionFilter !== 'all' ? actionFilter : statusFilter}
       />
 
       {/* Filter and Query Rail */}
@@ -170,6 +244,7 @@ const AppContent: React.FC = () => {
           onSelectItem={(id) => setSelectedId(id)}
           isLoading={isLoading}
           onOpenTrackModal={() => setIsTrackModalOpen(true)}
+          onResetFilters={handleResetFilters}
         />
       </main>
 
@@ -226,6 +301,10 @@ const AppContent: React.FC = () => {
         isOpen={isIntegrationsModalOpen}
         onClose={() => setIsIntegrationsModalOpen(false)}
         onSyncTriggered={() => {
+          fetchStats();
+          fetchContributions();
+        }}
+        onAccountsChanged={() => {
           fetchStats();
           fetchContributions();
         }}

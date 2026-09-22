@@ -13,7 +13,12 @@ import {
   LogOut,
   Key,
   User as UserIcon,
+  Bell,
+  BellOff,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
+import { requestNotificationPermission, playNotificationSound } from '../utils/notifications';
 
 interface HeaderTelemetryProps {
   stats: Stats | null;
@@ -23,6 +28,8 @@ interface HeaderTelemetryProps {
   onOpenGuideModal?: () => void;
   onOpenAuthModal?: () => void;
   onOpenIntegrationsModal?: () => void;
+  onSelectFilter?: (filter: string) => void;
+  activeFilter?: string;
 }
 
 export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
@@ -33,6 +40,8 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   onOpenGuideModal,
   onOpenAuthModal,
   onOpenIntegrationsModal,
+  onSelectFilter,
+  activeFilter,
 }) => {
   const { user, logout, integrations } = useAuth();
 
@@ -45,6 +54,32 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMins / 60);
     return `${diffHours}h ago`;
+  };
+
+  const [notifPermission, setNotifPermission] = React.useState<NotificationPermission>(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'denied'
+  );
+  const [soundEnabled, setSoundEnabled] = React.useState<boolean>(
+    typeof window !== 'undefined' ? localStorage.getItem('oss_sound_enabled') !== 'false' : true
+  );
+
+  const handleToggleNotifications = async () => {
+    if (notifPermission !== 'granted') {
+      const perm = await requestNotificationPermission();
+      setNotifPermission(perm);
+      if (perm === 'granted') {
+        playNotificationSound();
+      }
+    }
+  };
+
+  const handleToggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    localStorage.setItem('oss_sound_enabled', String(next));
+    if (next) {
+      playNotificationSound();
+    }
   };
 
   return (
@@ -135,38 +170,89 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
             </button>
           )}
 
-          {/* Action Needed Badge */}
-          <div
-            className={`flex items-center gap-1.5 border px-3 py-1.5 ${
-              stats?.actionNeeded
-                ? 'border-status-action-needed/50 bg-status-action-needed/10 text-status-action-needed'
-                : 'border-border-subtle bg-base text-text-muted'
+          {/* Action Needed Badge (Clickable) */}
+          <button
+            onClick={() => onSelectFilter?.('action-needed')}
+            className={`flex items-center gap-1.5 border px-3 py-1.5 transition-all text-left cursor-pointer ${
+              activeFilter === 'action-needed'
+                ? 'border-status-action-needed bg-status-action-needed/25 text-status-action-needed font-bold shadow-sm ring-1 ring-status-action-needed'
+                : stats?.actionNeeded
+                ? 'border-status-action-needed/50 bg-status-action-needed/10 text-status-action-needed hover:bg-status-action-needed/20'
+                : 'border-border-subtle bg-base text-text-muted hover:border-border-bold'
             }`}
-            title="Items requiring your response or code updates"
+            title="Filter by items requiring your response or code updates"
           >
             <AlertCircle className="h-3.5 w-3.5" />
             <span>ACTION NEEDED:</span>
             <span className="font-bold">{stats?.actionNeeded ?? 0}</span>
-          </div>
+          </button>
 
-          {/* Awaiting Review Badge */}
-          <div
-            className="flex items-center gap-1.5 border border-border-subtle bg-base px-3 py-1.5 text-text-secondary"
-            title="Items waiting on maintainer review"
+          {/* Awaiting Review Badge (Clickable) */}
+          <button
+            onClick={() => onSelectFilter?.('active')}
+            className={`flex items-center gap-1.5 border px-3 py-1.5 transition-all text-left cursor-pointer ${
+              activeFilter === 'active'
+                ? 'border-border-active bg-surface-active text-text-primary font-bold shadow-sm ring-1 ring-border-active'
+                : 'border-border-subtle bg-base text-text-secondary hover:border-border-bold hover:text-white'
+            }`}
+            title="Filter by active contributions in review"
           >
             <Clock className="h-3.5 w-3.5 text-status-awaiting-reply" />
             <span className="text-text-muted">IN REVIEW:</span>
             <span className="font-bold text-text-primary">{stats?.awaitingMaintainer ?? 0}</span>
-          </div>
+          </button>
 
-          {/* Merged Badge */}
-          <div
-            className="flex items-center gap-1.5 border border-border-subtle bg-base px-3 py-1.5 text-status-merged"
-            title="Contributions merged into upstream"
+          {/* Merged Badge (Clickable) */}
+          <button
+            onClick={() => onSelectFilter?.('merged')}
+            className={`flex items-center gap-1.5 border px-3 py-1.5 transition-all text-left cursor-pointer ${
+              activeFilter === 'merged'
+                ? 'border-status-merged bg-status-merged/20 text-status-merged font-bold shadow-sm ring-1 ring-status-merged'
+                : 'border-border-subtle bg-base text-status-merged hover:border-border-bold hover:bg-status-merged/10'
+            }`}
+            title="Filter by contributions merged upstream"
           >
             <CheckCircle2 className="h-3.5 w-3.5" />
             <span className="text-text-muted">MERGED:</span>
             <span className="font-bold">{stats?.merged ?? 0}</span>
+          </button>
+
+          {/* Notification & Sound Toggles */}
+          <div className="flex items-center border border-border-bold bg-base">
+            <button
+              onClick={handleToggleNotifications}
+              className={`flex items-center p-1.5 transition-colors ${
+                notifPermission === 'granted'
+                  ? 'text-status-awaiting-reply hover:text-white'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+              title={
+                notifPermission === 'granted'
+                  ? 'Desktop notifications enabled'
+                  : 'Click to enable desktop notifications for maintainer replies'
+              }
+            >
+              {notifPermission === 'granted' ? (
+                <Bell className="h-3.5 w-3.5" />
+              ) : (
+                <BellOff className="h-3.5 w-3.5" />
+              )}
+            </button>
+            <button
+              onClick={handleToggleSound}
+              className={`flex items-center border-l border-border-subtle p-1.5 transition-colors ${
+                soundEnabled
+                  ? 'text-status-merged hover:text-white'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+              title={soundEnabled ? 'Alert chime enabled (click to mute)' : 'Alert chime muted (click to unmute)'}
+            >
+              {soundEnabled ? (
+                <Volume2 className="h-3.5 w-3.5" />
+              ) : (
+                <VolumeX className="h-3.5 w-3.5" />
+              )}
+            </button>
           </div>
 
           {/* Sync Button */}

@@ -61,16 +61,19 @@ export const FilterRail: React.FC<FilterRailProps> = ({
             { id: 'merged', label: 'Merged' },
           ].map((item) => {
             const isActive =
-              (item.id === 'action-needed' && actionFilter !== 'all') ||
-              (item.id !== 'action-needed' && statusFilter === item.id);
+              item.id === 'action-needed'
+                ? actionFilter !== 'all'
+                : actionFilter === 'all' && statusFilter === item.id;
 
             return (
               <button
                 key={item.id}
                 onClick={() => {
                   if (item.id === 'action-needed') {
-                    onActionChange(actionFilter === 'all' ? 'reply' : 'all');
+                    onStatusChange('all');
+                    onActionChange('action-needed');
                   } else {
+                    onActionChange('all');
                     onStatusChange(item.id);
                   }
                 }}

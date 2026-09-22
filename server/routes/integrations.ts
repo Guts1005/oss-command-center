@@ -96,21 +96,72 @@ integrationsRouter.post('/', async (req: AuthenticatedRequest, res) => {
   }
 });
 
-// DELETE /api/integrations/:id - Remove integration
+// DELETE /api/integrations/:id - Remove integration and cascade clean up harvested contributions
 integrationsRouter.delete('/:id', (req: AuthenticatedRequest, res) => {
   const userId = req.user!.id;
   const { id } = req.params;
+  const keepContributions = req.query.keep_contributions === 'true';
 
-  const result = db.prepare(`
-    DELETE FROM user_integrations
-    WHERE id = ? AND user_id = ?
-  `).run(id, userId);
+  try {
+    // 1. Fetch integration details to identify platform
+    const integration = db.prepare(`
+      SELECT id, platform, username, host
+      FROM user_integrations
+      WHERE id = ? AND user_id = ?
+    `).get(id, userId) as any;
 
-  if (result.changes === 0) {
-    return res.status(404).json({ error: 'Integration not found or not owned by user' });
+    if (!integration) {
+      return res.status(404).json({ error: 'Integration not found or not owned by user' });
+    }
+
+    // 2. Perform deletion inside an atomic SQLite transaction
+    const purgeTransaction = db.transaction(() => {
+      // Delete integration record
+      db.prepare(`
+        DELETE FROM user_integrations
+        WHERE id = ? AND user_id = ?
+      `).run(id, userId);
+
+      let purgedCount = 0;
+      if (!keepContributions) {
+        // Find contribution IDs to remove related activity_events
+        const contribs = db.prepare(`
+          SELECT id FROM contributions
+          WHERE user_id = ? AND platform = ?
+        `).all(userId, integration.platform) as any[];
+
+        if (contribs.length > 0) {
+          const contribIds = contribs.map((c: any) => c.id);
+          const placeholders = contribIds.map(() => '?').join(',');
+          
+          db.prepare(`
+            DELETE FROM activity_events
+            WHERE user_id = ? AND contribution_id IN (${placeholders})
+          `).run(userId, ...contribIds);
+
+          const result = db.prepare(`
+            DELETE FROM contributions
+            WHERE user_id = ? AND platform = ?
+          `).run(userId, integration.platform);
+          purgedCount = result.changes;
+        }
+      }
+
+      return purgedCount;
+    });
+
+    const purgedCount = purgeTransaction();
+
+    return res.json({
+      success: true,
+      message: `Disconnected ${integration.platform.toUpperCase()} (${integration.username}). ${purgedCount > 0 ? `${purgedCount} associated contributions purged.` : ''}`.trim(),
+      platform: integration.platform,
+      purgedCount
+    });
+  } catch (err: any) {
+    console.error('[Integration Delete Error]:', err);
+    return res.status(500).json({ error: 'Failed to delete integration', details: err.message });
   }
-
-  return res.json({ success: true, message: 'Integration removed successfully' });
 });
 
 // POST /api/integrations/sync - Manually trigger sync for all user integrations

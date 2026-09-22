@@ -169,7 +169,74 @@ async function runMultiTenantTests() {
     }
     console.log('✔ Logout and session destruction passed.');
 
-    console.log('\nALL MULTI-TENANT & SECURITY TESTS PASSED WITH 100% ISOLATION!\n');
+    // 11. Log back in as User A and test integration disconnect & cascade purge
+    const reLogin = await client.post('/auth/login', {
+      email: userAEmail,
+      password: 'StrongP@ssword123!'
+    });
+    const newTokenA = reLogin.data.token;
+    const clientAAuthed = axios.create({
+      baseURL: baseUrl,
+      headers: { Authorization: `Bearer ${newTokenA}` },
+      validateStatus: () => true
+    });
+
+    // Verify integration and contribution exist before disconnect
+    const intsBefore = await clientAAuthed.get('/integrations');
+    if (intsBefore.data.integrations.length !== 1) {
+      throw new Error('Expected 1 integration before disconnect');
+    }
+    const intId = intsBefore.data.integrations[0].id;
+
+    const contribsBefore = await clientAAuthed.get('/contributions');
+    if (contribsBefore.data.length !== 1) {
+      throw new Error('Expected 1 contribution before disconnect');
+    }
+
+    // Disconnect integration with cascade purge
+    const delResp = await clientAAuthed.delete(`/integrations/${intId}`);
+    if (delResp.status !== 200 || !delResp.data.success || delResp.data.purgedCount !== 1) {
+      throw new Error(`Failed to delete integration cleanly: ${JSON.stringify(delResp.data)}`);
+    }
+    console.log('✔ Integration disconnected and associated contributions purged atomically.');
+
+    // Verify user integrations list is now empty
+    const intsAfter = await clientAAuthed.get('/integrations');
+    if (intsAfter.data.integrations.length !== 0) {
+      throw new Error('Integration was not removed from user_integrations table');
+    }
+
+    // Verify contributions list is now empty
+    const contribsAfter = await clientAAuthed.get('/contributions');
+    if (contribsAfter.data.length !== 0) {
+      throw new Error('Harvested contributions were not purged upon disconnecting integration');
+    }
+
+    // Verify stats updated to 0
+    const statsAfter = await clientAAuthed.get('/stats');
+    if (statsAfter.data.total !== 0 || statsAfter.data.actionNeeded !== 0) {
+      throw new Error('Stats did not reflect purged contributions');
+    }
+    console.log('✔ Dashboard metrics and contribution tables confirmed empty after disconnect.');
+
+    // Test filter stability on edge-case query parameters
+    const filterActive = await clientAAuthed.get('/contributions?status=active&platform=all&action=reply&sort=recent');
+    if (filterActive.status !== 200 || !Array.isArray(filterActive.data)) {
+      throw new Error('Query with status=active failed');
+    }
+
+    const filterStale = await clientAAuthed.get('/contributions?status=stale&platform=all&action=reply&sort=recent');
+    if (filterStale.status !== 200 || !Array.isArray(filterStale.data)) {
+      throw new Error('Query with status=stale failed');
+    }
+
+    const filterDiff = await clientAAuthed.get('/contributions?status=all&platform=all&action=reply&sort=difficulty');
+    if (filterDiff.status !== 200 || !Array.isArray(filterDiff.data)) {
+      throw new Error('Query with sort=difficulty failed');
+    }
+    console.log('✔ Filter rail stability verified on active, stale, and difficulty parameters.');
+
+    console.log('\nALL MULTI-TENANT, DISCONNECT & SECURITY TESTS PASSED WITH 100% ISOLATION!\n');
   } finally {
     server!.close();
   }

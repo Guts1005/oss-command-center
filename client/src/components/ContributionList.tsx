@@ -9,6 +9,7 @@ interface ContributionListProps {
   onSelectItem: (id: string) => void;
   isLoading: boolean;
   onOpenTrackModal?: () => void;
+  onResetFilters?: () => void;
 }
 
 export const ContributionList: React.FC<ContributionListProps> = ({
@@ -17,6 +18,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   onSelectItem,
   isLoading,
   onOpenTrackModal,
+  onResetFilters,
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
 
@@ -80,15 +82,25 @@ export const ContributionList: React.FC<ContributionListProps> = ({
           <p className="text-xs text-text-muted mb-5 font-body leading-relaxed">
             No items matched your current search query or active filter. You can clear your filters or start tracking a new pull request or issue.
           </p>
-          {onOpenTrackModal && (
-            <button
-              onClick={onOpenTrackModal}
-              className="inline-flex items-center gap-1.5 border border-status-awaiting-reply/60 bg-status-awaiting-reply/15 px-4 py-2 font-telemetry text-xs font-bold text-status-awaiting-reply hover:bg-status-awaiting-reply/25 transition-colors"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>+ Track a PR or Issue Now</span>
-            </button>
-          )}
+          <div className="flex items-center justify-center gap-2.5">
+            {onResetFilters && (
+              <button
+                onClick={onResetFilters}
+                className="inline-flex items-center gap-1.5 border border-border-bold bg-surface-elevated px-3.5 py-1.5 font-telemetry text-xs font-bold text-text-primary hover:border-border-active hover:bg-surface-active transition-colors"
+              >
+                <span>Reset All Filters</span>
+              </button>
+            )}
+            {onOpenTrackModal && (
+              <button
+                onClick={onOpenTrackModal}
+                className="inline-flex items-center gap-1.5 border border-status-awaiting-reply/60 bg-status-awaiting-reply/15 px-3.5 py-1.5 font-telemetry text-xs font-bold text-status-awaiting-reply hover:bg-status-awaiting-reply/25 transition-colors"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>+ Track Item</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

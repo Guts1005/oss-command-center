@@ -10,7 +10,7 @@
     "dev:client": "vite",
     "build": "tsc && vite build",
     "start": "tsx server/index.ts",
-    "test": "tsx tests/crypto.test.ts && tsx tests/db.test.ts && tsx tests/api_integration.test.ts && tsx tests/multi_tenant.test.ts",
+    "test": "tsx tests/run_all.ts",
     "test:crypto": "tsx tests/crypto.test.ts",
     "test:db": "tsx tests/db.test.ts",
     "test:api": "tsx tests/api_integration.test.ts",

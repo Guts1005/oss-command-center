@@ -1,7 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-const DB_PATH = path.resolve(process.cwd(), 'contributions.db');
+const DB_PATH = process.env.DB_PATH
+  ? (process.env.DB_PATH === ':memory:' ? ':memory:' : path.resolve(process.cwd(), process.env.DB_PATH))
+  : path.resolve(process.cwd(), 'contributions.db');
 export const db = new Database(DB_PATH);
 
 // Enable WAL mode for high-concurrency read/write transactions
@@ -211,6 +213,9 @@ export function initDatabase() {
     now,
     now
   );
+
+  // Reset any orphaned 'syncing' status on startup to avoid permanent zombie states
+  db.prepare("UPDATE user_integrations SET sync_status = 'idle' WHERE sync_status = 'syncing'").run();
 }
 
 export interface UserRecord {
