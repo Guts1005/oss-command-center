@@ -208,45 +208,47 @@ const AppContent: React.FC = () => {
   ]);
 
   return (
-    <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-surface-active selection:text-white antialiased overflow-hidden">
-      {/* Header with Quick Guide, Auth, Notification toggle and Track buttons */}
-      <HeaderTelemetry
-        stats={stats}
-        onSync={handleSync}
-        isSyncing={isSyncing}
-        onOpenTrackModal={() => setIsTrackModalOpen(true)}
-        onOpenGuideModal={() => setIsGuideModalOpen(true)}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
-        onSelectFilter={handleSelectFilter}
-        activeFilter={actionFilter !== 'all' ? actionFilter : statusFilter}
-      />
-
-      {/* Filter and Query Rail */}
-      <FilterRail
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        platformFilter={platformFilter}
-        onPlatformChange={setPlatformFilter}
-        actionFilter={actionFilter}
-        onActionChange={setActionFilter}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
-
-      {/* Main Scannable Contribution Stream */}
-      <main className="flex-1 flex flex-col min-h-0 relative">
-        <ContributionList
-          items={contributions}
-          selectedId={selectedId}
-          onSelectItem={(id) => setSelectedId(id)}
-          isLoading={isLoading}
+    <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 max-w-7xl w-full mx-auto p-3 sm:p-5 md:p-6 lg:p-8">
+        {/* Header with Quick Guide, Auth, Notification toggle and Track buttons */}
+        <HeaderTelemetry
+          stats={stats}
+          onSync={handleSync}
+          isSyncing={isSyncing}
           onOpenTrackModal={() => setIsTrackModalOpen(true)}
-          onResetFilters={handleResetFilters}
+          onOpenGuideModal={() => setIsGuideModalOpen(true)}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
+          onSelectFilter={handleSelectFilter}
+          activeFilter={actionFilter !== 'all' ? actionFilter : statusFilter}
         />
-      </main>
+
+        {/* Filter and Query Rail */}
+        <FilterRail
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          platformFilter={platformFilter}
+          onPlatformChange={setPlatformFilter}
+          actionFilter={actionFilter}
+          onActionChange={setActionFilter}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
+
+        {/* Main Scannable Contribution Stream */}
+        <main className="flex-1 flex flex-col min-h-0 relative">
+          <ContributionList
+            items={contributions}
+            selectedId={selectedId}
+            onSelectItem={(id) => setSelectedId(id)}
+            isLoading={isLoading}
+            onOpenTrackModal={() => setIsTrackModalOpen(true)}
+            onResetFilters={handleResetFilters}
+          />
+        </main>
+      </div>
 
       {/* Slide-over Detail Inspection Drawer */}
       <SlideOverDetail

@@ -4,65 +4,65 @@
 
 /* ==========================================================================
    OSS COMMAND CENTER DESIGN TOKENS
-   Aesthetic Archetype: Industrial Spec-Sheet & Telemetry Console (Data-Dense)
-   Anti-AI-Slop Certified: Zero soft dropshadows, zero rounded-2xl blobs,
-   zero decorative purple gradients, strict 0px radii, tabular numerals.
+   Aesthetic Archetype: Sapphire Stream Whisper & Bold Technical Sans
+   Colors: #48547C, #AAA59F, #CFE7F8, #33343B, #749DD0, #92AAD1
+   Typography: Bold Sans (Plus Jakarta Sans + IBM Plex Sans) + JetBrains Mono
+   Scale: Sizing 5 -> 7 (+40% scale up for high-legibility human readability)
    ========================================================================== */
 
 :root {
   /* Substrates & Structural Machine Panels */
-  --color-bg-base: #07090e;              /* Deep cold carbon black */
-  --color-bg-surface: #0d1117;           /* Matte industrial panel */
-  --color-bg-surface-elevated: #151b23;  /* Sub-panel / raised telemetry block */
-  --color-bg-surface-active: #1c2430;    /* Highlighted / selected row */
+  --color-bg-base: #28292f;              /* Deep Warm Charcoal Substrate */
+  --color-bg-surface: #33343B;           /* Primary Surface / Nav & Toolbar HUD */
+  --color-bg-surface-card: #3a3b44;      /* Independent Contribution Card Surface */
+  --color-bg-surface-elevated: #42444e;  /* Input & Nested Panel Surface */
+  --color-bg-surface-active: #4b4d58;    /* Selected / Focused Card Surface */
 
-  /* Hairline Structural Framing (Zero blurry dropshadows, strict 1px grid) */
-  --color-border-subtle: #1e2633;        /* Hairline division rule */
-  --color-border-bold: #2b3648;          /* Frame container boundary */
-  --color-border-active: #485b78;        /* Focused / engaged outline */
+  /* Structural Sapphire Framing (Crisp 1px - 2px definition, high separation) */
+  --color-border-subtle: #48547C;        /* Deep Slate Sapphire Border */
+  --color-border-bold: #5c6a99;          /* Bold Slate Sapphire Rule */
+  --color-border-active: #749DD0;        /* Sapphire Blue Active Focus */
 
-  /* Phosphor & Spec-Sheet Typography */
-  --color-text-primary: #f0f4f8;         /* High-contrast crisp luminescent white */
-  --color-text-secondary: #94a3b8;       /* Cold telemetry readout slate */
-  --color-text-muted: #5e6d82;           /* Sub-label grey */
-  --color-text-dim: #334155;             /* Inactive guide mark */
+  /* High-Contrast Readability Typography */
+  --color-text-primary: #FFFFFF;         /* Crisp Pure White (Max Legibility) */
+  --color-text-whisper: #CFE7F8;         /* Luminescent Ice Whisper Blue */
+  --color-text-secondary: #CFE7F8;       /* Primary Subtitles & Telemetry Data */
+  --color-text-muted: #AAA59F;           /* Warm Stone Grey (5.5:1 Contrast AA) */
+  --color-text-dim: #7e7b76;             /* Inactive Guide Mark */
 
-  /* Semantic Telemetry Signals (Strict 1-to-1 Functional Purpose) */
-  --color-status-merged: #22c55e;        /* Verified Success Green */
-  --color-status-in-review: #38bdf8;     /* Active In-Review Cyan / Sky */
-  --color-status-awaiting-reply: #eab308;/* Caution Signal Amber */
-  --color-status-action-needed: #ef4444; /* Urgent Alarm Red */
-  --color-status-draft: #64748b;         /* Neutral Work-In-Progress Slate */
-  --color-status-open: #38bdf8;          /* Upstream Pending Review */
-  --color-status-bounty: #f59e0b;        /* Rewarded Bounty Amber */
+  /* Semantic Telemetry Signals */
+  --color-accent-sapphire: #749DD0;      /* Sapphire Blue Accent */
+  --color-accent-glacial: #92AAD1;       /* Glacial Blue Accent */
+  --color-status-merged: #4ade80;        /* Crisp Emerald Success */
+  --color-status-in-review: #749DD0;     /* Sapphire In-Review */
+  --color-status-awaiting-reply: #fbbf24;/* Warm Signal Amber */
+  --color-status-action-needed: #f87171; /* High-Urgency Coral Red */
+  --color-status-draft: #AAA59F;         /* Neutral Stone Grey */
+  --color-status-open: #749DD0;          /* Pending Review Sapphire */
+  --color-status-bounty: #fbbf24;        /* Rewarded Bounty Amber */
 
   /* Platform Tokens */
-  --color-platform-github: #e2e8f0;
-  --color-platform-gitlab: #f97316;
+  --color-platform-github: #CFE7F8;
+  --color-platform-gitlab: #fc6d26;
 
-  /* Typographic Hierarchy: Monospace Spec-Sheet + Clean Technical Body */
-  --font-family-display: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-family-telemetry: 'JetBrains Mono', 'Fira Code', monospace;
+  /* Typographic Hierarchy: Bold Sans Headings + Crisp Sans Body + Tabular Mono */
+  --font-family-display: 'Plus Jakarta Sans', 'IBM Plex Sans', -apple-system, sans-serif;
   --font-family-body: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-family-telemetry: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Rigid Geometric Metric Scale (Absolute 90-degree industrial corners) */
-  --radius-none: 0px;
-
-  /* Dense Spacing Scale */
-  --space-05: 0.125rem; /* 2px */
+  /* Comfortable Spacing Scale (Scaled 5 -> 7) */
   --space-1: 0.25rem;   /* 4px */
   --space-2: 0.5rem;    /* 8px */
   --space-3: 0.75rem;   /* 12px */
   --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
   --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
 }
 
-/* Global Reset & Tabular Technical Defaults */
+/* Global Reset & Box Sizing */
 *, *::before, *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  border-radius: 0 !important;
 }
 
 body {
@@ -71,22 +71,21 @@ body {
   font-family: var(--font-family-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.4;
+  line-height: 1.5;
   overflow-x: hidden;
-  font-feature-settings: "tnum" 1, "zero" 1;
 }
 
-/* Enforce Tabular Numerals on all monospace and telemetry readouts */
-.font-telemetry, .font-mono, code, kbd, table, th, td {
+/* Tabular Numerals for metrics, counters, and telemetry */
+.font-telemetry, .font-mono, code, kbd, .tabular-nums {
   font-feature-settings: "tnum" 1, "zero" 1;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
 
-/* Custom Tactical Scrollbar */
+/* Custom Scrollbar styled for Sapphire Whisper */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -94,7 +93,8 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-bold);
+  background: var(--color-border-subtle);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

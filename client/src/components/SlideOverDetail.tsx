@@ -66,7 +66,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
         badge: '[ACTION_REQUIRED: REQ_CHANGES]',
         heading: 'MAINTAINER REQUESTED CODE MODIFICATIONS',
         body: 'The upstream maintainer reviewed this PR and requested adjustments. Inspect feedback in the activity ledger below, apply commits in your local git branch, and push upstream.',
-        icon: <AlertTriangle className="h-4 w-4 text-status-action-needed shrink-0 mt-0.5" />,
+        icon: <AlertTriangle className="h-5 w-5 text-status-action-needed shrink-0 mt-0.5" />,
       };
     }
 
@@ -76,7 +76,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
         badge: '[ACTION_REQUIRED: OWE_REPLY]',
         heading: 'MAINTAINER COMMENT REQ RESPONSE',
         body: 'A maintainer left a question or clarification request. Open the upstream discussion thread to post your technical response.',
-        icon: <MessageSquare className="h-4 w-4 text-status-awaiting-reply shrink-0 mt-0.5" />,
+        icon: <MessageSquare className="h-5 w-5 text-status-awaiting-reply shrink-0 mt-0.5" />,
       };
     }
 
@@ -86,7 +86,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
         badge: '[STATUS: ACCEPTED_&_MERGED]',
         heading: 'CONTRIBUTION MERGED UPSTREAM',
         body: 'Your changes have been accepted and committed into the main upstream repository branch. Local branch can safely be retired.',
-        icon: <CheckCircle2 className="h-4 w-4 text-status-merged shrink-0 mt-0.5" />,
+        icon: <CheckCircle2 className="h-5 w-5 text-status-merged shrink-0 mt-0.5" />,
       };
     }
 
@@ -96,7 +96,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
         badge: '[STATUS: CLOSED]',
         heading: 'ITEM CLOSED UPSTREAM',
         body: 'This pull request or issue was closed by the repository maintainer. Check the activity ledger below for closure rationale.',
-        icon: <X className="h-4 w-4 text-text-muted shrink-0 mt-0.5" />,
+        icon: <X className="h-5 w-5 text-text-muted shrink-0 mt-0.5" />,
       };
     }
 
@@ -105,7 +105,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
       badge: '[STATUS: AWAITING_MAINTAINER_REVIEW]',
       heading: 'IN REVIEW QUEUE // NO ACTION REQUIRED',
       body: 'Your changes are cleanly submitted and awaiting maintainer triage. You spoke last in the thread.',
-      icon: <Clock className="h-4 w-4 text-status-in-review shrink-0 mt-0.5" />,
+      icon: <Clock className="h-5 w-5 text-accent-sapphire shrink-0 mt-0.5" />,
     };
   };
 
@@ -115,69 +115,76 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-2xl flex-col border-l border-border-bold bg-surface shadow-2xl transition-transform animate-in slide-in-from-right duration-150 font-telemetry select-none">
-      {/* Header Bar */}
-      <div className="flex items-center justify-between border-b border-border-bold bg-base px-5 py-2.5">
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-text-muted text-[10px] font-bold uppercase">[INSPECTOR]:</span>
-          <span className="font-bold text-text-primary">{itemId}</span>
+    <>
+      {/* Backdrop for easy dismiss on click outside */}
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-black/45 backdrop-blur-[1px] z-40 transition-opacity cursor-pointer"
+        title="Click to dismiss inspector"
+      />
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-2xl transition-transform animate-in slide-in-from-right duration-150 select-none">
+        {/* Header Bar */}
+        <div className="flex items-center justify-between border-b border-border-subtle bg-base px-6 py-4">
+        <div className="flex items-center gap-2.5">
+          <span className="text-text-muted text-xs font-mono font-bold uppercase tracking-wider">[INSPECTOR]:</span>
+          <span className="font-mono font-bold text-white text-base md:text-lg">{itemId}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {data?.item?.url && (
             <a
               href={data.item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 border border-status-in-review/70 bg-status-in-review/15 px-2.5 py-1 text-xs font-bold text-status-in-review hover:bg-status-in-review/25 transition-colors"
+              className="flex items-center gap-1.5 border border-accent-sapphire bg-accent-sapphire/20 px-3.5 py-1.5 rounded-md text-xs md:text-sm font-mono font-bold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer"
             >
               <span>[OPEN UPSTREAM]</span>
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink className="h-3.5 w-3.5" />
             </a>
           )}
           <button
             onClick={onClose}
-            className="flex h-6 w-6 items-center justify-center border border-border-bold text-text-muted hover:border-border-active hover:text-white transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-all cursor-pointer"
             title="Dismiss Inspector (Esc)"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex flex-1 items-center justify-center text-xs text-text-muted">
-          <Clock className="h-4 w-4 animate-spin mr-2" />
+        <div className="flex flex-1 items-center justify-center text-sm font-mono text-text-muted">
+          <Clock className="h-5 w-5 animate-spin mr-3 text-accent-sapphire" />
           <span>PARSING TELEMETRY LEDGER...</span>
         </div>
       ) : data ? (
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Spec-Sheet Header & Metadata Grid */}
-          <div className="border border-border-bold bg-base p-4">
-            <h2 className="text-sm font-bold text-text-primary leading-tight font-display mb-3">
+          <div className="border border-border-subtle bg-surface-card p-5 rounded-lg shadow-card">
+            <h2 className="text-lg md:text-xl font-bold text-white leading-snug font-sans mb-4">
               {data.item.title}
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs border-t border-border-subtle pt-3">
-              <div>
-                <span className="text-text-muted text-[10px] block uppercase">REPOSITORY</span>
-                <span className="font-bold text-text-primary text-[11px] truncate block">{data.item.repo}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs border-t border-border-subtle/60 pt-4">
+              <div className="bg-base p-2.5 rounded border border-border-subtle/50">
+                <span className="text-text-muted text-xs block uppercase font-mono font-bold">REPOSITORY</span>
+                <span className="font-mono font-bold text-text-whisper text-sm truncate block mt-0.5">{data.item.repo}</span>
               </div>
-              <div>
-                <span className="text-text-muted text-[10px] block uppercase">AUTHOR</span>
-                <span className="font-bold text-text-primary text-[11px] block">@{data.item.author}</span>
+              <div className="bg-base p-2.5 rounded border border-border-subtle/50">
+                <span className="text-text-muted text-xs block uppercase font-mono font-bold">AUTHOR</span>
+                <span className="font-mono font-bold text-white text-sm block mt-0.5">@{data.item.author}</span>
               </div>
-              <div>
-                <span className="text-text-muted text-[10px] block uppercase">PLATFORM</span>
-                <span className="font-bold text-status-in-review text-[11px] block uppercase">[{data.item.platform}]</span>
+              <div className="bg-base p-2.5 rounded border border-border-subtle/50">
+                <span className="text-text-muted text-xs block uppercase font-mono font-bold">PLATFORM</span>
+                <span className="font-mono font-bold text-accent-glacial text-sm block uppercase mt-0.5">[{data.item.platform}]</span>
               </div>
-              <div>
-                <span className="text-text-muted text-[10px] block uppercase">STATUS</span>
-                <span className="font-bold text-text-primary text-[11px] block uppercase">[{data.item.status}]</span>
+              <div className="bg-base p-2.5 rounded border border-border-subtle/50">
+                <span className="text-text-muted text-xs block uppercase font-mono font-bold">STATUS</span>
+                <span className="font-mono font-bold text-white text-sm block uppercase mt-0.5">[{data.item.status}]</span>
               </div>
             </div>
             {data.item.bounty_amount && (
-              <div className="mt-2.5 border-t border-border-subtle pt-2 flex items-center justify-between text-xs">
-                <span className="text-text-muted text-[10px] uppercase">REWARD / BOUNTY</span>
-                <span className="text-status-bounty font-bold text-[11px]">[{data.item.bounty_amount}]</span>
+              <div className="mt-3.5 border-t border-border-subtle/60 pt-3 flex items-center justify-between text-sm">
+                <span className="text-text-muted uppercase font-mono font-bold">REWARD / BOUNTY</span>
+                <span className="text-status-bounty font-mono font-bold text-base">[{data.item.bounty_amount}]</span>
               </div>
             )}
           </div>
@@ -187,38 +194,38 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
             const guidance = getActionGuidance(data.item);
             return (
               <div
-                className={`border p-3.5 space-y-2 ${
+                className={`border p-5 rounded-lg space-y-3 shadow-card ${
                   guidance.variant === 'urgent'
-                    ? 'border-status-action-needed/60 bg-status-action-needed/10'
+                    ? 'border-status-action-needed/80 bg-status-action-needed/15'
                     : guidance.variant === 'success'
-                    ? 'border-status-merged/60 bg-status-merged/10'
-                    : 'border-border-bold bg-base'
+                    ? 'border-status-merged/80 bg-status-merged/15'
+                    : 'border-border-subtle bg-surface-card'
                 }`}
               >
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-3.5">
                   {guidance.icon}
                   <div className="flex-1">
-                    <span className="text-[10px] font-bold tracking-wider uppercase text-text-muted block">
+                    <span className="text-xs font-mono font-bold tracking-wider uppercase text-text-muted block">
                       {guidance.badge}
                     </span>
-                    <h3 className="text-xs font-bold text-text-primary mt-0.5">
+                    <h3 className="text-sm md:text-base font-bold text-white mt-1">
                       {guidance.heading}
                     </h3>
-                    <p className="text-xs text-text-secondary mt-1 font-body leading-relaxed">
+                    <p className="text-sm text-text-whisper mt-1.5 font-sans leading-relaxed">
                       {guidance.body}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-2 flex justify-end border-t border-border-subtle">
+                <div className="pt-3 flex justify-end border-t border-border-subtle/60">
                   <a
                     href={data.item.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-text-primary hover:text-white underline underline-offset-4 decoration-border-bold hover:decoration-white"
+                    className="inline-flex items-center gap-1.5 text-xs md:text-sm font-bold text-text-whisper hover:text-white underline underline-offset-4 decoration-accent-sapphire hover:decoration-white transition-colors"
                   >
                     <span>Inspect Discussion Thread</span>
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 </div>
               </div>
@@ -226,20 +233,20 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
           })()}
 
           {/* Working Notes & Status Flag Override */}
-          <div className="border border-border-bold bg-base p-4 space-y-3 text-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border-subtle pb-2.5">
-              <span className="font-bold text-text-secondary uppercase text-[10px]">
+          <div className="border border-border-subtle bg-surface-card p-5 rounded-lg space-y-4 text-sm shadow-card">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 border-b border-border-subtle/60 pb-3">
+              <span className="font-mono font-bold text-text-whisper uppercase text-xs">
                 MANUAL TRIGGER OVERRIDE:
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 {(['none', 'reply', 'push-changes'] as const).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => setActionNeeded(mode)}
-                    className={`border px-2 py-0.5 uppercase text-[10px] transition-colors ${
+                    className={`border px-3 py-1 rounded uppercase font-mono text-xs font-bold transition-all cursor-pointer ${
                       actionNeeded === mode
-                        ? 'border-status-action-needed bg-status-action-needed/20 text-status-action-needed font-bold'
-                        : 'border-border-subtle text-text-muted hover:text-text-secondary'
+                        ? 'border-status-action-needed bg-status-action-needed/25 text-status-action-needed ring-1 ring-status-action-needed'
+                        : 'border-border-subtle bg-base text-text-muted hover:text-text-whisper hover:border-accent-sapphire'
                     }`}
                   >
                     {mode === 'none' ? '[WAITING]' : mode === 'reply' ? '[OWE_REPLY]' : '[REQ_CHANGES]'}
@@ -249,7 +256,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
             </div>
 
             <div>
-              <label className="block text-text-muted mb-1 uppercase text-[10px]">
+              <label className="block text-text-muted mb-2 uppercase text-xs font-mono font-bold">
                 DEVELOPER WORKING NOTES // LOCAL CONTEXT:
               </label>
               <textarea
@@ -257,15 +264,15 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Log next steps, branch references, or review feedback..."
-                className="w-full border border-border-bold bg-surface p-2 text-xs text-text-primary placeholder:text-text-muted focus:border-status-in-review focus:outline-none"
+                className="w-full border border-border-subtle bg-base p-3 rounded-md text-sm text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all"
               />
             </div>
 
-            <div className="flex items-center justify-between pt-1">
-              <span className="text-[10px] text-text-muted">
+            <div className="flex items-center justify-between pt-1 font-mono text-xs">
+              <span className="text-text-muted">
                 {saveSuccess ? (
-                  <span className="text-status-merged flex items-center gap-1">
-                    <Check className="h-3 w-3" /> [NOTES_PERSISTED_LOCALLY]
+                  <span className="text-status-merged flex items-center gap-1 font-bold">
+                    <Check className="h-4 w-4" /> [NOTES_PERSISTED_LOCALLY]
                   </span>
                 ) : (
                   'Notes stored encrypted in local SQLite instance.'
@@ -274,7 +281,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
               <button
                 onClick={handleSaveNotes}
                 disabled={savingNotes}
-                className="border border-border-bold bg-surface-elevated px-3 py-1 text-xs font-bold text-text-primary hover:border-border-active hover:bg-surface-active disabled:opacity-50 transition-colors"
+                className="border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-md font-mono text-xs md:text-sm font-bold text-text-whisper hover:bg-accent-sapphire/30 disabled:opacity-50 transition-all cursor-pointer"
               >
                 {savingNotes ? '[SAVING...]' : '[SAVE_NOTES]'}
               </button>
@@ -283,53 +290,53 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
 
           {/* Activity Ledger Stream */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-text-secondary uppercase">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-mono font-bold text-text-whisper uppercase tracking-wider">
                 TELEMETRY ACTIVITY LEDGER ({data.events.length})
               </span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {data.events.length === 0 ? (
-                <div className="border border-border-subtle bg-base p-4 text-center text-xs text-text-muted">
+                <div className="border border-border-subtle bg-surface-card p-5 rounded-lg text-center text-sm font-mono text-text-muted">
                   [ZERO_ACTIVITY_EVENTS_RECORDED]
                 </div>
               ) : (
                 data.events.map((ev) => {
                   const bot = isBot(ev.actor);
                   return (
-                    <div key={ev.id} className="border border-border-bold bg-base p-3 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
+                    <div key={ev.id} className="border border-border-subtle bg-surface-card p-4 rounded-lg space-y-2.5 shadow-sm">
+                      <div className="flex items-center justify-between text-xs md:text-sm">
                         <div className="flex items-center gap-2">
                           {bot ? (
-                            <Bot className="h-3.5 w-3.5 text-text-muted" />
+                            <Bot className="h-4 w-4 text-text-muted" />
                           ) : (
-                            <User className="h-3.5 w-3.5 text-status-in-review" />
+                            <User className="h-4 w-4 text-accent-sapphire" />
                           )}
-                          <span className="font-bold text-text-primary">@{ev.actor}</span>
+                          <span className="font-bold text-white font-mono">@{ev.actor}</span>
                           {bot && (
-                            <span className="border border-border-subtle bg-surface-elevated px-1 py-0.2 text-[9px] text-text-muted">
+                            <span className="border border-border-subtle bg-surface-elevated px-1.5 py-0.5 rounded text-xs font-mono text-text-muted">
                               [BOT]
                             </span>
                           )}
                           {ev.review_state && (
                             <span
-                              className={`border px-1 py-0.2 text-[9px] font-bold ${
+                              className={`border px-2 py-0.5 rounded text-xs font-bold font-mono ${
                                 ev.review_state === 'APPROVED'
-                                  ? 'border-status-merged text-status-merged bg-status-merged/10'
-                                  : 'border-status-action-needed text-status-action-needed bg-status-action-needed/10'
+                                  ? 'border-status-merged text-status-merged bg-status-merged/15'
+                                  : 'border-status-action-needed text-status-action-needed bg-status-action-needed/15'
                               }`}
                             >
                               [{ev.review_state}]
                             </span>
                           )}
                         </div>
-                        <span className="text-text-muted text-[10px] font-telemetry">
+                        <span className="text-text-muted text-xs font-mono">
                           {new Date(ev.created_at).toLocaleString()}
                         </span>
                       </div>
 
-                      <div className="text-xs text-text-secondary leading-relaxed whitespace-pre-wrap bg-surface p-2.5 border-l-2 border-border-bold font-mono text-[11px]">
+                      <div className="text-xs md:text-sm text-text-whisper leading-relaxed whitespace-pre-wrap bg-base p-3 rounded border-l-2 border-accent-sapphire font-mono">
                         {ev.body_excerpt}
                       </div>
                     </div>
@@ -340,6 +347,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
           </div>
         </div>
       ) : null}
-    </div>
+      </div>
+    </>
   );
 };

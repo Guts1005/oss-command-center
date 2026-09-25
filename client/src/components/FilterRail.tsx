@@ -27,11 +27,11 @@ export const FilterRail: React.FC<FilterRailProps> = ({
   onSortChange,
 }) => {
   return (
-    <div className="border-b border-border-bold bg-surface px-5 py-2 font-telemetry select-none">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 text-xs">
-        {/* Terminal Query Input */}
-        <div className="relative flex items-center w-full md:w-80 lg:w-96 min-w-[280px]">
-          <span className="absolute left-2.5 text-text-muted text-[11px] font-bold">
+    <div className="border border-border-subtle bg-surface px-5 py-4 md:px-7 md:py-4.5 rounded-lg shadow-card select-none mb-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        {/* Terminal Query Search Input */}
+        <div className="relative flex items-center w-full md:w-96 lg:w-[420px]">
+          <span className="absolute left-3.5 text-accent-sapphire text-sm font-mono font-bold">
             &gt;
           </span>
           <input
@@ -39,22 +39,22 @@ export const FilterRail: React.FC<FilterRailProps> = ({
             placeholder="FILTER REPO, TITLE, ID (Ctrl+K)..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full border border-border-bold bg-base py-1 pl-7 pr-7 text-xs text-text-primary placeholder:text-text-muted focus:border-status-in-review focus:outline-none"
+            className="w-full border border-border-subtle bg-base py-2.5 pl-8 pr-9 text-sm md:text-base font-medium rounded-md text-text-primary placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2 text-text-muted hover:text-text-primary p-0.5"
+              className="absolute right-3 text-text-muted hover:text-text-primary p-1 cursor-pointer"
               title="Clear query"
             >
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {/* Industrial Status Mode Switches */}
-        <div className="flex flex-wrap items-center gap-1">
-          <span className="text-text-muted mr-1 hidden sm:inline uppercase text-[10px] font-bold">
+        {/* Status Mode Switches */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-text-muted mr-1 hidden sm:inline uppercase text-xs font-bold tracking-wider font-mono">
             VIEW:
           </span>
           {[
@@ -81,12 +81,12 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                     onStatusChange(item.id);
                   }
                 }}
-                className={`flex items-center gap-1 border px-2 py-0.5 transition-colors text-[11px] font-bold ${
+                className={`flex items-center gap-1.5 border px-3 py-1.5 rounded-md transition-all text-xs md:text-sm font-bold font-mono cursor-pointer ${
                   isActive
                     ? item.isUrgent
-                      ? 'border-status-action-needed bg-status-action-needed/20 text-status-action-needed'
-                      : 'border-status-in-review bg-status-in-review/15 text-status-in-review'
-                    : 'border-border-subtle bg-base text-text-muted hover:border-border-bold hover:text-text-secondary'
+                      ? 'border-status-action-needed bg-status-action-needed/25 text-status-action-needed shadow-sm ring-1 ring-status-action-needed'
+                      : 'border-accent-sapphire bg-accent-sapphire/25 text-text-whisper shadow-sm ring-1 ring-accent-sapphire'
+                    : 'border-border-subtle bg-surface-card text-text-muted hover:border-accent-sapphire hover:text-text-whisper'
                 }`}
               >
                 <span>{item.label}</span>
@@ -96,13 +96,13 @@ export const FilterRail: React.FC<FilterRailProps> = ({
         </div>
 
         {/* Platform & Sorting Spec Controls */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <div className="flex items-center gap-1">
-            <span className="text-text-muted uppercase text-[10px] font-bold">PLATFORM:</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-text-muted uppercase text-xs font-bold tracking-wider font-mono">PLATFORM:</span>
             <select
               value={platformFilter}
               onChange={(e) => onPlatformChange(e.target.value)}
-              className="border border-border-bold bg-base px-2 py-0.5 text-xs text-text-primary focus:border-status-in-review focus:outline-none"
+              className="border border-border-subtle bg-base px-3 py-1.5 rounded-md text-xs md:text-sm font-semibold text-text-whisper focus:border-accent-sapphire focus:outline-none transition-colors cursor-pointer"
             >
               <option value="all">ALL</option>
               <option value="github">GITHUB</option>
@@ -110,12 +110,12 @@ export const FilterRail: React.FC<FilterRailProps> = ({
             </select>
           </div>
 
-          <div className="flex items-center gap-1">
-            <span className="text-text-muted uppercase text-[10px] font-bold">SORT:</span>
+          <div className="flex items-center gap-2">
+            <span className="text-text-muted uppercase text-xs font-bold tracking-wider font-mono">SORT:</span>
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value)}
-              className="border border-border-bold bg-base px-2 py-0.5 text-xs text-text-primary focus:border-status-in-review focus:outline-none"
+              className="border border-border-subtle bg-base px-3 py-1.5 rounded-md text-xs md:text-sm font-semibold text-text-whisper focus:border-accent-sapphire focus:outline-none transition-colors cursor-pointer"
             >
               <option value="recent">RECENT_ACTIVITY</option>
               <option value="unread">UNREAD_FIRST</option>

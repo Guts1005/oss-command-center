@@ -60,10 +60,10 @@ export const ContributionList: React.FC<ContributionListProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center p-12 bg-base">
-        <div className="border border-border-bold bg-surface p-4 font-telemetry text-xs text-text-secondary flex items-center gap-3">
-          <span className="inline-block h-2 w-2 bg-status-in-review animate-ping" />
-          <span className="text-text-primary font-bold">[SYS_SYNC]</span>
+      <div className="flex flex-1 items-center justify-center p-16 bg-base">
+        <div className="border border-border-subtle bg-surface p-6 rounded-lg font-mono text-sm text-text-whisper flex items-center gap-4 shadow-card">
+          <span className="inline-block h-3 w-3 bg-accent-sapphire rounded-full animate-ping" />
+          <span className="text-white font-bold text-base">[SYS_SYNC]</span>
           <span>INGESTING CONTRIBUTION TELEMETRY...</span>
         </div>
       </div>
@@ -73,19 +73,19 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   if (items.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-12 bg-base text-center">
-        <div className="border border-border-bold bg-surface p-6 max-w-lg w-full text-left font-telemetry">
-          <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4 text-xs">
-            <span className="text-status-awaiting-reply font-bold">[ZERO_RECORDS_LOCATED]</span>
+        <div className="border border-border-subtle bg-surface p-8 rounded-lg max-w-lg w-full text-left font-mono shadow-card">
+          <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4 text-sm">
+            <span className="text-status-awaiting-reply font-bold text-base">[ZERO_RECORDS_LOCATED]</span>
             <span className="text-text-muted">CODE: NULL_SET</span>
           </div>
-          <p className="text-xs text-text-secondary mb-5 font-body leading-relaxed">
+          <p className="text-sm text-text-whisper mb-6 font-sans leading-relaxed">
             No contributions matched the active filter criteria or query string. Reset the current filter or ingest a new contribution URL.
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             {onResetFilters && (
               <button
                 onClick={onResetFilters}
-                className="border border-border-bold bg-surface-elevated px-3 py-1.5 font-telemetry text-xs font-bold text-text-primary hover:border-border-active hover:bg-surface-active transition-colors"
+                className="border border-border-bold bg-surface-elevated px-4 py-2 rounded-md font-mono text-sm font-bold text-text-primary hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer"
               >
                 [RESET_FILTERS]
               </button>
@@ -93,7 +93,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
             {onOpenTrackModal && (
               <button
                 onClick={onOpenTrackModal}
-                className="border border-status-in-review/60 bg-status-in-review/15 px-3 py-1.5 font-telemetry text-xs font-bold text-status-in-review hover:bg-status-in-review/25 transition-colors"
+                className="border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-md font-mono text-sm font-bold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer"
               >
                 [+ TRACK_ITEM]
               </button>
@@ -106,22 +106,20 @@ export const ContributionList: React.FC<ContributionListProps> = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-base">
-      {/* Table Column Header (Hidden on mobile) */}
-      <div className="hidden md:flex items-center justify-between border-b border-border-bold bg-surface-elevated px-5 py-1.5 font-telemetry text-[11px] font-bold text-text-muted select-none">
-        <div className="flex items-center gap-2.5">
-          <span className="w-8 text-center text-[10px]">NEW</span>
-          <span className="w-12">SRC</span>
-          <span className="w-4">TYP</span>
-          <span>IDENTIFIER & CONTRIBUTION SUMMARY</span>
+      {/* Stream Section Header */}
+      <div className="flex items-center justify-between px-2 pb-3 select-none">
+        <div className="flex items-center gap-2 text-xs md:text-sm font-mono font-bold text-text-muted uppercase tracking-wider">
+          <Terminal className="h-4 w-4 text-accent-sapphire" />
+          <span>CONTRIBUTION TELEMETRY STREAM ({items.length} ACTIVE RECORDS)</span>
         </div>
-        <div className="flex items-center gap-6">
-          <span>STATUS & TRIGGER</span>
-          <span className="w-16 text-right">HEARTBEAT</span>
+        <div className="hidden sm:flex items-center gap-4 text-xs font-mono text-text-muted">
+          <span>NAVIGATE: <kbd className="border border-border-bold bg-surface-card px-1.5 py-0.5 rounded text-text-whisper">j</kbd>/<kbd className="border border-border-bold bg-surface-card px-1.5 py-0.5 rounded text-text-whisper">k</kbd></span>
+          <span>SELECT: <kbd className="border border-border-bold bg-surface-card px-1.5 py-0.5 rounded text-text-whisper">Enter</kbd></span>
         </div>
       </div>
 
-      {/* Dense Rows */}
-      <div className="divide-y divide-border-subtle overflow-y-auto flex-1">
+      {/* Separated Card Rows */}
+      <div className="overflow-y-auto flex-1 pr-1 pb-4">
         {items.map((item, idx) => {
           const isHighlighted = idx === highlightedIndex;
           const isSelected = item.id === selectedId;
@@ -129,7 +127,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
           return (
             <div
               key={item.id}
-              className={isHighlighted && !isSelected ? 'ring-1 ring-border-active ring-inset' : ''}
+              className={isHighlighted && !isSelected ? 'ring-2 ring-accent-sapphire/60 rounded-lg' : ''}
             >
               <ContributionRow
                 item={item}
@@ -144,26 +142,26 @@ export const ContributionList: React.FC<ContributionListProps> = ({
         })}
       </div>
 
-      {/* Industrial Console Footer */}
-      <div className="border-t border-border-bold bg-surface px-5 py-2 flex items-center justify-between font-telemetry text-[11px] text-text-muted select-none">
-        <div className="flex items-center gap-3">
-          <span className="text-text-primary font-bold">[CONSOLE]</span>
+      {/* Sapphire Console Footer HUD */}
+      <div className="border border-border-subtle bg-surface px-6 py-3.5 rounded-lg shadow-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 font-mono text-xs md:text-sm text-text-muted select-none mt-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-white font-bold">[CONSOLE]</span>
           <span>
-            <kbd className="border border-border-bold bg-base px-1 text-text-secondary">j</kbd>/<kbd className="border border-border-bold bg-base px-1 text-text-secondary">k</kbd> NAVIGATE
+            <kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">j</kbd>/<kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">k</kbd> NAVIGATE
           </span>
           <span>
-            <kbd className="border border-border-bold bg-base px-1 text-text-secondary">Enter</kbd> TELEMETRY
+            <kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">Enter</kbd> TELEMETRY
           </span>
           <span>
-            <kbd className="border border-border-bold bg-base px-1 text-text-secondary">/</kbd> QUERY
+            <kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">/</kbd> QUERY
           </span>
           <span>
-            <kbd className="border border-border-bold bg-base px-1 text-text-secondary">Esc</kbd> DISMISS
+            <kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">Esc</kbd> DISMISS
           </span>
         </div>
-        <div>
+        <div className="flex items-center gap-2">
           <span>RECORDS: </span>
-          <span className="font-bold text-text-primary">{items.length}</span>
+          <span className="font-bold text-white text-base">{items.length}</span>
           <span> // STATUS: </span>
           <span className="text-status-merged font-bold">ONLINE</span>
         </div>
