@@ -8,8 +8,11 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
+      backgroundColor: {
         base: 'var(--color-bg-base)',
+      },
+      colors: {
+        substrate: 'var(--color-bg-base)',
         surface: 'var(--color-bg-surface)',
         'surface-card': 'var(--color-bg-surface-card)',
         'surface-elevated': 'var(--color-bg-surface-elevated)',

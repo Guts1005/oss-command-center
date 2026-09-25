@@ -108,25 +108,31 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm select-none">
       {/* Modal Container */}
-      <div className="relative w-full max-w-2xl border border-border-subtle bg-surface p-6 rounded-xl shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-3xl border border-border-subtle bg-surface p-7 rounded-xl shadow-2xl z-10 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border-subtle/80 pb-4 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
               <Key className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm md:text-base font-bold uppercase tracking-wider text-white font-mono">
-                [LINK_UPSTREAM_ACCOUNTS] // GITHUB &amp; GITLAB
-              </h2>
-              <p className="text-xs text-text-muted font-sans mt-0.5">
-                AUTOMATED TELEMETRY HARVESTING // ENCRYPTED TOKEN VAULT
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide">
+                  Linked Upstream Accounts
+                </h2>
+                <span className="border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
+                  [TELEMETRY_VAULT]
+                </span>
+              </div>
+              <p className="text-xs md:text-sm text-text-muted font-sans mt-0.5">
+                Automated multi-platform telemetry harvesting &amp; encrypted token store.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-all cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-all cursor-pointer"
+            title="Dismiss (Esc)"
           >
             <X className="h-4 w-4" />
           </button>
@@ -197,38 +203,38 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
               [ZERO_LINKED_ACCOUNTS] Link your GitHub or GitLab profile below.
             </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {accountList.map((acc) => (
                 <div
                   key={acc.id}
-                  className="border border-border-subtle bg-surface-card p-3.5 rounded-lg transition-all text-xs md:text-sm shadow-sm"
+                  className="border border-border-subtle bg-surface-card p-4 rounded-lg transition-all text-xs md:text-sm shadow-sm"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded border border-border-bold bg-base text-text-primary">
+                    <div className="flex items-center gap-3.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-bold bg-base text-text-primary">
                         {acc.platform === 'github' ? (
-                          <Github className="h-4 w-4" />
+                          <Github className="h-5 w-5" />
                         ) : (
-                          <Gitlab className="h-4 w-4 text-[#fc6d26]" />
+                          <Gitlab className="h-5 w-5 text-[#fc6d26]" />
                         )}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-white">{acc.username}</span>
-                          <span className="border border-border-subtle bg-base px-1.5 py-0.5 rounded text-xs font-mono uppercase text-text-muted">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono text-base font-bold text-white">{acc.username}</span>
+                          <span className="border border-border-subtle bg-base px-2 py-0.5 rounded text-xs font-mono uppercase font-bold text-text-muted">
                             [{acc.platform}]
                           </span>
                           {acc.has_token && (
-                            <span className="border border-status-merged/60 bg-status-merged/15 px-1.5 py-0.5 rounded text-xs font-mono text-status-merged font-bold">
+                            <span className="border border-status-merged/60 bg-status-merged/15 px-2 py-0.5 rounded text-xs font-mono text-status-merged font-bold">
                               [AES_ENCRYPTED]
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-text-muted flex items-center gap-3 mt-1 font-mono">
-                          {acc.host && <span>HOST: {acc.host}</span>}
-                          <span>STATUS: <span className="text-text-whisper font-semibold uppercase">{acc.sync_status}</span></span>
+                        <div className="text-xs text-text-whisper flex flex-wrap items-center gap-3.5 mt-1.5 font-mono">
+                          {acc.host && <span>HOST: <span className="text-text-muted">{acc.host}</span></span>}
+                          <span>STATUS: <span className="text-status-merged font-bold uppercase">{acc.sync_status}</span></span>
                           {acc.last_synced_at && (
-                            <span>LAST_SYNC: {new Date(acc.last_synced_at).toLocaleTimeString()}</span>
+                            <span>LAST_SYNC: <span className="text-text-muted">{new Date(acc.last_synced_at).toLocaleTimeString()}</span></span>
                           )}
                         </div>
                       </div>
@@ -318,7 +324,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
 
             {/* Username Input */}
             <div>
-              <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-1.5">
+              <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
                 {platform === 'github' ? 'GITHUB USERNAME' : 'GITLAB USERNAME'}
               </label>
               <input
@@ -327,14 +333,14 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={platform === 'github' ? 'e.g. torvalds' : 'e.g. gitlab-user'}
-                className="w-full border border-border-subtle bg-base px-3 py-2.5 rounded-md text-sm text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all"
+                className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
               />
             </div>
 
             {/* GitLab Host */}
             {platform === 'gitlab' && (
               <div>
-                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-1.5">
+                <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
                   GITLAB INSTANCE HOST
                 </label>
                 <input
@@ -342,14 +348,14 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   value={gitlabHost}
                   onChange={(e) => setGitlabHost(e.target.value)}
                   placeholder="https://gitlab.com or https://gitlab.rtems.org"
-                  className="w-full border border-border-subtle bg-base px-3 py-2.5 rounded-md text-sm text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all"
+                  className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
                 />
               </div>
             )}
 
             {/* Personal Access Token */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-muted">
                   PERSONAL ACCESS TOKEN (OPTIONAL / RECOMMENDED)
                 </label>
@@ -361,7 +367,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs font-mono text-accent-sapphire hover:underline"
+                  className="flex items-center gap-1 text-xs font-mono text-accent-sapphire hover:underline font-bold"
                 >
                   <span>[GENERATE_TOKEN]</span>
                   <ExternalLink className="h-3 w-3" />
@@ -372,9 +378,9 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder={platform === 'github' ? 'ghp_...' : 'glpat-...'}
-                className="w-full border border-border-subtle bg-base px-3 py-2.5 rounded-md text-sm text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all"
+                className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
               />
-              <p className="text-xs text-text-muted mt-1 font-sans">
+              <p className="text-xs md:text-sm text-text-muted mt-1.5 font-sans">
                 Tokens unlock 5,000 req/hr rate limits and private repository tracking.
               </p>
             </div>
@@ -382,7 +388,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full border border-accent-sapphire bg-accent-sapphire/20 py-3 rounded-md font-mono font-bold uppercase tracking-wider text-white hover:bg-accent-sapphire/30 disabled:opacity-50 transition-all text-sm cursor-pointer shadow-sm"
+              className="w-full border border-accent-sapphire bg-accent-sapphire/25 py-3.5 rounded-md font-mono font-bold uppercase tracking-wider text-white hover:bg-accent-sapphire/35 disabled:opacity-50 transition-all text-sm md:text-base cursor-pointer shadow-sm"
             >
               {isSubmitting ? '[ENCRYPTING_&_LINKING...]' : `[LINK_${platform.toUpperCase()}_ACCOUNT]`}
             </button>

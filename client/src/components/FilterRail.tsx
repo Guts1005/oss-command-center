@@ -96,13 +96,13 @@ export const FilterRail: React.FC<FilterRailProps> = ({
         </div>
 
         {/* Platform & Sorting Spec Controls */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3.5">
           <div className="flex items-center gap-2">
             <span className="text-text-muted uppercase text-xs font-bold tracking-wider font-mono">PLATFORM:</span>
             <select
               value={platformFilter}
               onChange={(e) => onPlatformChange(e.target.value)}
-              className="border border-border-subtle bg-base px-3 py-1.5 rounded-md text-xs md:text-sm font-semibold text-text-whisper focus:border-accent-sapphire focus:outline-none transition-colors cursor-pointer"
+              className="border border-border-subtle bg-base px-3.5 py-2 rounded-md text-xs md:text-sm font-bold font-mono text-text-whisper hover:border-accent-sapphire focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-colors cursor-pointer shadow-sm"
             >
               <option value="all">ALL</option>
               <option value="github">GITHUB</option>
@@ -115,7 +115,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value)}
-              className="border border-border-subtle bg-base px-3 py-1.5 rounded-md text-xs md:text-sm font-semibold text-text-whisper focus:border-accent-sapphire focus:outline-none transition-colors cursor-pointer"
+              className="border border-border-subtle bg-base px-3.5 py-2 rounded-md text-xs md:text-sm font-bold font-mono text-text-whisper hover:border-accent-sapphire focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-colors cursor-pointer shadow-sm"
             >
               <option value="recent">RECENT_ACTIVITY</option>
               <option value="unread">UNREAD_FIRST</option>
