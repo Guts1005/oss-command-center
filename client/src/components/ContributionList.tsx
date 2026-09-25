@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Contribution } from '../types';
 import { ContributionRow } from './ContributionRow';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, Terminal } from 'lucide-react';
 
 interface ContributionListProps {
   items: Contribution[];
@@ -60,10 +60,11 @@ export const ContributionList: React.FC<ContributionListProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center p-12">
-        <div className="font-telemetry text-xs text-text-muted flex items-center gap-2.5">
-          <span className="inline-block h-2 w-2 rounded-full bg-status-awaiting-reply animate-pulse" />
-          <span>Synchronizing contribution data...</span>
+      <div className="flex flex-1 items-center justify-center p-12 bg-base">
+        <div className="border border-border-bold bg-surface p-4 font-telemetry text-xs text-text-secondary flex items-center gap-3">
+          <span className="inline-block h-2 w-2 bg-status-in-review animate-ping" />
+          <span className="text-text-primary font-bold">[SYS_SYNC]</span>
+          <span>INGESTING CONTRIBUTION TELEMETRY...</span>
         </div>
       </div>
     );
@@ -71,33 +72,30 @@ export const ContributionList: React.FC<ContributionListProps> = ({
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center p-12 border-b border-border-subtle bg-base text-center">
-        <div className="border border-border-bold bg-surface p-8 max-w-md w-full shadow-lg">
-          <div className="flex justify-center mb-3 text-text-muted">
-            <Search className="h-8 w-8" />
+      <div className="flex flex-1 flex-col items-center justify-center p-12 bg-base text-center">
+        <div className="border border-border-bold bg-surface p-6 max-w-lg w-full text-left font-telemetry">
+          <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4 text-xs">
+            <span className="text-status-awaiting-reply font-bold">[ZERO_RECORDS_LOCATED]</span>
+            <span className="text-text-muted">CODE: NULL_SET</span>
           </div>
-          <div className="font-display text-sm font-bold text-text-primary uppercase tracking-wide mb-1.5">
-            No Contributions in View
-          </div>
-          <p className="text-xs text-text-muted mb-5 font-body leading-relaxed">
-            No items matched your current search query or active filter. You can clear your filters or start tracking a new pull request or issue.
+          <p className="text-xs text-text-secondary mb-5 font-body leading-relaxed">
+            No contributions matched the active filter criteria or query string. Reset the current filter or ingest a new contribution URL.
           </p>
-          <div className="flex items-center justify-center gap-2.5">
+          <div className="flex items-center gap-2">
             {onResetFilters && (
               <button
                 onClick={onResetFilters}
-                className="inline-flex items-center gap-1.5 border border-border-bold bg-surface-elevated px-3.5 py-1.5 font-telemetry text-xs font-bold text-text-primary hover:border-border-active hover:bg-surface-active transition-colors"
+                className="border border-border-bold bg-surface-elevated px-3 py-1.5 font-telemetry text-xs font-bold text-text-primary hover:border-border-active hover:bg-surface-active transition-colors"
               >
-                <span>Reset All Filters</span>
+                [RESET_FILTERS]
               </button>
             )}
             {onOpenTrackModal && (
               <button
                 onClick={onOpenTrackModal}
-                className="inline-flex items-center gap-1.5 border border-status-awaiting-reply/60 bg-status-awaiting-reply/15 px-3.5 py-1.5 font-telemetry text-xs font-bold text-status-awaiting-reply hover:bg-status-awaiting-reply/25 transition-colors"
+                className="border border-status-in-review/60 bg-status-in-review/15 px-3 py-1.5 font-telemetry text-xs font-bold text-status-in-review hover:bg-status-in-review/25 transition-colors"
               >
-                <PlusCircle className="h-4 w-4" />
-                <span>+ Track Item</span>
+                [+ TRACK_ITEM]
               </button>
             )}
           </div>
@@ -109,14 +107,16 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-base">
       {/* Table Column Header (Hidden on mobile) */}
-      <div className="hidden md:flex items-center justify-between border-b border-border-bold bg-surface-elevated px-6 py-2 font-telemetry text-[11px] font-semibold text-text-muted select-none">
-        <div className="flex items-center gap-3">
-          <span className="w-9 text-center text-[10px]">NEW</span>
-          <span>PLATFORM & CONTRIBUTION TITLE</span>
+      <div className="hidden md:flex items-center justify-between border-b border-border-bold bg-surface-elevated px-5 py-1.5 font-telemetry text-[11px] font-bold text-text-muted select-none">
+        <div className="flex items-center gap-2.5">
+          <span className="w-8 text-center text-[10px]">NEW</span>
+          <span className="w-12">SRC</span>
+          <span className="w-4">TYP</span>
+          <span>IDENTIFIER & CONTRIBUTION SUMMARY</span>
         </div>
         <div className="flex items-center gap-6">
-          <span>STATUS & NEXT ACTION</span>
-          <span className="w-16 text-right">ACTIVITY</span>
+          <span>STATUS & TRIGGER</span>
+          <span className="w-16 text-right">HEARTBEAT</span>
         </div>
       </div>
 
@@ -144,23 +144,28 @@ export const ContributionList: React.FC<ContributionListProps> = ({
         })}
       </div>
 
-      {/* Footer Navigation Hints */}
-      <div className="border-t border-border-subtle bg-surface px-6 py-2 flex items-center justify-between font-telemetry text-[11px] text-text-muted">
-        <div className="flex items-center gap-4">
+      {/* Industrial Console Footer */}
+      <div className="border-t border-border-bold bg-surface px-5 py-2 flex items-center justify-between font-telemetry text-[11px] text-text-muted select-none">
+        <div className="flex items-center gap-3">
+          <span className="text-text-primary font-bold">[CONSOLE]</span>
           <span>
-            HOTKEYS: <kbd className="border border-border-bold bg-base px-1 py-0.5 text-text-secondary">j</kbd>/<kbd className="border border-border-bold bg-base px-1 py-0.5 text-text-secondary">k</kbd> Navigate
+            <kbd className="border border-border-bold bg-base px-1 text-text-secondary">j</kbd>/<kbd className="border border-border-bold bg-base px-1 text-text-secondary">k</kbd> NAVIGATE
           </span>
           <span>
-            <kbd className="border border-border-bold bg-base px-1 py-0.5 text-text-secondary">Enter</kbd> Open Details
+            <kbd className="border border-border-bold bg-base px-1 text-text-secondary">Enter</kbd> TELEMETRY
           </span>
           <span>
-            <kbd className="border border-border-bold bg-base px-1 py-0.5 text-text-secondary">Esc</kbd> Close Drawer
+            <kbd className="border border-border-bold bg-base px-1 text-text-secondary">/</kbd> QUERY
+          </span>
+          <span>
+            <kbd className="border border-border-bold bg-base px-1 text-text-secondary">Esc</kbd> DISMISS
           </span>
         </div>
         <div>
-          <span>Showing </span>
+          <span>RECORDS: </span>
           <span className="font-bold text-text-primary">{items.length}</span>
-          <span> items</span>
+          <span> // STATUS: </span>
+          <span className="text-status-merged font-bold">ONLINE</span>
         </div>
       </div>
     </div>

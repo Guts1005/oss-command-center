@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, AlertCircle } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface FilterRailProps {
   statusFilter: string;
@@ -27,38 +27,42 @@ export const FilterRail: React.FC<FilterRailProps> = ({
   onSortChange,
 }) => {
   return (
-    <div className="border-b border-border-subtle bg-surface px-6 py-2.5">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 font-telemetry text-xs">
-        {/* Search input with clear button */}
+    <div className="border-b border-border-bold bg-surface px-5 py-2 font-telemetry select-none">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 text-xs">
+        {/* Terminal Query Input */}
         <div className="relative flex items-center w-full md:w-80 lg:w-96 min-w-[280px]">
-          <Search className="absolute left-3 h-3.5 w-3.5 text-text-muted" />
+          <span className="absolute left-2.5 text-text-muted text-[11px] font-bold">
+            &gt;
+          </span>
           <input
             type="text"
-            placeholder="Search repo, title, PR # (Ctrl+K)..."
+            placeholder="FILTER REPO, TITLE, ID (Ctrl+K)..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full border border-border-bold bg-base py-1.5 pl-9 pr-8 text-xs text-text-primary placeholder:text-text-muted focus:border-border-active focus:outline-none"
+            className="w-full border border-border-bold bg-base py-1 pl-7 pr-7 text-xs text-text-primary placeholder:text-text-muted focus:border-status-in-review focus:outline-none"
           />
           {searchQuery && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2.5 text-text-muted hover:text-text-primary p-0.5"
-              title="Clear search"
+              className="absolute right-2 text-text-muted hover:text-text-primary p-0.5"
+              title="Clear query"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-3 w-3" />
             </button>
           )}
         </div>
 
-        {/* Clean Status Filter Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-text-muted mr-1 hidden sm:inline uppercase text-[11px]">Filter:</span>
+        {/* Industrial Status Mode Switches */}
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="text-text-muted mr-1 hidden sm:inline uppercase text-[10px] font-bold">
+            VIEW:
+          </span>
           {[
-            { id: 'all', label: 'All Items' },
-            { id: 'active', label: 'Active Work' },
-            { id: 'action-needed', label: 'Action Needed', isUrgent: true },
-            { id: 'stale', label: 'Stale (>30d)' },
-            { id: 'merged', label: 'Merged' },
+            { id: 'all', label: '[ALL]' },
+            { id: 'active', label: '[ACTIVE]' },
+            { id: 'action-needed', label: '[ACTION_REQ]', isUrgent: true },
+            { id: 'stale', label: '[STALE_30D]' },
+            { id: 'merged', label: '[MERGED]' },
           ].map((item) => {
             const isActive =
               item.id === 'action-needed'
@@ -77,46 +81,45 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                     onStatusChange(item.id);
                   }
                 }}
-                className={`flex items-center gap-1.5 border px-2.5 py-1 transition-colors text-xs ${
+                className={`flex items-center gap-1 border px-2 py-0.5 transition-colors text-[11px] font-bold ${
                   isActive
-                    ? 'border-border-active bg-surface-active text-text-primary font-bold'
+                    ? item.isUrgent
+                      ? 'border-status-action-needed bg-status-action-needed/20 text-status-action-needed'
+                      : 'border-status-in-review bg-status-in-review/15 text-status-in-review'
                     : 'border-border-subtle bg-base text-text-muted hover:border-border-bold hover:text-text-secondary'
                 }`}
               >
-                {item.isUrgent && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-status-action-needed inline-block" />
-                )}
                 <span>{item.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Platform & Sort Selectors */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="text-text-muted uppercase text-[11px]">Platform:</span>
+        {/* Platform & Sorting Spec Controls */}
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center gap-1">
+            <span className="text-text-muted uppercase text-[10px] font-bold">PLATFORM:</span>
             <select
               value={platformFilter}
               onChange={(e) => onPlatformChange(e.target.value)}
-              className="border border-border-bold bg-base px-2 py-1 text-xs text-text-primary focus:border-border-active focus:outline-none"
+              className="border border-border-bold bg-base px-2 py-0.5 text-xs text-text-primary focus:border-status-in-review focus:outline-none"
             >
-              <option value="all">All Platforms</option>
-              <option value="github">GitHub</option>
-              <option value="gitlab">GitLab</option>
+              <option value="all">ALL</option>
+              <option value="github">GITHUB</option>
+              <option value="gitlab">GITLAB</option>
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="text-text-muted uppercase text-[11px]">Sort:</span>
+          <div className="flex items-center gap-1">
+            <span className="text-text-muted uppercase text-[10px] font-bold">SORT:</span>
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value)}
-              className="border border-border-bold bg-base px-2 py-1 text-xs text-text-primary focus:border-border-active focus:outline-none"
+              className="border border-border-bold bg-base px-2 py-0.5 text-xs text-text-primary focus:border-status-in-review focus:outline-none"
             >
-              <option value="recent">Recent Activity</option>
-              <option value="unread">Unread First</option>
-              <option value="difficulty">Difficulty</option>
+              <option value="recent">RECENT_ACTIVITY</option>
+              <option value="unread">UNREAD_FIRST</option>
+              <option value="difficulty">DIFFICULTY</option>
             </select>
           </div>
         </div>

@@ -4,63 +4,65 @@
 
 /* ==========================================================================
    OSS COMMAND CENTER DESIGN TOKENS
-   Aesthetic Archetype: Tactical Telemetry & Declassified Blueprint
-   Strict token consumption only. No arbitrary hexes or px overrides in components.
+   Aesthetic Archetype: Industrial Spec-Sheet & Telemetry Console (Data-Dense)
+   Anti-AI-Slop Certified: Zero soft dropshadows, zero rounded-2xl blobs,
+   zero decorative purple gradients, strict 0px radii, tabular numerals.
    ========================================================================== */
 
 :root {
-  /* Substrates & Structural Panels */
-  --color-bg-base: #0a0b0e;
-  --color-bg-surface: #11141a;
-  --color-bg-surface-elevated: #181d26;
-  --color-bg-surface-active: #202733;
+  /* Substrates & Structural Machine Panels */
+  --color-bg-base: #07090e;              /* Deep cold carbon black */
+  --color-bg-surface: #0d1117;           /* Matte industrial panel */
+  --color-bg-surface-elevated: #151b23;  /* Sub-panel / raised telemetry block */
+  --color-bg-surface-active: #1c2430;    /* Highlighted / selected row */
 
-  /* Dividing Lines & Structural Framing */
-  --color-border-subtle: #1e2430;
-  --color-border-bold: #2f384a;
-  --color-border-active: #4a5670;
+  /* Hairline Structural Framing (Zero blurry dropshadows, strict 1px grid) */
+  --color-border-subtle: #1e2633;        /* Hairline division rule */
+  --color-border-bold: #2b3648;          /* Frame container boundary */
+  --color-border-active: #485b78;        /* Focused / engaged outline */
 
-  /* Typography / Phosphor Hierarchy */
-  --color-text-primary: #ededed;
-  --color-text-secondary: #9aa5b8;
-  --color-text-muted: #5e697a;
-  --color-text-dim: #3d4554;
+  /* Phosphor & Spec-Sheet Typography */
+  --color-text-primary: #f0f4f8;         /* High-contrast crisp luminescent white */
+  --color-text-secondary: #94a3b8;       /* Cold telemetry readout slate */
+  --color-text-muted: #5e6d82;           /* Sub-label grey */
+  --color-text-dim: #334155;             /* Inactive guide mark */
 
-  /* Semantic Status Tokens (One exact hue per status, used nowhere else) */
-  --color-status-merged: #3b82f6;        /* Cobalt Telemetry */
-  --color-status-in-review: #8b5cf6;     /* Hyper Violet */
-  --color-status-awaiting-reply: #06b6d4;/* Cyan Telemetry */
-  --color-status-action-needed: #ef4444; /* Hazard Red */
-  --color-status-draft: #6b7280;         /* Muted Lead */
-  --color-status-open: #10b981;          /* Active Emerald */
-  --color-status-bounty: #f59e0b;        /* Amber Reward */
+  /* Semantic Telemetry Signals (Strict 1-to-1 Functional Purpose) */
+  --color-status-merged: #22c55e;        /* Verified Success Green */
+  --color-status-in-review: #38bdf8;     /* Active In-Review Cyan / Sky */
+  --color-status-awaiting-reply: #eab308;/* Caution Signal Amber */
+  --color-status-action-needed: #ef4444; /* Urgent Alarm Red */
+  --color-status-draft: #64748b;         /* Neutral Work-In-Progress Slate */
+  --color-status-open: #38bdf8;          /* Upstream Pending Review */
+  --color-status-bounty: #f59e0b;        /* Rewarded Bounty Amber */
 
   /* Platform Tokens */
-  --color-platform-github: #ededed;
-  --color-platform-gitlab: #fc6d26;
+  --color-platform-github: #e2e8f0;
+  --color-platform-gitlab: #f97316;
 
-  /* Typographic Families */
-  --font-family-display: 'Space Grotesk', -apple-system, sans-serif;
-  --font-family-telemetry: 'JetBrains Mono', monospace;
+  /* Typographic Hierarchy: Monospace Spec-Sheet + Clean Technical Body */
+  --font-family-display: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-family-telemetry: 'JetBrains Mono', 'Fira Code', monospace;
   --font-family-body: 'IBM Plex Sans', -apple-system, sans-serif;
 
-  /* Rigid Geometric Metric Scale (Zero border-radius, absolute 90-degree corners) */
+  /* Rigid Geometric Metric Scale (Absolute 90-degree industrial corners) */
   --radius-none: 0px;
 
-  /* Standard Spacing Scale */
-  --space-1: 0.25rem;  /* 4px */
-  --space-2: 0.5rem;   /* 8px */
-  --space-3: 0.75rem;  /* 12px */
-  --space-4: 1rem;     /* 16px */
-  --space-6: 1.5rem;   /* 24px */
-  --space-8: 2rem;     /* 32px */
+  /* Dense Spacing Scale */
+  --space-05: 0.125rem; /* 2px */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-6: 1.5rem;    /* 24px */
 }
 
-/* Global Reset & Tactical Defaults */
+/* Global Reset & Tabular Technical Defaults */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  border-radius: 0 !important;
 }
 
 body {
@@ -69,14 +71,22 @@ body {
   font-family: var(--font-family-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.45;
+  line-height: 1.4;
   overflow-x: hidden;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+/* Enforce Tabular Numerals on all monospace and telemetry readouts */
+.font-telemetry, .font-mono, code, kbd, table, th, td {
+  font-feature-settings: "tnum" 1, "zero" 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 /* Custom Tactical Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {

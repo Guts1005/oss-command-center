@@ -29,9 +29,9 @@ export default {
         'status-bounty': 'var(--color-status-bounty)',
       },
       fontFamily: {
-        display: ['Space Grotesk', 'sans-serif'],
-        telemetry: ['JetBrains Mono', 'monospace'],
-        body: ['IBM Plex Sans', 'sans-serif'],
+        display: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        telemetry: ['JetBrains Mono', 'Fira Code', 'monospace'],
+        body: ['IBM Plex Sans', '-apple-system', 'sans-serif'],
       },
       borderRadius: {
         none: '0px',

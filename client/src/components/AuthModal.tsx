@@ -51,53 +51,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
-
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm font-telemetry select-none">
       {/* Modal Container */}
-      <div className="relative w-full max-w-md border border-border-bold bg-surface p-6 shadow-2xl z-10 font-mono">
+      <div className="relative w-full max-w-md border border-border-bold bg-surface p-5 shadow-2xl z-10">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-subtle pb-4 mb-5">
+        <div className="flex items-center justify-between border-b border-border-bold pb-3 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center border border-status-awaiting-reply bg-status-awaiting-reply/10 text-status-awaiting-reply">
+            <div className="flex h-7 w-7 items-center justify-center border border-border-bold bg-base text-status-in-review">
               <Shield className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="font-display text-lg font-bold uppercase tracking-wider text-text-primary">
-                {isRegister ? 'Create Secure Account' : 'Authenticate Session'}
+              <h2 className="text-xs font-bold uppercase tracking-wider text-text-primary">
+                {isRegister ? '[CREATE_SECURE_TENANT]' : '[AUTHENTICATE_TENANT]'}
               </h2>
-              <p className="font-telemetry text-[11px] text-text-muted">
-                Private Multi-Tenant OSS Command Hub
+              <p className="text-[10px] text-text-muted">
+                ENCRYPTED MULTI-USER LOCAL HUB
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-white transition-colors p-1"
+            className="flex h-6 w-6 items-center justify-center border border-border-bold text-text-muted hover:border-border-active hover:text-white transition-colors"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
 
-        {/* Tab Toggle */}
-        <div className="grid grid-cols-2 gap-1 border border-border-bold bg-base p-1 mb-5 text-xs font-bold">
+        {/* Mode Switch */}
+        <div className="grid grid-cols-2 gap-1 border border-border-bold bg-base p-1 mb-4 text-xs font-bold">
           <button
             type="button"
             onClick={() => {
               setIsRegister(false);
               setErrorMessage(null);
             }}
-            className={`py-1.5 text-center transition-all ${
+            className={`py-1 text-center transition-all ${
               !isRegister
-                ? 'bg-surface-elevated text-white border border-border-active'
+                ? 'bg-surface-elevated text-text-primary border border-border-active'
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            SIGN IN
+            [SIGN_IN]
           </button>
           <button
             type="button"
@@ -105,85 +99,84 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               setIsRegister(true);
               setErrorMessage(null);
             }}
-            className={`py-1.5 text-center transition-all ${
+            className={`py-1 text-center transition-all ${
               isRegister
-                ? 'bg-surface-elevated text-white border border-border-active'
+                ? 'bg-surface-elevated text-text-primary border border-border-active'
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            CREATE ACCOUNT
+            [REGISTER_TENANT]
           </button>
         </div>
 
         {/* Security Assurance Banner */}
-        <div className="mb-5 border border-border-subtle bg-surface-elevated p-3 text-[11px] text-text-secondary leading-relaxed">
-          <div className="flex items-center gap-1.5 font-bold text-status-merged mb-1">
+        <div className="mb-4 border border-border-bold bg-base p-2.5 text-[11px] text-text-secondary leading-relaxed">
+          <div className="flex items-center gap-1.5 font-bold text-status-merged mb-0.5 text-[10px]">
             <Lock className="h-3 w-3" />
-            <span>CRYPTOGRAPHIC SECURITY ENFORCED</span>
+            <span>[ENCRYPTION AT REST: AES-256-GCM]</span>
           </div>
-          <p>
-            Your account is isolated. All connected access tokens are encrypted with authenticated
-            AES-256-GCM. No plain text secrets ever touch disk or external networks.
+          <p className="text-[10px] text-text-muted">
+            All linked platform tokens are encrypted with authenticated AES-256-GCM using unique IVs. Zero plaintext credentials touch disk or external telemetry.
           </p>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mb-4 flex items-start gap-2 border border-status-action-needed/50 bg-status-action-needed/10 p-3 text-xs text-status-action-needed">
+          <div className="mb-4 flex items-start gap-2 border border-status-action-needed/60 bg-status-action-needed/10 p-2.5 text-xs text-status-action-needed">
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-text-muted mb-1">
-              {isRegister ? 'Username' : 'Username or Email'}
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1">
+              {isRegister ? 'TENANT USERNAME' : 'TENANT USERNAME OR EMAIL'}
             </label>
-            <div className="relative flex items-center border border-border-bold bg-base focus-within:border-status-awaiting-reply">
-              <span className="pl-3 text-text-muted">
-                <User className="h-4 w-4" />
+            <div className="relative flex items-center border border-border-bold bg-base focus-within:border-status-in-review">
+              <span className="pl-2.5 text-text-muted">
+                <User className="h-3.5 w-3.5" />
               </span>
               <input
                 type="text"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder={isRegister ? 'octocat' : 'octocat or user@domain.com'}
-                className="w-full bg-transparent px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none"
+                placeholder={isRegister ? 'sharvin' : 'sharvin or user@example.com'}
+                className="w-full bg-transparent px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none"
               />
             </div>
           </div>
 
           {isRegister && (
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-text-muted mb-1">
-                Email Address
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1">
+                CONTACT EMAIL
               </label>
-              <div className="relative flex items-center border border-border-bold bg-base focus-within:border-status-awaiting-reply">
-                <span className="pl-3 text-text-muted">
-                  <Mail className="h-4 w-4" />
+              <div className="relative flex items-center border border-border-bold bg-base focus-within:border-status-in-review">
+                <span className="pl-2.5 text-text-muted">
+                  <Mail className="h-3.5 w-3.5" />
                 </span>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="developer@opensource.org"
-                  className="w-full bg-transparent px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none"
+                  placeholder="developer@domain.com"
+                  className="w-full bg-transparent px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-text-muted mb-1">
-              Password {isRegister && <span className="text-[10px] text-text-muted">(Min 8 chars)</span>}
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-text-muted mb-1">
+              PASSPHRASE {isRegister && <span className="text-text-muted">(MIN 8 CHARS)</span>}
             </label>
-            <div className="relative flex items-center border border-border-bold bg-base focus-within:border-status-awaiting-reply">
-              <span className="pl-3 text-text-muted">
-                <KeyRound className="h-4 w-4" />
+            <div className="relative flex items-center border border-border-bold bg-base focus-within:border-status-in-review">
+              <span className="pl-2.5 text-text-muted">
+                <KeyRound className="h-3.5 w-3.5" />
               </span>
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -191,14 +184,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full bg-transparent px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none"
+                className="w-full bg-transparent px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="pr-3 text-text-muted hover:text-white transition-colors"
+                className="pr-2.5 text-text-muted hover:text-white transition-colors"
               >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
           </div>
@@ -206,9 +199,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-2 border border-status-awaiting-reply bg-status-awaiting-reply/20 py-2.5 font-bold uppercase tracking-wider text-status-awaiting-reply hover:bg-status-awaiting-reply/30 disabled:opacity-50 transition-colors"
+            className="w-full mt-2 border border-status-in-review bg-status-in-review/20 py-2 font-bold uppercase tracking-wider text-status-in-review hover:bg-status-in-review/30 disabled:opacity-50 transition-colors text-xs"
           >
-            {isLoading ? 'VERIFYING...' : isRegister ? 'INITIALIZE ACCOUNT' : 'ENTER COMMAND CENTER'}
+            {isLoading ? '[VERIFYING_CREDENTIALS...]' : isRegister ? '[INITIALIZE_TENANT]' : '[ENTER_CONSOLE]'}
           </button>
         </form>
       </div>
