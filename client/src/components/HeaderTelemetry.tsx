@@ -83,16 +83,17 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   };
 
   return (
-    <header className="border border-border-subtle bg-surface px-5 py-4 md:px-7 md:py-5 rounded-lg shadow-card select-none mb-6">
-      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-        {/* System Identity & Status HUD */}
-        <div className="flex items-center gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border-bold bg-base text-accent-sapphire shadow-inner">
+    <header className="border border-border-subtle bg-surface rounded-xl shadow-card select-none mb-6 overflow-hidden">
+      {/* Tier 1: Main Control Bar (Brand Identity Left, Neat Clustered Actions Right) */}
+      <div className="px-6 py-4 md:px-8 md:py-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+        {/* Left: System Identity & Status HUD */}
+        <div className="flex items-center gap-3.5 shrink-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire shadow-inner">
             <GitMerge className="h-6 w-6" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-lg md:text-xl font-extrabold tracking-tight text-text-primary uppercase font-sans">
+              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-white uppercase font-sans">
                 OSS COMMAND CENTER
               </h1>
               <span className="border border-status-merged/50 bg-status-merged/15 px-2.5 py-0.5 rounded text-xs font-bold font-mono text-status-merged">
@@ -102,127 +103,58 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
                 v1.2 // SEC-GCM
               </span>
             </div>
-            <p className="text-xs md:text-sm font-medium text-text-muted mt-0.5">
+            <p className="text-xs md:text-sm font-medium text-text-muted mt-0.5 font-sans">
               MULTI-TENANT ENCRYPTED TELEMETRY HUB // GITHUB &amp; GITLAB
             </p>
           </div>
         </div>
 
-        {/* Scaled-Up Telemetry Metrics & Command Controls */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Action Needed Indicator (Interactive) */}
-          <button
-            onClick={() => onSelectFilter?.('action-needed')}
-            className={`flex items-center gap-2 border px-3.5 py-2 rounded-md text-sm font-bold transition-all cursor-pointer ${
-              activeFilter === 'action-needed'
-                ? 'border-status-action-needed bg-status-action-needed/25 text-status-action-needed ring-2 ring-status-action-needed'
-                : (stats?.actionNeeded ?? 0) > 0
-                ? 'border-status-action-needed/80 bg-status-action-needed/15 text-status-action-needed hover:bg-status-action-needed/25'
-                : 'border-border-subtle bg-surface-card text-text-muted hover:border-border-bold hover:text-text-whisper'
-            }`}
-            title="Filter: Contributions requiring developer action"
-          >
-            <AlertCircle className="h-4 w-4" />
-            <span>ACTION_REQ:</span>
-            <span className="font-mono text-base font-extrabold">{stats?.actionNeeded ?? 0}</span>
-          </button>
-
-          {/* In Review Telemetry (Interactive) */}
-          <button
-            onClick={() => onSelectFilter?.('active')}
-            className={`flex items-center gap-2 border px-3.5 py-2 rounded-md text-sm font-bold transition-all cursor-pointer ${
-              activeFilter === 'active'
-                ? 'border-accent-sapphire bg-surface-active text-text-whisper ring-2 ring-accent-sapphire'
-                : 'border-border-subtle bg-surface-card text-text-whisper hover:border-accent-sapphire hover:bg-surface-elevated'
-            }`}
-            title="Filter: Contributions currently awaiting maintainer review"
-          >
-            <Clock className="h-4 w-4 text-accent-sapphire" />
-            <span className="text-text-muted">IN_REVIEW:</span>
-            <span className="font-mono text-base font-extrabold text-text-primary">{stats?.awaitingMaintainer ?? 0}</span>
-          </button>
-
-          {/* Merged Telemetry (Interactive) */}
-          <button
-            onClick={() => onSelectFilter?.('merged')}
-            className={`flex items-center gap-2 border px-3.5 py-2 rounded-md text-sm font-bold transition-all cursor-pointer ${
-              activeFilter === 'merged'
-                ? 'border-status-merged bg-status-merged/25 text-status-merged ring-2 ring-status-merged'
-                : 'border-border-subtle bg-surface-card text-status-merged hover:border-status-merged hover:bg-status-merged/10'
-            }`}
-            title="Filter: Upstream accepted contributions"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            <span className="text-text-muted">MERGED:</span>
-            <span className="font-mono text-base font-extrabold">{stats?.merged ?? 0}</span>
-          </button>
-
-          {/* User Session & Integration Badge */}
-          {user ? (
-            <div className="flex items-center border border-border-subtle bg-surface-card rounded-md overflow-hidden">
-              <div className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold text-text-primary">
-                <UserIcon className="h-4 w-4 text-accent-sapphire" />
-                <span>[{user.username}]</span>
-              </div>
-              <button
-                onClick={onOpenIntegrationsModal}
-                className="flex items-center gap-1.5 border-l border-border-subtle bg-surface-elevated px-3 py-2 text-sm font-semibold text-text-whisper hover:text-white hover:bg-surface-active transition-colors"
-                title="Manage linked GitHub and GitLab integrations"
-              >
-                <Key className="h-3.5 w-3.5 text-status-awaiting-reply" />
-                <span>ACCOUNTS ({integrations.length})</span>
-              </button>
-              <button
-                onClick={() => logout()}
-                className="flex items-center border-l border-border-subtle px-2.5 py-2 text-text-muted hover:text-status-action-needed transition-colors"
-                title="Sign out of active session"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onOpenAuthModal}
-              className="flex items-center gap-2 border border-accent-sapphire bg-accent-sapphire/20 px-3.5 py-2 rounded-md font-bold text-sm text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer"
-              title="Sign in or register for a private encrypted workspace"
-            >
-              <Lock className="h-4 w-4 text-accent-sapphire" />
-              <span>[SIGN_IN]</span>
-            </button>
-          )}
-
-          {/* Track URL Button */}
+        {/* Right: Organized Action & Toolbar Groups (Neatly clustered, uniform height) */}
+        <div className="flex items-center gap-3 flex-wrap xl:flex-nowrap shrink-0">
+          {/* Group 1: Primary Ingest Action */}
           {onOpenTrackModal && (
             <button
               onClick={onOpenTrackModal}
-              className="flex items-center gap-1.5 border border-border-bold bg-surface-elevated px-3.5 py-2 rounded-md font-bold text-sm text-text-primary hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer"
+              className="flex items-center gap-2 h-10 border border-accent-sapphire bg-accent-sapphire/25 px-4 rounded-lg font-mono font-bold text-xs md:text-sm text-text-whisper hover:bg-accent-sapphire/35 hover:text-white transition-all shadow-sm cursor-pointer shrink-0"
               title="Ingest new contribution URL"
             >
               <PlusCircle className="h-4 w-4 text-accent-sapphire" />
-              <span>[+ TRACK]</span>
+              <span>+ TRACK</span>
             </button>
           )}
 
-          {/* Guide Quick Reference */}
-          {onOpenGuideModal && (
+          {/* Group 2: System Utility Toolbelt */}
+          <div className="flex items-center h-10 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
+            {/* Sync Button */}
             <button
-              onClick={onOpenGuideModal}
-              className="flex items-center gap-1.5 border border-border-subtle bg-surface-card px-3 py-2 rounded-md text-sm font-semibold text-text-whisper hover:border-accent-sapphire hover:text-white transition-all cursor-pointer"
-              title="Open console documentation & legend (?)"
+              onClick={onSync}
+              disabled={isSyncing}
+              className="flex items-center gap-1.5 h-full px-3.5 text-xs md:text-sm font-mono text-text-muted hover:text-white hover:bg-surface-elevated transition-colors disabled:opacity-50 cursor-pointer"
+              title="Poll upstream GitHub & GitLab APIs"
             >
-              <HelpCircle className="h-4 w-4 text-text-muted" />
-              <span>[GUIDE]</span>
+              <RefreshCw className={`h-3.5 w-3.5 text-accent-glacial ${isSyncing ? 'animate-spin text-accent-sapphire' : ''}`} />
+              <span className="hidden sm:inline font-medium">{isSyncing ? 'SYNCING...' : `SYNC: ${formatTime(stats?.lastSync)}`}</span>
             </button>
-          )}
 
-          {/* Notification & Sound Toggles */}
-          <div className="flex items-center border border-border-subtle bg-surface-card rounded-md overflow-hidden">
+            {/* Guide Quick Reference */}
+            {onOpenGuideModal && (
+              <button
+                onClick={onOpenGuideModal}
+                className="flex items-center gap-1.5 h-full px-3 text-xs md:text-sm font-mono text-text-muted hover:text-white hover:bg-surface-elevated transition-colors cursor-pointer"
+                title="Open operational reference manual (?)"
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+                <span className="font-medium">GUIDE</span>
+              </button>
+            )}
+
+            {/* Desktop Notification Toggle */}
             <button
               onClick={handleToggleNotifications}
-              className={`p-2 transition-colors ${
+              className={`h-full px-3 transition-colors cursor-pointer flex items-center justify-center ${
                 notifPermission === 'granted'
-                  ? 'text-accent-sapphire hover:text-white'
-                  : 'text-text-muted hover:text-text-primary'
+                  ? 'text-accent-sapphire hover:text-white bg-accent-sapphire/10'
+                  : 'text-text-muted hover:text-white hover:bg-surface-elevated'
               }`}
               title={
                 notifPermission === 'granted'
@@ -236,12 +168,14 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
                 <BellOff className="h-4 w-4" />
               )}
             </button>
+
+            {/* Sound Chime Toggle */}
             <button
               onClick={handleToggleSound}
-              className={`border-l border-border-subtle p-2 transition-colors ${
+              className={`h-full px-3 transition-colors cursor-pointer flex items-center justify-center ${
                 soundEnabled
-                  ? 'text-status-merged hover:text-white'
-                  : 'text-text-muted hover:text-text-primary'
+                  ? 'text-status-merged hover:text-white bg-status-merged/10'
+                  : 'text-text-muted hover:text-white hover:bg-surface-elevated'
               }`}
               title={soundEnabled ? 'Audio chime active' : 'Audio chime muted'}
             >
@@ -253,18 +187,123 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
             </button>
           </div>
 
-          {/* Trigger Telemetry Sync */}
+          {/* Group 3: Tenant User Session */}
+          {user ? (
+            <div className="flex items-center h-10 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
+              <div className="flex items-center gap-1.5 h-full px-3.5 text-xs md:text-sm font-mono font-bold text-white bg-base/50">
+                <UserIcon className="h-3.5 w-3.5 text-accent-sapphire" />
+                <span>@{user.username}</span>
+              </div>
+              <button
+                onClick={onOpenIntegrationsModal}
+                className="flex items-center gap-1.5 h-full bg-surface-elevated px-3 text-xs md:text-sm font-mono font-bold text-text-whisper hover:text-white hover:bg-surface-active transition-colors cursor-pointer"
+                title="Manage linked GitHub and GitLab accounts"
+              >
+                <Key className="h-3.5 w-3.5 text-status-awaiting-reply" />
+                <span>ACCOUNTS ({integrations.length})</span>
+              </button>
+              <button
+                onClick={() => logout()}
+                className="h-full px-3 text-text-muted hover:text-status-action-needed hover:bg-surface-elevated transition-colors cursor-pointer flex items-center justify-center"
+                title="Sign out of active session"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuthModal}
+              className="flex items-center gap-2 h-10 border border-accent-sapphire bg-accent-sapphire/20 px-4 rounded-lg font-mono font-bold text-xs md:text-sm text-text-whisper hover:bg-accent-sapphire/35 transition-all cursor-pointer shadow-sm shrink-0"
+              title="Sign in or register for a private encrypted workspace"
+            >
+              <Lock className="h-4 w-4 text-accent-sapphire" />
+              <span>SIGN_IN</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tier 2: Dedicated Full-Width Telemetry KPI Strip */}
+      <div className="border-t border-border-subtle bg-base/60 px-6 py-2.5 md:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-3 font-mono text-xs">
+        {/* Left: KPI Filter Chips */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <span className="text-text-muted uppercase font-bold tracking-wider mr-1 hidden lg:inline">
+            TELEMETRY KPI:
+          </span>
+
+          {/* Action Needed Metric Chip */}
           <button
-            onClick={onSync}
-            disabled={isSyncing}
-            className="flex items-center gap-2 border border-border-subtle bg-surface-card px-3.5 py-2 rounded-md hover:border-accent-sapphire hover:bg-surface-elevated disabled:opacity-50 transition-all cursor-pointer"
-            title="Poll upstream GitHub & GitLab APIs"
+            onClick={() => onSelectFilter?.('action-needed')}
+            className={`flex items-center gap-2 px-3 py-1 rounded-md font-bold transition-all cursor-pointer border ${
+              activeFilter === 'action-needed'
+                ? 'border-status-action-needed bg-status-action-needed/25 text-status-action-needed shadow-sm ring-1 ring-status-action-needed'
+                : (stats?.actionNeeded ?? 0) > 0
+                ? 'border-status-action-needed/50 bg-status-action-needed/15 text-status-action-needed hover:bg-status-action-needed/25'
+                : 'border-border-subtle bg-surface text-text-muted hover:text-white'
+            }`}
+            title="Filter: Contributions requiring developer action"
           >
-            <RefreshCw className={`h-4 w-4 text-accent-glacial ${isSyncing ? 'animate-spin text-accent-sapphire' : ''}`} />
-            <span className="text-text-muted text-xs font-mono font-medium">
-              {isSyncing ? 'SYNCING...' : `SYNC: ${formatTime(stats?.lastSync)}`}
-            </span>
+            <span className={`h-2 w-2 rounded-full bg-status-action-needed shrink-0 ${(stats?.actionNeeded ?? 0) > 0 ? 'animate-pulse' : ''}`} />
+            <span>ACTION_REQ:</span>
+            <span className="text-sm font-extrabold">{stats?.actionNeeded ?? 0}</span>
           </button>
+
+          {/* In Review Metric Chip */}
+          <button
+            onClick={() => onSelectFilter?.('active')}
+            className={`flex items-center gap-2 px-3 py-1 rounded-md font-bold transition-all cursor-pointer border ${
+              activeFilter === 'active'
+                ? 'border-accent-sapphire bg-accent-sapphire/25 text-text-whisper shadow-sm ring-1 ring-accent-sapphire'
+                : 'border-border-subtle bg-surface text-text-muted hover:text-white hover:border-accent-sapphire'
+            }`}
+            title="Filter: Contributions currently awaiting maintainer review"
+          >
+            <span className="h-2 w-2 rounded-full bg-accent-sapphire shrink-0" />
+            <span>IN_REVIEW:</span>
+            <span className="text-sm font-extrabold text-white">{stats?.awaitingMaintainer ?? 0}</span>
+          </button>
+
+          {/* Merged Metric Chip */}
+          <button
+            onClick={() => onSelectFilter?.('merged')}
+            className={`flex items-center gap-2 px-3 py-1 rounded-md font-bold transition-all cursor-pointer border ${
+              activeFilter === 'merged'
+                ? 'border-status-merged bg-status-merged/25 text-status-merged shadow-sm ring-1 ring-status-merged'
+                : 'border-border-subtle bg-surface text-text-muted hover:text-status-merged hover:border-status-merged/50'
+            }`}
+            title="Filter: Upstream accepted contributions"
+          >
+            <span className="h-2 w-2 rounded-full bg-status-merged shrink-0" />
+            <span>MERGED:</span>
+            <span className="text-sm font-extrabold text-white">{stats?.merged ?? 0}</span>
+          </button>
+
+          {/* Total Metric Chip */}
+          <button
+            onClick={() => onSelectFilter?.('all')}
+            className={`flex items-center gap-2 px-3 py-1 rounded-md font-bold transition-all cursor-pointer border ${
+              activeFilter === 'all'
+                ? 'border-border-bold bg-surface-elevated text-white shadow-sm'
+                : 'border-border-subtle bg-surface text-text-muted hover:text-white'
+            }`}
+            title="Show all tracked contributions"
+          >
+            <span className="h-2 w-2 rounded-full bg-text-muted shrink-0" />
+            <span>TOTAL_TRACKED:</span>
+            <span className="text-sm font-extrabold text-white">{stats?.total ?? 0}</span>
+          </button>
+        </div>
+
+        {/* Right: Operational Status Info */}
+        <div className="hidden sm:flex items-center gap-3 text-text-muted shrink-0 font-mono text-[11px]">
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-status-merged" />
+            <span>SYS: OPTIMAL</span>
+          </span>
+          <span>•</span>
+          <span>POLL: 30s</span>
+          <span>•</span>
+          <span>ENCRYPTION: AES-256-GCM</span>
         </div>
       </div>
     </header>

@@ -209,7 +209,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
-      <div className="flex-1 flex flex-col min-h-0 max-w-7xl w-full mx-auto p-3 sm:p-5 md:p-6 lg:p-8">
+      <div className="flex-1 flex flex-col min-h-0 w-full max-w-[1880px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
         {/* Header with Quick Guide, Auth, Notification toggle and Track buttons */}
         <HeaderTelemetry
           stats={stats}
