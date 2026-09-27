@@ -21,7 +21,12 @@ interface GitHubReview {
   submitted_at: string;
 }
 
-export async function syncGitHub(userId: string, token?: string, username = 'Guts1005') {
+export async function syncGitHub(userId: string, token?: string, username?: string) {
+  if (!username) {
+    console.warn(`[GitHub Sync] No GitHub username configured for user ${userId}, skipping sync.`);
+    return;
+  }
+
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
   };

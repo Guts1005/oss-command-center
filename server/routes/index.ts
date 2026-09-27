@@ -16,16 +16,26 @@ apiRouter.use('/integrations', integrationsRouter);
 // Apply optionalAuth to all remaining contribution endpoints
 apiRouter.use(optionalAuth);
 
-function getEffectiveUserId(req: AuthenticatedRequest): string {
+function getEffectiveUserId(req: AuthenticatedRequest): string | null {
   if (req.user) return req.user.id;
-  // Local fallback for dev/CLI scripts
-  return 'default-local-user';
+  return null;
 }
 
 // GET /api/stats - High-level operational metrics
 apiRouter.get('/stats', (req: AuthenticatedRequest, res) => {
   try {
     const userId = getEffectiveUserId(req);
+    if (!userId) {
+      return res.json({
+        total: 0,
+        actionNeeded: 0,
+        awaitingMaintainer: 0,
+        merged: 0,
+        unreadCount: 0,
+        lastSync: null
+      });
+    }
+
     const total = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ?').get(userId) as any)?.count || 0;
     const actionNeeded = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND action_needed != 'none'").get(userId) as any)?.count || 0;
     const awaitingMaintainer = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status IN ('open', 'opened', 'submitted', 'awaiting-reply') AND action_needed = 'none'").get(userId) as any)?.count || 0;
@@ -51,6 +61,9 @@ apiRouter.get('/stats', (req: AuthenticatedRequest, res) => {
 apiRouter.get('/contributions', (req: AuthenticatedRequest, res) => {
   try {
     const userId = getEffectiveUserId(req);
+    if (!userId) {
+      return res.json([]);
+    }
     const platform = typeof req.query.platform === 'string' ? req.query.platform : (Array.isArray(req.query.platform) ? String(req.query.platform[0]) : undefined);
     const status = typeof req.query.status === 'string' ? req.query.status : (Array.isArray(req.query.status) ? String(req.query.status[0]) : undefined);
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : (Array.isArray(req.query.search) ? String(req.query.search[0]).trim() : undefined);
@@ -113,6 +126,9 @@ apiRouter.get('/contributions', (req: AuthenticatedRequest, res) => {
 apiRouter.get('/contributions/:id', (req: AuthenticatedRequest, res) => {
   try {
     const userId = getEffectiveUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    }
     const { id } = req.params;
     const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id) as any;
     if (!item) {
@@ -139,6 +155,9 @@ apiRouter.get('/contributions/:id', (req: AuthenticatedRequest, res) => {
 apiRouter.patch('/contributions/:id/notes', (req: AuthenticatedRequest, res) => {
   try {
     const userId = getEffectiveUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    }
     const { id } = req.params;
     const { notes, action_needed } = req.body;
 
@@ -166,6 +185,9 @@ apiRouter.patch('/contributions/:id/notes', (req: AuthenticatedRequest, res) => 
 apiRouter.post('/sync', async (req: AuthenticatedRequest, res) => {
   try {
     const userId = getEffectiveUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    }
     const result = await syncUser(userId);
     return res.json(result);
   } catch (err: any) {
@@ -193,6 +215,9 @@ const IngestSchema = z.object({
 apiRouter.post('/ingest', (req: AuthenticatedRequest, res) => {
   try {
     const userId = getEffectiveUserId(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    }
     const data = IngestSchema.parse(req.body);
     const id = data.platform === 'github' ? `gh:${data.repo}#${data.number}` : `gl:${data.repo}!${data.number}`;
     const now = new Date().toISOString();
@@ -234,6 +259,9 @@ apiRouter.post('/ingest', (req: AuthenticatedRequest, res) => {
 // POST /api/track-url - Ingest any GitHub/GitLab URL directly from UI
 apiRouter.post('/track-url', async (req: AuthenticatedRequest, res) => {
   const userId = getEffectiveUserId(req);
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+  }
   const { url } = req.body;
   if (!url || typeof url !== 'string') {
     return res.status(400).json({ error: 'A valid URL is required' });

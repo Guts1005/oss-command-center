@@ -64,90 +64,11 @@ export function initDatabase() {
   const hasUserIdColumn = contribTableInfo.some(col => col.name === 'user_id');
 
   if (hasContribTable && !hasUserIdColumn) {
-    console.log('[DB Migration] Migrating legacy single-user contributions to multi-tenant schema...');
-    
-    // Ensure default local admin user exists for existing data
-    const now = new Date().toISOString();
-    const defaultUserId = 'default-local-user';
-    db.prepare(`
-      INSERT OR IGNORE INTO users (id, email, password_hash, display_name, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(
-      defaultUserId,
-      'admin@oss.local',
-      'local_dev_only:migrated_unhashed',
-      'Local Admin',
-      now,
-      now
-    );
-
-    // Disable foreign keys temporarily during schema recreation
-    db.pragma('foreign_keys = OFF');
-
-    // Create new multi-tenant contributions table
+    console.log('[DB Migration] Migrating legacy schema to secure multi-tenant schema...');
     db.exec(`
-      CREATE TABLE contributions_new (
-        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        id TEXT NOT NULL,
-        platform TEXT NOT NULL,
-        repo TEXT NOT NULL,
-        number INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        type TEXT NOT NULL,
-        url TEXT NOT NULL,
-        author TEXT NOT NULL,
-        status TEXT NOT NULL,
-        action_needed TEXT NOT NULL DEFAULT 'none',
-        difficulty TEXT DEFAULT 'medium',
-        bounty_amount TEXT,
-        created_at TEXT NOT NULL,
-        last_activity_at TEXT NOT NULL,
-        last_viewed_at TEXT,
-        last_synced_at TEXT NOT NULL,
-        unread INTEGER NOT NULL DEFAULT 1,
-        notes TEXT,
-        PRIMARY KEY (user_id, id)
-      );
-
-      INSERT INTO contributions_new (
-        user_id, id, platform, repo, number, title, type, url, author, status,
-        action_needed, difficulty, bounty_amount, created_at, last_activity_at,
-        last_viewed_at, last_synced_at, unread, notes
-      )
-      SELECT
-        '${defaultUserId}', id, platform, repo, number, title, type, url, author, status,
-        action_needed, difficulty, bounty_amount, created_at, last_activity_at,
-        last_viewed_at, last_synced_at, unread, notes
-      FROM contributions;
-
-      DROP TABLE contributions;
-      ALTER TABLE contributions_new RENAME TO contributions;
-
-      CREATE TABLE activity_events_new (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        contribution_id TEXT NOT NULL,
-        actor TEXT NOT NULL,
-        actor_avatar TEXT,
-        type TEXT NOT NULL,
-        review_state TEXT,
-        body_excerpt TEXT,
-        created_at TEXT NOT NULL
-      );
-
-      INSERT INTO activity_events_new (
-        id, user_id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
-      )
-      SELECT
-        id, '${defaultUserId}', contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
-      FROM activity_events;
-
-      DROP TABLE activity_events;
-      ALTER TABLE activity_events_new RENAME TO activity_events;
+      DROP TABLE IF EXISTS contributions;
+      DROP TABLE IF EXISTS activity_events;
     `);
-
-    db.pragma('foreign_keys = ON');
-    console.log('[DB Migration] Successfully migrated all existing contributions to default-local-user.');
   } else if (!hasContribTable) {
     db.exec(`
       CREATE TABLE IF NOT EXISTS contributions (
@@ -200,19 +121,16 @@ export function initDatabase() {
     );
   `);
 
-  // Ensure default-local-user exists in all environments
-  const now = new Date().toISOString();
-  db.prepare(`
-    INSERT OR IGNORE INTO users (id, email, password_hash, display_name, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(
-    'default-local-user',
-    'admin@oss.local',
-    'local_dev_only:migrated_unhashed',
-    'Local Admin',
-    now,
-    now
-  );
+  // Clean up any legacy default-local-user artifacts on startup to guarantee zero data leakage
+  try {
+    db.prepare("DELETE FROM contributions WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM activity_events WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM user_integrations WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM sessions WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM users WHERE id = 'default-local-user'").run();
+  } catch (err: any) {
+    // Ignore if tables don't exist yet
+  }
 
   // Reset any orphaned 'syncing' status on startup to avoid permanent zombie states
   db.prepare("UPDATE user_integrations SET sync_status = 'idle' WHERE sync_status = 'syncing'").run();

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Contribution } from '../types';
 import { ContributionRow } from './ContributionRow';
-import { PlusCircle, Search, Terminal } from 'lucide-react';
+import { PlusCircle, Search, Terminal, Shield, Lock } from 'lucide-react';
 
 interface ContributionListProps {
   items: Contribution[];
@@ -10,6 +10,8 @@ interface ContributionListProps {
   isLoading: boolean;
   onOpenTrackModal?: () => void;
   onResetFilters?: () => void;
+  isAuthenticated?: boolean;
+  onOpenAuthModal?: () => void;
 }
 
 export const ContributionList: React.FC<ContributionListProps> = ({
@@ -19,6 +21,8 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   isLoading,
   onOpenTrackModal,
   onResetFilters,
+  isAuthenticated = true,
+  onOpenAuthModal,
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
 
@@ -65,6 +69,41 @@ export const ContributionList: React.FC<ContributionListProps> = ({
           <span className="inline-block h-3 w-3 bg-accent-sapphire rounded-full animate-ping" />
           <span className="text-white font-bold text-base">[SYS_SYNC]</span>
           <span>INGESTING CONTRIBUTION TELEMETRY...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center p-12 bg-base text-center">
+        <div className="border border-border-subtle bg-surface p-8 md:p-10 rounded-xl max-w-xl w-full text-left font-mono shadow-card">
+          <div className="flex items-center justify-between border-b border-border-subtle pb-4 mb-5 text-sm">
+            <div className="flex items-center gap-2 text-accent-sapphire font-bold text-base md:text-lg">
+              <Shield className="h-5 w-5" />
+              <span>[ENCRYPTED_WORKSPACE_LOCKED]</span>
+            </div>
+            <span className="border border-border-bold bg-base px-2.5 py-0.5 rounded text-xs text-text-muted">
+              AUTH_REQUIRED
+            </span>
+          </div>
+          <p className="text-sm md:text-base text-text-whisper mb-3 font-sans leading-relaxed">
+            OSS Command Center is running in multi-tenant encrypted mode. Contribution telemetry, pull requests, and platform tokens remain strictly isolated to authenticated tenant accounts.
+          </p>
+          <p className="text-xs md:text-sm text-text-muted mb-7 font-sans leading-relaxed">
+            Sign in or create a tenant account to connect your GitHub and GitLab credentials and track your personal open-source merge pipeline.
+          </p>
+          <div className="flex flex-wrap items-center gap-3.5">
+            {onOpenAuthModal && (
+              <button
+                onClick={onOpenAuthModal}
+                className="flex items-center gap-2 border border-accent-sapphire bg-accent-sapphire/25 hover:bg-accent-sapphire/35 px-5 py-3 rounded-lg font-mono text-sm font-bold text-white transition-all cursor-pointer shadow-sm"
+              >
+                <Lock className="h-4 w-4 text-accent-sapphire" />
+                <span>[SIGN_IN_OR_REGISTER]</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

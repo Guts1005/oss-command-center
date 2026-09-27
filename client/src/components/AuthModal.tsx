@@ -149,7 +149,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder={isRegister ? 'sharvin' : 'sharvin or user@example.com'}
+                placeholder={isRegister ? 'developer' : 'developer or user@example.com'}
                 className="w-full bg-transparent px-3.5 py-3 text-base text-white placeholder:text-text-muted focus:outline-none font-medium"
               />
             </div>
