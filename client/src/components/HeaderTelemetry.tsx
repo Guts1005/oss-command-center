@@ -100,7 +100,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
                 [SYS: ONLINE]
               </span>
               <span className="hidden sm:inline-block border border-border-subtle bg-surface-elevated px-2 py-0.5 rounded text-xs font-mono text-text-muted">
-                v1.2 // SEC-GCM
+                v1.0 // SEC-GCM
               </span>
             </div>
             <p className="text-xs md:text-sm font-medium text-text-muted mt-0.5 font-sans">
