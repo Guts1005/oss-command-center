@@ -3,10 +3,15 @@ import { db } from '../db.js';
 
 export async function syncGitLab(
   userId: string,
-  host = 'https://gitlab.rtems.org',
-  username = 'Sharvin',
+  host = 'https://gitlab.com',
+  username?: string,
   token?: string
 ) {
+  if (!username) {
+    console.warn(`[GitLab Sync] No GitLab username configured for user ${userId}, skipping sync.`);
+    return;
+  }
+
   console.log(`[GitLab Sync] Querying authored MRs on ${host} for user: ${username} (ID: ${userId})`);
   
   const headers: Record<string, string> = {};

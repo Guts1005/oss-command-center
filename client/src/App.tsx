@@ -72,9 +72,41 @@ const AppContent: React.FC = () => {
 
   // Initial load and user change reload
   useEffect(() => {
+    if (!user) {
+      setContributions([]);
+      setStats({
+        total: 0,
+        actionNeeded: 0,
+        awaitingMaintainer: 0,
+        merged: 0,
+        unreadCount: 0,
+        lastSync: null
+      });
+      setIsLoading(false);
+      return;
+    }
     fetchStats();
     fetchContributions();
   }, [fetchStats, fetchContributions, user]);
+
+  // Handle immediate state purge on logout
+  useEffect(() => {
+    const handleLogout = () => {
+      setContributions([]);
+      setStats({
+        total: 0,
+        actionNeeded: 0,
+        awaitingMaintainer: 0,
+        merged: 0,
+        unreadCount: 0,
+        lastSync: null
+      });
+      setSelectedId(null);
+      setIsIntegrationsModalOpen(false);
+    };
+    window.addEventListener('oss:auth:logout', handleLogout);
+    return () => window.removeEventListener('oss:auth:logout', handleLogout);
+  }, []);
 
   // Handle unauthorized session expiration across the application
   useEffect(() => {
@@ -88,24 +120,23 @@ const AppContent: React.FC = () => {
 
   // Check for updates and notify desktop/audio
   useEffect(() => {
-    if (contributions.length > 0 && prevItemsRef.current.size > 0) {
-      for (const item of contributions) {
-        const prev = prevItemsRef.current.get(item.id);
-        if (prev) {
-          if (prev.status !== 'merged' && item.status === 'merged') {
-            sendDesktopNotification(
-              '🎉 PR Merged Upstream!',
-              `Your contribution to ${item.repo} was accepted and merged!`,
-              () => setSelectedId(item.id)
-            );
-          } else if (prev.action_needed === 'none' && item.action_needed !== 'none') {
-            const label = item.action_needed === 'push-changes' ? 'requested code updates' : 'left a reply';
-            sendDesktopNotification(
-              `🔔 Maintainer Action: ${item.repo}`,
-              `Maintainer ${label} on "${item.title}".`,
-              () => setSelectedId(item.id)
-            );
-          }
+    if (!user || contributions.length === 0 || prevItemsRef.current.size === 0) return;
+    for (const item of contributions) {
+      const prev = prevItemsRef.current.get(item.id);
+      if (prev) {
+        if (prev.status !== 'merged' && item.status === 'merged') {
+          sendDesktopNotification(
+            '🎉 PR Merged Upstream!',
+            `Your contribution to ${item.repo} was accepted and merged!`,
+            () => setSelectedId(item.id)
+          );
+        } else if (prev.action_needed === 'none' && item.action_needed !== 'none') {
+          const label = item.action_needed === 'push-changes' ? 'requested code updates' : 'left a reply';
+          sendDesktopNotification(
+            `🔔 Maintainer Action: ${item.repo}`,
+            `Maintainer ${label} on "${item.title}".`,
+            () => setSelectedId(item.id)
+          );
         }
       }
     }
@@ -115,16 +146,17 @@ const AppContent: React.FC = () => {
       nextMap.set(item.id, { status: item.status, action_needed: item.action_needed });
     }
     prevItemsRef.current = nextMap;
-  }, [contributions]);
+  }, [contributions, user]);
 
-  // 30s background polling
+  // 30s background polling for authenticated users only
   useEffect(() => {
+    if (!user) return;
     const timer = setInterval(() => {
       fetchStats();
       fetchContributions();
     }, 30000);
     return () => clearInterval(timer);
-  }, [fetchStats, fetchContributions]);
+  }, [fetchStats, fetchContributions, user]);
 
   // Direct filter routing from telemetry cards
   const handleSelectFilter = (filterKey: string) => {
@@ -208,45 +240,49 @@ const AppContent: React.FC = () => {
   ]);
 
   return (
-    <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-surface-active selection:text-white antialiased overflow-hidden">
-      {/* Header with Quick Guide, Auth, Notification toggle and Track buttons */}
-      <HeaderTelemetry
-        stats={stats}
-        onSync={handleSync}
-        isSyncing={isSyncing}
-        onOpenTrackModal={() => setIsTrackModalOpen(true)}
-        onOpenGuideModal={() => setIsGuideModalOpen(true)}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
-        onSelectFilter={handleSelectFilter}
-        activeFilter={actionFilter !== 'all' ? actionFilter : statusFilter}
-      />
-
-      {/* Filter and Query Rail */}
-      <FilterRail
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        platformFilter={platformFilter}
-        onPlatformChange={setPlatformFilter}
-        actionFilter={actionFilter}
-        onActionChange={setActionFilter}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
-
-      {/* Main Scannable Contribution Stream */}
-      <main className="flex-1 flex flex-col min-h-0 relative">
-        <ContributionList
-          items={contributions}
-          selectedId={selectedId}
-          onSelectItem={(id) => setSelectedId(id)}
-          isLoading={isLoading}
+    <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 w-full max-w-[1880px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
+        {/* Header with Quick Guide, Auth, Notification toggle and Track buttons */}
+        <HeaderTelemetry
+          stats={stats}
+          onSync={handleSync}
+          isSyncing={isSyncing}
           onOpenTrackModal={() => setIsTrackModalOpen(true)}
-          onResetFilters={handleResetFilters}
+          onOpenGuideModal={() => setIsGuideModalOpen(true)}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
+          onSelectFilter={handleSelectFilter}
+          activeFilter={actionFilter !== 'all' ? actionFilter : statusFilter}
         />
-      </main>
+
+        {/* Filter and Query Rail */}
+        <FilterRail
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          platformFilter={platformFilter}
+          onPlatformChange={setPlatformFilter}
+          actionFilter={actionFilter}
+          onActionChange={setActionFilter}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
+
+        {/* Main Scannable Contribution Stream */}
+        <main className="flex-1 flex flex-col min-h-0 relative">
+          <ContributionList
+            items={contributions}
+            selectedId={selectedId}
+            onSelectItem={(id) => setSelectedId(id)}
+            isLoading={isLoading}
+            onOpenTrackModal={() => setIsTrackModalOpen(true)}
+            onResetFilters={handleResetFilters}
+            isAuthenticated={Boolean(user)}
+            onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          />
+        </main>
+      </div>
 
       {/* Slide-over Detail Inspection Drawer */}
       <SlideOverDetail

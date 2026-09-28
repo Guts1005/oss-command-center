@@ -25,7 +25,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const cached = localStorage.getItem('oss_user_cached');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [integrations, setIntegrations] = useState<UserIntegration[]>([]);
   const [isIntegrationsLoading, setIsIntegrationsLoading] = useState<boolean>(false);
@@ -36,16 +43,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await axios.get('/api/auth/me');
       if (res.data?.authenticated && res.data.user) {
         setUser(res.data.user);
+        localStorage.setItem('oss_user_cached', JSON.stringify(res.data.user));
         if (Array.isArray(res.data.integrations)) {
           setIntegrations(res.data.integrations);
         }
       } else {
         setUser(null);
         setIntegrations([]);
+        localStorage.removeItem('oss_user_cached');
+        localStorage.removeItem('oss_session_token');
       }
-    } catch {
-      setUser(null);
-      setIntegrations([]);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setUser(null);
+        setIntegrations([]);
+        localStorage.removeItem('oss_user_cached');
+        localStorage.removeItem('oss_session_token');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -75,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setIntegrations([]);
       localStorage.removeItem('oss_session_token');
+      localStorage.removeItem('oss_user_cached');
     };
 
     window.addEventListener('oss:auth:unauthorized', handleUnauthorized);
@@ -98,7 +113,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.data.token) {
       localStorage.setItem('oss_session_token', res.data.token);
     }
-    setUser(res.data.user);
+    if (res.data.user) {
+      localStorage.setItem('oss_user_cached', JSON.stringify(res.data.user));
+      setUser(res.data.user);
+    }
+    window.dispatchEvent(new CustomEvent('oss:auth:login', { detail: { user: res.data.user } }));
     await refreshIntegrations();
   };
 
@@ -107,7 +126,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.data.token) {
       localStorage.setItem('oss_session_token', res.data.token);
     }
-    setUser(res.data.user);
+    if (res.data.user) {
+      localStorage.setItem('oss_user_cached', JSON.stringify(res.data.user));
+      setUser(res.data.user);
+    }
+    window.dispatchEvent(new CustomEvent('oss:auth:login', { detail: { user: res.data.user } }));
     await refreshIntegrations();
   };
 
@@ -116,8 +139,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await axios.post('/api/auth/logout');
     } catch {}
     localStorage.removeItem('oss_session_token');
+    localStorage.removeItem('oss_user_cached');
     setUser(null);
     setIntegrations([]);
+    window.dispatchEvent(new CustomEvent('oss:auth:logout'));
   };
 
   const saveIntegration = async (data: {

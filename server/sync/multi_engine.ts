@@ -15,19 +15,8 @@ export async function syncUser(userId: string): Promise<{ status: string; synced
   const now = new Date().toISOString();
   const errors: string[] = [];
 
-  // Fallback for default local user if no integrations are configured yet
-  if (integrations.length === 0 && userId === 'default-local-user') {
-    const githubToken = process.env.GITHUB_TOKEN;
-    const githubUser = process.env.GITHUB_USERNAME || 'Guts1005';
-    const gitlabUser = process.env.GITLAB_USERNAME || 'Sharvin';
-    const gitlabHost = process.env.GITLAB_HOST || 'https://gitlab.rtems.org';
-
-    await Promise.allSettled([
-      syncGitHub(userId, githubToken, githubUser),
-      syncGitLab(userId, gitlabHost, gitlabUser)
-    ]);
-
-    db.prepare("INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('last_synced_at', ?)").run(now);
+  // If no integrations are configured for this user, nothing to sync
+  if (integrations.length === 0) {
     return { status: 'completed', syncedAt: now };
   }
 
@@ -91,10 +80,7 @@ export async function syncAllUsers() {
 
   try {
     const users = db.prepare('SELECT DISTINCT user_id FROM user_integrations').all() as any[];
-    
-    // Always sync default-local-user if present
     const userIds = new Set(users.map(u => u.user_id));
-    userIds.add('default-local-user');
 
     for (const userId of userIds) {
       try {
