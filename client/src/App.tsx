@@ -12,8 +12,35 @@ import { QuickGuideModal } from './components/QuickGuideModal';
 import { AuthModal } from './components/AuthModal';
 import { IntegrationsModal } from './components/IntegrationsModal';
 import { MobileBottomDock } from './components/MobileBottomDock';
+import { OfflineBanner } from './components/OfflineBanner';
 
 import { sendDesktopNotification } from './utils/notifications';
+
+// Sync mobile hardware back button and browser navigation with modal lifecycles
+function useModalHistory(isOpen: boolean, onClose: () => void, modalKey: string) {
+  const wasOpenRef = React.useRef<boolean>(isOpen);
+
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      window.history.pushState({ modal: modalKey }, '');
+    } else if (!isOpen && wasOpenRef.current) {
+      if (window.history.state?.modal === modalKey) {
+        window.history.back();
+      }
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen, modalKey]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (wasOpenRef.current && window.history.state?.modal !== modalKey) {
+        onClose();
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [modalKey, onClose]);
+}
 
 const AppContent: React.FC = () => {
   const { user, integrations } = useAuth();
@@ -267,6 +294,14 @@ const AppContent: React.FC = () => {
     selectedId,
   ]);
 
+  // Sync mobile hardware back button and browser navigation with active modals
+  useModalHistory(Boolean(selectedId), () => setSelectedId(null), 'detail');
+  useModalHistory(isTrackModalOpen, () => setIsTrackModalOpen(false), 'track');
+  useModalHistory(isIntegrationsModalOpen, () => setIsIntegrationsModalOpen(false), 'vault');
+  useModalHistory(isGuideModalOpen, () => setIsGuideModalOpen(false), 'guide');
+  useModalHistory(isAuthModalOpen, () => setIsAuthModalOpen(false), 'auth');
+  useModalHistory(isCommandPaletteOpen, () => setIsCommandPaletteOpen(false), 'command-palette');
+
   const handleSelectItem = (id: string) => {
     setSelectedId(id);
     setContributions((prev) =>
@@ -279,6 +314,9 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex h-screen h-[100dvh] min-h-[100dvh] flex-col bg-base diffused-bg text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
+      {/* Offline Status / Reconnection Resilience Banner */}
+      <OfflineBanner />
+
       <div className="flex-1 flex flex-col min-h-0 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3.5">
         {/* Compact Single-Tier Header */}
         <HeaderTelemetry
@@ -387,6 +425,7 @@ const AppContent: React.FC = () => {
         onScrollToTop={() => {
           document.getElementById('stream-feed-container')?.scrollTo({ top: 0, behavior: 'smooth' });
         }}
+        onRefresh={handleSync}
         isFiltersOpen={isMobileFiltersOpen}
         onToggleFilters={() => setIsMobileFiltersOpen((prev) => !prev)}
         onOpenTrackModal={() => setIsTrackModalOpen(true)}

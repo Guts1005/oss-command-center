@@ -103,7 +103,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
         </div>
 
         {/* Center: Consolidated KPI Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar shrink-0 w-full lg:w-auto touch-pan-x">
+        <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar shrink-0 w-full lg:w-auto touch-pan-x snap-x-mandatory">
           <div className="inline-flex items-center p-0.5 rounded-lg border border-border-subtle bg-base/80 shadow-inner gap-1 relative w-max">
             {tabs.map((tab) => {
               const isActive =
@@ -124,7 +124,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                       onStatusChange(tab.id);
                     }
                   }}
-                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none whitespace-nowrap ${
+                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none whitespace-nowrap snap-start ${
                     isActive
                       ? tab.urgent
                         ? 'text-status-action-needed'

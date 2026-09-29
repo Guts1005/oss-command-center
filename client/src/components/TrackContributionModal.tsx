@@ -53,7 +53,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none">
           {/* Backdrop with smooth fade */}
           <motion.div
             key="track-modal-backdrop"
@@ -65,15 +65,18 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
             className="absolute inset-0 bg-black/85 backdrop-blur-sm"
           />
 
-          {/* Modal Container with Spring Physics */}
+          {/* Modal / Bottom Sheet Container with Spring Physics */}
           <motion.div
             key="track-modal-card"
-            initial={{ opacity: 0, scale: 0.93, y: 16 }}
+            initial={{ opacity: 0, scale: 0.96, y: 32 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 380, mass: 0.8 }}
-            className="relative w-full max-w-xl border border-border-subtle bg-surface p-5 sm:p-7 rounded-xl shadow-2xl z-10 max-h-[90dvh] overflow-y-auto"
+            exit={{ opacity: 0, scale: 0.96, y: 24 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 380, mass: 0.8 }}
+            className="relative w-full max-w-xl border-t sm:border border-border-subtle bg-surface p-5 sm:p-7 rounded-t-2xl sm:rounded-xl shadow-2xl z-10 max-h-[88dvh] overflow-y-auto pb-safe"
           >
+            {/* Mobile Tactile Grab Handle */}
+            <div className="sm:hidden w-12 h-1.5 bg-border-bold/80 rounded-full mx-auto mb-3 cursor-grab shrink-0" />
+
             {/* Dismiss Button */}
             <motion.button
               type="button"
@@ -81,7 +84,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               onClick={onClose}
-              className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
               title="Dismiss (Esc)"
             >
               <X className="h-4 w-4" />

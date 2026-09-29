@@ -107,7 +107,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none">
           {/* Backdrop with smooth fade */}
           <motion.div
             key="integrations-backdrop"
@@ -119,15 +119,17 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             className="absolute inset-0 bg-black/85 backdrop-blur-sm"
           />
 
-          {/* Modal Container with Spring Physics */}
+          {/* Modal / Bottom Sheet Container with Spring Physics */}
           <motion.div
             key="integrations-modal-card"
-            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            initial={{ opacity: 0, scale: 0.96, y: 32 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 380, mass: 0.85 }}
-            className="relative w-full max-w-3xl border border-border-subtle bg-surface p-4 sm:p-7 rounded-xl shadow-2xl z-10 max-h-[90dvh] overflow-y-auto"
+            exit={{ opacity: 0, scale: 0.96, y: 24 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 380, mass: 0.85 }}
+            className="relative w-full max-w-3xl border-t sm:border border-border-subtle bg-surface p-4 sm:p-7 rounded-t-2xl sm:rounded-xl shadow-2xl z-10 max-h-[88dvh] overflow-y-auto pb-safe"
           >
+            {/* Mobile Tactile Grab Handle */}
+            <div className="sm:hidden w-12 h-1.5 bg-border-bold/80 rounded-full mx-auto mb-3 cursor-grab shrink-0" />
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border-subtle/80 pb-4 mb-5 gap-2">
               <div className="flex items-center gap-3.5 min-w-0">

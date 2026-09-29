@@ -122,9 +122,19 @@ body {
 .diffused-bg {
   background-color: var(--color-bg-base);
   background-image: 
-    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(116, 157, 208, 0.08) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 30% at 50% 105%, rgba(74, 222, 128, 0.03) 0%, transparent 60%);
+    radial-gradient(circle 800px at 50% 0px, rgba(116, 157, 208, 0.09) 0%, transparent 70%),
+    radial-gradient(circle 600px at 15% 45%, rgba(146, 170, 209, 0.035) 0%, transparent 60%),
+    radial-gradient(circle 700px at 85% 65%, rgba(74, 222, 128, 0.025) 0%, transparent 60%);
   background-attachment: fixed;
+}
+
+/* Touch snap utilities for horizontal filter pill carousels */
+.snap-x-mandatory {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.snap-start {
+  scroll-snap-align: start;
 }
 
 /* Safe area insets for mobile dynamic viewports */

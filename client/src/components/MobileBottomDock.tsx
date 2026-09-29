@@ -4,6 +4,7 @@ import { Terminal, SlidersHorizontal, PlusCircle, Key } from 'lucide-react';
 
 interface MobileBottomDockProps {
   onScrollToTop: () => void;
+  onRefresh?: () => void;
   isFiltersOpen: boolean;
   onToggleFilters: () => void;
   onOpenTrackModal: () => void;
@@ -14,6 +15,7 @@ interface MobileBottomDockProps {
 
 export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
   onScrollToTop,
+  onRefresh,
   isFiltersOpen,
   onToggleFilters,
   onOpenTrackModal,
@@ -21,6 +23,18 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
   actionNeededCount = 0,
   integrationsCount = 0,
 }) => {
+  const lastTapRef = React.useRef<number>(0);
+
+  const handleStreamTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 350 && onRefresh) {
+      onRefresh();
+    } else {
+      onScrollToTop();
+    }
+    lastTapRef.current = now;
+  };
+
   return (
     <nav
       aria-label="Mobile Navigation Dock"
@@ -30,9 +44,9 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
       <motion.button
         type="button"
         whileTap={{ scale: 0.92 }}
-        onClick={onScrollToTop}
+        onClick={handleStreamTap}
         className="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-text-muted hover:text-white transition-colors cursor-pointer relative"
-        title="Scroll to top of contribution stream"
+        title="Tap to scroll to top, double-tap to refresh stream"
       >
         <div className="relative">
           <Terminal className="h-5 w-5" />
