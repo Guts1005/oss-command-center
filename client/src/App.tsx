@@ -20,6 +20,7 @@ const AppContent: React.FC = () => {
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Filters state
@@ -28,6 +29,7 @@ const AppContent: React.FC = () => {
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [scopeFilter, setScopeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('recent');
 
   // Modals state
@@ -39,6 +41,15 @@ const AppContent: React.FC = () => {
   const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState<boolean>(false);
 
   const prevItemsRef = React.useRef<Map<string, { status: string; action_needed: string }>>(new Map());
+  const isInitialMount = React.useRef<boolean>(true);
+
+  // Debounce search query to prevent input jitter
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Fetch telemetry stats
   const fetchStats = useCallback(async () => {
@@ -50,29 +61,40 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
-  // Fetch contributions matching current filters
-  const fetchContributions = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const res = await axios.get('/api/contributions', {
-        params: {
-          status: statusFilter,
-          platform: platformFilter,
-          action: actionFilter,
-          scope: scopeFilter !== 'all' ? scopeFilter : undefined,
-          search: searchQuery || undefined,
-          sort: sortBy,
-        },
-      });
-      setContributions(Array.isArray(res.data) ? res.data : (res.data?.items || []));
-    } catch (err) {
-      console.error('Failed to fetch contributions:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [statusFilter, platformFilter, actionFilter, scopeFilter, searchQuery, sortBy]);
+  // Fetch contributions matching current filters without unmounting the list
+  const fetchContributions = useCallback(
+    async (isInitial = false) => {
+      try {
+        if (isInitial) {
+          setIsLoading(true);
+        } else {
+          setIsRefreshing(true);
+        }
+        const res = await axios.get('/api/contributions', {
+          params: {
+            status: statusFilter,
+            platform: platformFilter,
+            action: actionFilter,
+            scope: scopeFilter !== 'all' ? scopeFilter : undefined,
+            search: debouncedSearch || undefined,
+            sort: sortBy,
+          },
+        });
+        setContributions(Array.isArray(res.data) ? res.data : (res.data?.items || []));
+      } catch (err) {
+        console.error('Failed to fetch contributions:', err);
+      } finally {
+        if (isInitial) {
+          setIsLoading(false);
+        } else {
+          setIsRefreshing(false);
+        }
+      }
+    },
+    [statusFilter, platformFilter, actionFilter, scopeFilter, debouncedSearch, sortBy]
+  );
 
-  // Initial load and user change reload
+  // Initial load and filter change updates
   useEffect(() => {
     if (!user) {
       setContributions([]);
@@ -83,13 +105,20 @@ const AppContent: React.FC = () => {
         merged: 0,
         closed: 0,
         unreadCount: 0,
-        lastSync: null
+        lastSync: null,
       });
       setIsLoading(false);
+      isInitialMount.current = true;
       return;
     }
-    fetchStats();
-    fetchContributions();
+
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchStats();
+      fetchContributions(true);
+    } else {
+      fetchContributions(false);
+    }
   }, [fetchStats, fetchContributions, user]);
 
   // Handle immediate state purge on logout
@@ -236,6 +265,16 @@ const AppContent: React.FC = () => {
     selectedId,
   ]);
 
+  const handleSelectItem = (id: string) => {
+    setSelectedId(id);
+    setContributions((prev) =>
+      prev.map((c) => (c.id === id && c.unread === 1 ? { ...c, unread: 0 } : c))
+    );
+    setStats((prev) =>
+      prev && prev.unreadCount > 0 ? { ...prev, unreadCount: prev.unreadCount - 1 } : prev
+    );
+  };
+
   return (
     <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
       <div className="flex-1 flex flex-col min-h-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5">
@@ -272,8 +311,9 @@ const AppContent: React.FC = () => {
           <ContributionList
             items={contributions}
             selectedId={selectedId}
-            onSelectItem={(id) => setSelectedId(id)}
+            onSelectItem={handleSelectItem}
             isLoading={isLoading}
+            isRefreshing={isRefreshing}
             onOpenTrackModal={() => setIsTrackModalOpen(true)}
             onResetFilters={handleResetFilters}
             isAuthenticated={Boolean(user)}
@@ -288,7 +328,7 @@ const AppContent: React.FC = () => {
         onClose={() => setSelectedId(null)}
         onItemUpdated={() => {
           fetchStats();
-          fetchContributions();
+          fetchContributions(false);
         }}
       />
 

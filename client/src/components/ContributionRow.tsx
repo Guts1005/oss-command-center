@@ -102,20 +102,24 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
     return <span className="text-text-primary font-bold">{rawTitle}</span>;
   };
 
-  // Left rail styling based on state
-  let borderLeftStyle = 'border-l-border-subtle';
+  // Perimeter styling and subtle ambient glow across all edges
+  let cardGlowStyle = 'border-border-subtle hover:border-accent-sapphire/60';
   let surfaceOpacity = 'opacity-100';
 
   if (item.action_needed === 'push-changes') {
-    borderLeftStyle = 'border-l-4 border-l-status-action-needed bg-status-action-needed/[0.04]';
+    // Subtle ambient rose perimeter glow across all edges
+    cardGlowStyle =
+      'border-rose-500/35 bg-gradient-to-r from-rose-500/[0.04] to-transparent shadow-[0_0_14px_-2px_rgba(244,63,94,0.18)] hover:shadow-[0_0_20px_-1px_rgba(244,63,94,0.26)] hover:border-rose-500/50';
   } else if (item.action_needed === 'reply') {
-    borderLeftStyle = 'border-l-4 border-l-status-awaiting-reply bg-status-awaiting-reply/[0.04]';
+    // Subtle ambient amber perimeter glow across all edges
+    cardGlowStyle =
+      'border-amber-500/35 bg-gradient-to-r from-amber-500/[0.04] to-transparent shadow-[0_0_14px_-2px_rgba(245,158,11,0.16)] hover:shadow-[0_0_20px_-1px_rgba(245,158,11,0.24)] hover:border-amber-500/50';
   } else if (normalizedStatus === 'merged') {
-    borderLeftStyle = 'border-l-2 border-l-status-merged/40';
-    surfaceOpacity = 'opacity-70 hover:opacity-100';
+    cardGlowStyle = 'border-emerald-500/25 hover:border-emerald-500/40';
+    surfaceOpacity = 'opacity-75 hover:opacity-100';
   } else if (normalizedStatus === 'closed') {
-    borderLeftStyle = 'border-l-2 border-l-text-dim';
-    surfaceOpacity = 'opacity-55 hover:opacity-100';
+    cardGlowStyle = 'border-border-subtle/50 hover:border-border-subtle';
+    surfaceOpacity = 'opacity-60 hover:opacity-95';
   }
 
   // Only show [NEW] if unread AND not merged/closed
@@ -124,10 +128,10 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
   return (
     <div
       onClick={onClick}
-      className={`group border rounded-lg p-3.5 md:p-4 transition-all chrome-card cursor-pointer select-none mb-2.5 ${borderLeftStyle} ${surfaceOpacity} ${
+      className={`group border rounded-lg p-3.5 md:p-4 transition-all duration-200 chrome-card cursor-pointer select-none mb-2.5 ${cardGlowStyle} ${surfaceOpacity} ${
         isSelected
-          ? 'border-accent-sapphire bg-surface-active ring-1 ring-accent-sapphire/80 shadow-md translate-x-1'
-          : 'border-border-subtle hover:bg-surface-active hover:border-accent-sapphire/70'
+          ? 'border-accent-sapphire bg-surface-active ring-1 ring-accent-sapphire/80 shadow-[0_0_18px_-2px_rgba(116,157,208,0.25)] translate-x-0.5'
+          : 'hover:bg-surface-active'
       }`}
     >
       <div className="flex flex-col gap-2">

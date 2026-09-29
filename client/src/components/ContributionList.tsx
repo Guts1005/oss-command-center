@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Contribution } from '../types';
 import { ContributionRow } from './ContributionRow';
 import { PlusCircle, Search, Terminal, Shield, Lock } from 'lucide-react';
@@ -8,6 +9,7 @@ interface ContributionListProps {
   selectedId: string | null;
   onSelectItem: (id: string) => void;
   isLoading: boolean;
+  isRefreshing?: boolean;
   onOpenTrackModal?: () => void;
   onResetFilters?: () => void;
   isAuthenticated?: boolean;
@@ -19,6 +21,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   selectedId,
   onSelectItem,
   isLoading,
+  isRefreshing = false,
   onOpenTrackModal,
   onResetFilters,
   isAuthenticated = true,
@@ -158,27 +161,39 @@ export const ContributionList: React.FC<ContributionListProps> = ({
       </div>
 
       {/* Separated Card Rows with Stream Scroll Fade Mask */}
-      <div className="overflow-y-auto flex-1 pr-1 pb-2 stream-scroll-mask">
-        {items.map((item, idx) => {
-          const isHighlighted = idx === highlightedIndex;
-          const isSelected = item.id === selectedId;
+      <div className="overflow-y-auto flex-1 pr-1 pt-1.5 pb-2 stream-scroll-mask">
+        {isRefreshing && (
+          <div className="h-0.5 w-full bg-accent-sapphire/20 overflow-hidden mb-1.5 rounded-full">
+            <div className="h-full w-1/3 bg-accent-sapphire rounded-full animate-pulse" />
+          </div>
+        )}
+        <AnimatePresence mode="popLayout" initial={false}>
+          {items.map((item, idx) => {
+            const isHighlighted = idx === highlightedIndex;
+            const isSelected = item.id === selectedId;
 
-          return (
-            <div
-              key={item.id}
-              className={isHighlighted && !isSelected ? 'ring-1 ring-accent-sapphire/70 rounded-lg' : ''}
-            >
-              <ContributionRow
-                item={item}
-                isSelected={isSelected}
-                onClick={() => {
-                  setHighlightedIndex(idx);
-                  onSelectItem(item.id);
-                }}
-              />
-            </div>
-          );
-        })}
+            return (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
+                className={isHighlighted && !isSelected ? 'ring-1 ring-accent-sapphire/70 rounded-lg' : ''}
+              >
+                <ContributionRow
+                  item={item}
+                  isSelected={isSelected}
+                  onClick={() => {
+                    setHighlightedIndex(idx);
+                    onSelectItem(item.id);
+                  }}
+                />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
 
       {/* Sapphire Console Footer HUD (Chrome Surface with Top Highlight) */}

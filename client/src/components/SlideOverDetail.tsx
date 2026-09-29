@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Contribution, ActivityEvent } from '../types';
 import { X, ExternalLink, MessageSquare, Check, AlertTriangle, CheckCircle2, Clock, Bot, User } from 'lucide-react';
 import axios from 'axios';
@@ -30,7 +31,6 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
         setData(res.data);
         setNotes(res.data.item.notes || '');
         setActionNeeded(res.data.item.action_needed || 'none');
-        onItemUpdated(); // update unread count on parent
       })
       .catch((err) => console.error('Failed to load detail:', err))
       .finally(() => setLoading(false));
@@ -54,8 +54,6 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
       setSavingNotes(false);
     }
   };
-
-  if (!itemId) return null;
 
   const getActionGuidance = (item: Contribution) => {
     const status = (item.status === 'opened' ? 'open' : item.status).toLowerCase();
@@ -115,16 +113,33 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
   };
 
   return (
-    <>
-      {/* Backdrop for easy dismiss on click outside */}
-      <div
-        onClick={onClose}
-        className="fixed inset-0 bg-black/45 backdrop-blur-[1px] z-40 transition-opacity cursor-pointer"
-        title="Click to dismiss inspector"
-      />
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-2xl transition-transform animate-in slide-in-from-right duration-150 select-none">
-        {/* Header Bar */}
-        <div className="flex items-center justify-between border-b border-border-subtle bg-base px-6 py-4">
+    <AnimatePresence>
+      {Boolean(itemId) && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop with smooth fade */}
+          <motion.div
+            key="drawer-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/60 backdrop-blur-[2px] cursor-pointer"
+            title="Click to dismiss inspector"
+          />
+
+          {/* Drawer container with slide-in from right */}
+          <div className="fixed inset-y-0 right-0 flex max-w-full pl-6 sm:pl-10">
+            <motion.div
+              key="drawer-panel"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 320, mass: 0.75 }}
+              className="flex w-screen max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-[-16px_0_40px_rgba(0,0,0,0.7)] select-none"
+            >
+              {/* Header Bar */}
+              <div className="flex items-center justify-between border-b border-border-subtle bg-base px-6 py-4">
         <div className="flex items-center gap-2.5">
           <span className="text-text-muted text-xs font-mono font-bold uppercase tracking-wider">[INSPECTOR]:</span>
           <span className="font-mono font-bold text-white text-base md:text-lg">{itemId}</span>
@@ -347,7 +362,10 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
           </div>
         </div>
       ) : null}
-      </div>
-    </>
+            </motion.div>
+          </div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 };
