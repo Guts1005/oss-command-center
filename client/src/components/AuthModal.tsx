@@ -52,7 +52,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none">
           {/* Backdrop with smooth fade */}
           <motion.div
             key="auth-modal-backdrop"
@@ -64,31 +64,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             className="absolute inset-0 bg-black/85 backdrop-blur-sm"
           />
 
-          {/* Modal Container with Spring Physics */}
+          {/* Modal / Bottom Sheet Container with Spring Physics */}
           <motion.div
             key="auth-modal-card"
-            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            initial={{ opacity: 0, scale: 0.96, y: 32 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
-            transition={{ type: 'spring', damping: 26, stiffness: 380, mass: 0.8 }}
-            className="relative w-full max-w-lg border border-border-subtle bg-surface p-7 rounded-xl shadow-2xl z-10"
+            exit={{ opacity: 0, scale: 0.96, y: 24 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 380, mass: 0.8 }}
+            className="relative w-full max-w-lg border-t sm:border border-border-subtle bg-surface p-5 sm:p-7 rounded-t-2xl sm:rounded-xl shadow-2xl z-10 max-h-[90dvh] overflow-y-auto pb-safe"
           >
+            {/* Mobile Tactile Grab Handle */}
+            <div className="sm:hidden w-12 h-1.5 bg-border-bold/80 rounded-full mx-auto mb-3 cursor-grab shrink-0" />
+
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border-subtle/80 pb-4 mb-5">
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
-                  <Shield className="h-5 w-5" />
+            <div className="flex items-center justify-between border-b border-border-subtle/80 pb-3 mb-4 sm:pb-4 sm:mb-5 pr-8 sm:pr-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base md:text-lg font-bold text-white font-sans tracking-wide">
                       {isRegister ? 'Register Tenant Account' : 'Authenticate Tenant'}
                     </h2>
-                    <span className="border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
+                    <span className="hidden sm:inline-block border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
                       [AUTH_GCM]
                     </span>
                   </div>
-                  <p className="text-xs md:text-sm text-text-muted font-sans mt-0.5">
+                  <p className="text-[11px] sm:text-xs md:text-sm text-text-muted font-sans mt-0.5">
                     Multi-tenant encrypted workspace &amp; credential vault.
                   </p>
                 </div>
@@ -99,55 +102,55 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 whileTap={{ scale: 0.9 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
+                className="absolute top-4 right-4 sm:static flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
                 title="Dismiss (Esc)"
               >
                 <X className="h-4 w-4" />
               </motion.button>
             </div>
 
-        {/* Mode Switch */}
-        <div className="grid grid-cols-2 gap-2 border border-border-subtle bg-base p-1.5 rounded-lg mb-5 text-xs md:text-sm font-bold font-mono">
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegister(false);
-              setErrorMessage(null);
-            }}
-            className={`py-2.5 rounded text-center transition-all cursor-pointer ${
-              !isRegister
-                ? 'bg-surface-elevated text-white border border-accent-sapphire shadow-sm'
-                : 'text-text-muted hover:text-white'
-            }`}
-          >
-            [SIGN_IN]
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsRegister(true);
-              setErrorMessage(null);
-            }}
-            className={`py-2.5 rounded text-center transition-all cursor-pointer ${
-              isRegister
-                ? 'bg-surface-elevated text-white border border-accent-sapphire shadow-sm'
-                : 'text-text-muted hover:text-white'
-            }`}
-          >
-            [REGISTER_TENANT]
-          </button>
-        </div>
+            {/* Mode Switch */}
+            <div className="grid grid-cols-2 gap-2 border border-border-subtle bg-base p-1 rounded-lg mb-4 sm:mb-5 text-xs md:text-sm font-bold font-mono">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegister(false);
+                  setErrorMessage(null);
+                }}
+                className={`py-2 rounded text-center transition-all cursor-pointer ${
+                  !isRegister
+                    ? 'bg-surface-elevated text-white border border-accent-sapphire shadow-sm'
+                    : 'text-text-muted hover:text-white'
+                }`}
+              >
+                [SIGN_IN]
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRegister(true);
+                  setErrorMessage(null);
+                }}
+                className={`py-2 rounded text-center transition-all cursor-pointer ${
+                  isRegister
+                    ? 'bg-surface-elevated text-white border border-accent-sapphire shadow-sm'
+                    : 'text-text-muted hover:text-white'
+                }`}
+              >
+                [REGISTER_TENANT]
+              </button>
+            </div>
 
-        {/* Security Assurance Banner */}
-        <div className="mb-5 border border-border-subtle bg-surface-card p-3 rounded-lg text-xs text-text-whisper leading-relaxed">
-          <div className="flex items-center gap-1.5 font-bold text-status-merged mb-1">
-            <Lock className="h-3.5 w-3.5" />
-            <span>[ENCRYPTION AT REST: AES-256-GCM]</span>
-          </div>
-          <p className="text-xs text-text-muted">
-            All linked platform tokens are encrypted with authenticated AES-256-GCM using unique IVs. Zero plaintext credentials touch disk.
-          </p>
-        </div>
+            {/* Security Assurance Banner (Compact on mobile) */}
+            <div className="mb-4 sm:mb-5 border border-border-subtle bg-surface-card p-2.5 sm:p-3 rounded-lg text-xs text-text-whisper leading-relaxed">
+              <div className="flex items-center gap-1.5 font-bold text-status-merged">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                <span className="text-[11px] sm:text-xs">[ENCRYPTION AT REST: AES-256-GCM]</span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 hidden sm:block">
+                All linked platform tokens are encrypted with authenticated AES-256-GCM using unique IVs. Zero plaintext credentials touch disk.
+              </p>
+            </div>
 
         {/* Error Alert */}
         {errorMessage && (

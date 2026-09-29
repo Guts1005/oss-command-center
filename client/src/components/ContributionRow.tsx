@@ -176,13 +176,13 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
             {item.action_needed === 'reply' && (
               <span className="flex items-center gap-1 border border-status-awaiting-reply/80 bg-status-awaiting-reply/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-awaiting-reply shadow-sm">
                 <MessageSquare className="h-3 w-3" />
-                <span>[ACTION: OWE_REPLY]</span>
+                <span>[OWE_REPLY]</span>
               </span>
             )}
             {item.action_needed === 'push-changes' && (
               <span className="flex items-center gap-1 border border-status-action-needed/80 bg-status-action-needed/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-action-needed shadow-sm">
                 <AlertTriangle className="h-3 w-3" />
-                <span>[ACTION: REQ_CHANGES]</span>
+                <span>[REQ_CHANGES]</span>
               </span>
             )}
             {getStatusBadge(normalizedStatus)}
@@ -276,7 +276,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
         </div>
 
         {/* Line 2: Scannable Title with Conventional Commit Formatting */}
-        <div className="text-sm md:text-base leading-snug font-sans group-hover:text-text-whisper transition-colors">
+        <div className="text-sm md:text-base leading-snug font-sans break-words overflow-hidden group-hover:text-text-whisper transition-colors">
           {parseTitle(item.title)}
         </div>
 

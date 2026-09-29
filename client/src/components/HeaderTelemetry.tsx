@@ -79,63 +79,64 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   return (
     <header className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-3 py-2 sm:px-5 sm:py-2.5">
       {/* Mobile Top Bar (< sm): Slim single row with zero screen crowding */}
-      <div className="flex sm:hidden items-center justify-between gap-2">
-        {/* Left: Brand & Online Pill */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire shadow-inner">
-            <GitMerge className="h-4 w-4" />
+      <div className="flex sm:hidden items-center justify-between gap-1.5">
+        {/* Left: Brand & Online Indicator (Never truncated) */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire shadow-inner">
+            <GitMerge className="h-3.5 w-3.5" />
           </div>
-          <div className="flex items-center gap-1.5 min-w-0">
-            <h1 className="text-xs font-extrabold tracking-tight text-white uppercase font-sans truncate">
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-xs font-extrabold tracking-tight text-white uppercase font-sans whitespace-nowrap">
               OSS COMMAND
             </h1>
-            <span className="border border-status-merged/50 bg-status-merged/15 px-1.5 py-0.5 rounded text-[10px] font-bold font-mono text-status-merged shrink-0">
-              ONLINE
-            </span>
+            <span
+              className="h-2 w-2 rounded-full bg-status-merged shrink-0 shadow-[0_0_8px_rgba(74,222,128,0.8)] animate-pulse"
+              title="Telemetry Online"
+            />
           </div>
         </div>
 
         {/* Right: Quick Utilities */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           {/* Quick Sync */}
           <button
             onClick={onSync}
             disabled={isSyncing}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-border-subtle bg-surface-card text-text-muted hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+            className="flex items-center justify-center h-7 w-7 rounded-lg border border-border-subtle bg-surface-card text-text-muted hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
             title="Poll upstream APIs"
           >
-            <RefreshCw className={`h-3.5 w-3.5 text-accent-glacial ${isSyncing ? 'animate-spin text-accent-sapphire' : ''}`} />
+            <RefreshCw className={`h-3 w-3 text-accent-glacial ${isSyncing ? 'animate-spin text-accent-sapphire' : ''}`} />
           </button>
 
           {/* Sound Chime Toggle */}
           <button
             onClick={handleToggleSound}
-            className={`flex items-center justify-center h-8 w-8 rounded-lg border border-border-subtle bg-surface-card transition-colors cursor-pointer ${
+            className={`flex items-center justify-center h-7 w-7 rounded-lg border border-border-subtle bg-surface-card transition-colors cursor-pointer ${
               soundEnabled ? 'text-status-merged bg-status-merged/10' : 'text-text-muted hover:text-white'
             }`}
             title={soundEnabled ? 'Chime active' : 'Chime muted'}
           >
-            {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+            {soundEnabled ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
           </button>
 
           {/* Tenant Session Pill */}
           {user ? (
             <button
               onClick={onOpenIntegrationsModal}
-              className="flex items-center gap-1 h-8 px-2 rounded-lg border border-border-subtle bg-surface-card text-xs font-mono text-white cursor-pointer"
+              className="flex items-center gap-1 h-7 px-2 rounded-lg border border-border-subtle bg-surface-card text-xs font-mono text-white cursor-pointer"
               title={`@${user.username} - View Accounts`}
             >
-              <UserIcon className="h-3.5 w-3.5 text-accent-sapphire" />
-              <span className="max-w-[65px] truncate text-[11px] font-bold">@{user.username}</span>
+              <UserIcon className="h-3 w-3 text-accent-sapphire shrink-0" />
+              <span className="max-w-[70px] truncate text-[11px] font-bold">@{user.username}</span>
             </button>
           ) : (
             <button
               onClick={onOpenAuthModal}
-              className="flex items-center gap-1 h-8 px-2.5 rounded-lg border border-accent-sapphire bg-accent-sapphire/20 text-xs font-mono font-bold text-text-whisper cursor-pointer"
+              className="flex items-center gap-1 h-7 px-2 rounded-lg border border-accent-sapphire bg-accent-sapphire/20 text-xs font-mono font-bold text-text-whisper cursor-pointer"
               title="Sign in"
             >
-              <Lock className="h-3 w-3 text-accent-sapphire" />
-              <span>AUTH</span>
+              <Lock className="h-3 w-3 text-accent-sapphire shrink-0" />
+              <span className="text-[11px]">AUTH</span>
             </button>
           )}
         </div>

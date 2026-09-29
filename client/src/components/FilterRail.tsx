@@ -102,8 +102,8 @@ export const FilterRail: React.FC<FilterRailProps> = ({
           )}
         </div>
 
-        {/* Center: Consolidated KPI Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar shrink-0 w-full lg:w-auto touch-pan-x snap-x-mandatory">
+        {/* Desktop / Tablet View (>= sm): Preserved Single Horizontal Flex Bar */}
+        <div className="hidden sm:flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar shrink-0 w-full lg:w-auto">
           <div className="inline-flex items-center p-0.5 rounded-lg border border-border-subtle bg-base/80 shadow-inner gap-1 relative w-max">
             {tabs.map((tab) => {
               const isActive =
@@ -113,7 +113,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
 
               return (
                 <button
-                  key={tab.id}
+                  key={`desktop-${tab.id}`}
                   type="button"
                   onClick={() => {
                     if (tab.id === 'action-needed') {
@@ -124,7 +124,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                       onStatusChange(tab.id);
                     }
                   }}
-                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none whitespace-nowrap snap-start ${
+                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none whitespace-nowrap ${
                     isActive
                       ? tab.urgent
                         ? 'text-status-action-needed'
@@ -164,6 +164,62 @@ export const FilterRail: React.FC<FilterRailProps> = ({
               );
             })}
           </div>
+        </div>
+
+        {/* Mobile View (< sm): Responsive 3-Col x 2-Row Grid with STRICTLY ZERO Horizontal Scroll */}
+        <div className="sm:hidden grid grid-cols-3 gap-1.5 p-1 rounded-lg border border-border-subtle bg-base/80 shadow-inner w-full">
+          {tabs.map((tab) => {
+            const isActive =
+              tab.id === 'action-needed'
+                ? actionFilter !== 'all'
+                : actionFilter === 'all' && statusFilter === tab.id;
+
+            const mobileLabel =
+              tab.id === 'action-needed'
+                ? 'ACTION'
+                : tab.id === 'active'
+                ? 'REVIEW'
+                : tab.label;
+
+            return (
+              <button
+                key={`mobile-${tab.id}`}
+                type="button"
+                onClick={() => {
+                  if (tab.id === 'action-needed') {
+                    onStatusChange('all');
+                    onActionChange('action-needed');
+                  } else {
+                    onActionChange('all');
+                    onStatusChange(tab.id);
+                  }
+                }}
+                className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-md text-[11px] font-bold font-mono transition-colors text-center w-full relative select-none cursor-pointer ${
+                  isActive
+                    ? tab.urgent
+                      ? 'border border-status-action-needed/80 bg-status-action-needed/25 text-status-action-needed ring-1 ring-status-action-needed'
+                      : 'border border-accent-sapphire bg-accent-sapphire/25 text-white ring-1 ring-accent-sapphire'
+                    : tab.urgent
+                    ? 'border border-status-action-needed/40 bg-base text-status-action-needed/80 hover:text-status-action-needed'
+                    : 'border border-border-subtle/50 bg-base/60 text-text-muted hover:text-white'
+                }`}
+              >
+                {tab.urgent && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-status-action-needed animate-pulse shrink-0" />
+                )}
+                <span className="truncate">{mobileLabel}</span>
+                {tab.count !== null && (
+                  <span
+                    className={`text-[10px] px-1 py-0.2 rounded font-extrabold shrink-0 ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-surface-elevated text-text-muted'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Right: Auxiliary Filters on Desktop / Tablet (>= sm) */}
@@ -237,10 +293,10 @@ export const FilterRail: React.FC<FilterRailProps> = ({
             animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
             exit={{ opacity: 0, height: 0, marginTop: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="sm:hidden border-t border-border-subtle/70 pt-2 flex flex-wrap items-center justify-between gap-2 overflow-hidden"
+            className="sm:hidden border-t border-border-subtle/70 pt-2 flex flex-col gap-2 overflow-hidden w-full"
           >
-            {/* Scope Split */}
-            <div className="inline-flex items-center h-8 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono relative">
+            {/* Row 1: Scope Split (Full Width Segmented Control) */}
+            <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono w-full">
               {[
                 { id: 'all', label: 'ALL' },
                 { id: 'external', label: 'EXT' },
@@ -249,10 +305,10 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                 const isSelected = scopeFilter === sc.id;
                 return (
                   <button
-                    key={sc.id}
+                    key={`mob-scope-${sc.id}`}
                     type="button"
                     onClick={() => onScopeChange(sc.id)}
-                    className={`relative px-2.5 py-1 rounded-md font-bold transition-colors cursor-pointer select-none text-xs z-10 ${
+                    className={`relative py-1.5 rounded-md font-bold transition-colors cursor-pointer select-none text-xs text-center z-10 ${
                       isSelected ? 'text-white' : 'text-text-muted hover:text-white'
                     }`}
                   >
@@ -269,14 +325,15 @@ export const FilterRail: React.FC<FilterRailProps> = ({
               })}
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Row 2: Platform & Sort Controls in 2 Equal Columns */}
+            <div className="grid grid-cols-2 gap-2 w-full">
               {/* Platform Selector */}
-              <div className="flex items-center h-8 border border-border-subtle bg-base/80 rounded-lg px-2 text-xs font-mono text-text-muted">
-                <span className="mr-1 text-text-muted text-[11px]">PLAT:</span>
+              <div className="flex items-center justify-between h-9 border border-border-subtle bg-base/80 rounded-lg px-2.5 text-xs font-mono text-text-muted w-full">
+                <span className="text-text-muted text-[11px] font-bold">PLATFORM:</span>
                 <select
                   value={platformFilter}
                   onChange={(e) => onPlatformChange(e.target.value)}
-                  className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs"
+                  className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs text-right"
                 >
                   <option value="all" className="bg-surface text-white">ALL</option>
                   <option value="github" className="bg-surface text-white">GH</option>
@@ -285,12 +342,12 @@ export const FilterRail: React.FC<FilterRailProps> = ({
               </div>
 
               {/* Sort Selector */}
-              <div className="flex items-center h-8 border border-border-subtle bg-base/80 rounded-lg px-2 text-xs font-mono text-text-muted">
-                <span className="mr-1 text-text-muted text-[11px]">SORT:</span>
+              <div className="flex items-center justify-between h-9 border border-border-subtle bg-base/80 rounded-lg px-2.5 text-xs font-mono text-text-muted w-full">
+                <span className="text-text-muted text-[11px] font-bold">SORT:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => onSortChange(e.target.value)}
-                  className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs"
+                  className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs text-right"
                 >
                   <option value="recent" className="bg-surface text-white">RECENT</option>
                   <option value="unread" className="bg-surface text-white">UNREAD</option>
