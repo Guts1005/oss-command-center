@@ -161,7 +161,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
       </div>
 
       {/* Separated Card Rows with Stream Scroll Fade Mask */}
-      <div className="overflow-y-auto flex-1 pr-1 pt-1.5 pb-2 stream-scroll-mask">
+      <div id="stream-feed-container" className="overflow-y-auto flex-1 pr-1 pt-1.5 pb-24 sm:pb-2 stream-scroll-mask">
         {isRefreshing && (
           <div className="h-0.5 w-full bg-accent-sapphire/20 overflow-hidden mb-1.5 rounded-full">
             <div className="h-full w-1/3 bg-accent-sapphire rounded-full animate-pulse" />
@@ -196,8 +196,8 @@ export const ContributionList: React.FC<ContributionListProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Sapphire Console Footer HUD (Chrome Surface with Top Highlight) */}
-      <div className="border border-border-subtle chrome-surface px-4 py-2 rounded-lg shadow-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 font-mono text-xs text-text-muted select-none mt-2">
+      {/* Sapphire Console Footer HUD (Chrome Surface with Top Highlight, Desktop only) */}
+      <div className="hidden sm:flex border border-border-subtle chrome-surface px-4 py-2 rounded-lg shadow-card flex-col sm:flex-row sm:items-center sm:justify-between gap-2 font-mono text-xs text-text-muted select-none mt-2">
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-white font-bold">[CONSOLE]</span>
           <span>

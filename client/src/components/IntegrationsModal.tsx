@@ -126,20 +126,20 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ type: 'spring', damping: 26, stiffness: 380, mass: 0.85 }}
-            className="relative w-full max-w-3xl border border-border-subtle bg-surface p-7 rounded-xl shadow-2xl z-10 max-h-[90vh] overflow-y-auto"
+            className="relative w-full max-w-3xl border border-border-subtle bg-surface p-4 sm:p-7 rounded-xl shadow-2xl z-10 max-h-[90dvh] overflow-y-auto"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-border-subtle/80 pb-4 mb-5">
-              <div className="flex items-center gap-3.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
+            <div className="flex items-center justify-between border-b border-border-subtle/80 pb-4 mb-5 gap-2">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
                   <Key className="h-5 w-5" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide leading-snug">
                       Linked Upstream Accounts
                     </h2>
-                    <span className="border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
+                    <span className="hidden sm:inline-block border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
                       [TELEMETRY_VAULT]
                     </span>
                   </div>
@@ -154,7 +154,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                 whileTap={{ scale: 0.9 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
                 title="Dismiss (Esc)"
               >
                 <X className="h-4 w-4" />
@@ -244,23 +244,23 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                         transition={{ type: 'spring', damping: 25, stiffness: 350 }}
                         className="border border-border-subtle bg-surface-card p-4 rounded-lg transition-all text-xs md:text-sm shadow-sm"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3.5">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-bold bg-base text-text-primary">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-text-primary">
                               {acc.platform === 'github' ? (
                                 <Github className="h-5 w-5" />
                               ) : (
                                 <Gitlab className="h-5 w-5 text-[#fc6d26]" />
                               )}
                             </div>
-                            <div>
-                              <div className="flex items-center gap-2.5">
-                                <span className="font-mono text-base font-bold text-white">{acc.username}</span>
-                                <span className="border border-border-subtle bg-base px-2 py-0.5 rounded text-xs font-mono uppercase font-bold text-text-muted">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
+                                <span className="font-mono text-sm sm:text-base font-bold text-white truncate">{acc.username}</span>
+                                <span className="border border-border-subtle bg-base px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-mono uppercase font-bold text-text-muted">
                                   [{acc.platform}]
                                 </span>
                                 {acc.has_token && (
-                                  <span className="border border-status-merged/60 bg-status-merged/15 px-2 py-0.5 rounded text-xs font-mono text-status-merged font-bold">
+                                  <span className="border border-status-merged/60 bg-status-merged/15 px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-mono text-status-merged font-bold">
                                     [AES_ENCRYPTED]
                                   </span>
                                 )}

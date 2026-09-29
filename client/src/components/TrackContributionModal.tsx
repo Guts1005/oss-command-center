@@ -72,7 +72,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ type: 'spring', damping: 26, stiffness: 380, mass: 0.8 }}
-            className="relative w-full max-w-xl border border-border-subtle bg-surface p-7 rounded-xl shadow-2xl z-10"
+            className="relative w-full max-w-xl border border-border-subtle bg-surface p-5 sm:p-7 rounded-xl shadow-2xl z-10 max-h-[90dvh] overflow-y-auto"
           >
             {/* Dismiss Button */}
             <motion.button
@@ -88,16 +88,16 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
             </motion.button>
 
             {/* Modal Header */}
-            <div className="flex items-center gap-3.5 mb-6 border-b border-border-subtle/80 pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
+            <div className="flex items-center gap-3.5 mb-6 border-b border-border-subtle/80 pb-4 pr-9">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
                 <PlusCircle className="h-5 w-5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-base md:text-lg font-bold text-white tracking-wide font-sans">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-base md:text-lg font-bold text-white tracking-wide font-sans leading-snug">
                     Track Upstream Contribution
                   </h2>
-                  <span className="border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
+                  <span className="hidden sm:inline-block border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
                     [INGEST_URL]
                   </span>
                 </div>

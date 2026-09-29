@@ -118,3 +118,32 @@ body {
   -webkit-mask-image: linear-gradient(to bottom, #000 0px, #000 calc(100% - 28px), transparent 100%);
 }
 
+/* Ambient diffused background mesh: subtle sapphire and emerald atmospheric light */
+.diffused-bg {
+  background-color: var(--color-bg-base);
+  background-image: 
+    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(116, 157, 208, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 30% at 50% 105%, rgba(74, 222, 128, 0.03) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Safe area insets for mobile dynamic viewports */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Touch manipulation to eliminate 300ms mobile tap delay */
+button, a, input, select {
+  touch-action: manipulation;
+}
+
+/* Prevent iOS Safari auto-zoom on input focus */
+@media (max-width: 639px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+

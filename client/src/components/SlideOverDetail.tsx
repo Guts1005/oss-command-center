@@ -129,50 +129,55 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
           />
 
           {/* Drawer container with slide-in from right */}
-          <div className="fixed inset-y-0 right-0 flex max-w-full pl-6 sm:pl-10">
+          <div className="fixed inset-y-0 right-0 flex max-w-full pl-0 sm:pl-10 w-full sm:w-auto">
             <motion.div
               key="drawer-panel"
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 320, mass: 0.75 }}
-              className="flex w-screen max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-[-16px_0_40px_rgba(0,0,0,0.7)] select-none"
+              className="flex w-full sm:w-screen max-w-full sm:max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-[-16px_0_40px_rgba(0,0,0,0.7)] select-none pt-safe pb-safe"
             >
               {/* Header Bar */}
-              <div className="flex items-center justify-between border-b border-border-subtle bg-base px-6 py-4">
-        <div className="flex items-center gap-2.5">
-          <span className="text-text-muted text-xs font-mono font-bold uppercase tracking-wider">[INSPECTOR]:</span>
-          <span className="font-mono font-bold text-white text-base md:text-lg">{itemId}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          {data?.item?.url && (
-            <a
-              href={data.item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 border border-accent-sapphire bg-accent-sapphire/20 px-3.5 py-1.5 rounded-md text-xs md:text-sm font-mono font-bold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer"
-            >
-              <span>[OPEN UPSTREAM]</span>
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-all cursor-pointer"
-            title="Dismiss Inspector (Esc)"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+              <div className="flex items-center justify-between border-b border-border-subtle bg-base px-4 py-3 sm:px-6 sm:py-4 gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-text-muted text-xs font-mono font-bold uppercase tracking-wider shrink-0">[INSPECTOR]:</span>
+                  <span className="font-mono font-bold text-white text-sm sm:text-base truncate">{itemId}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {data?.item?.url && (
+                    <a
+                      href={data.item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 border border-accent-sapphire bg-accent-sapphire/20 px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-md text-xs font-mono font-bold text-text-whisper hover:bg-accent-sapphire/30 transition-colors cursor-pointer shrink-0"
+                    >
+                      <span className="hidden sm:inline">[OPEN UPSTREAM]</span>
+                      <span className="sm:hidden">[OPEN]</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                    onClick={onClose}
+                    className="flex h-9 w-9 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer shrink-0"
+                    title="Dismiss Inspector (Esc)"
+                  >
+                    <X className="h-4 w-4" />
+                  </motion.button>
+                </div>
+              </div>
 
-      {loading ? (
-        <div className="flex flex-1 items-center justify-center text-sm font-mono text-text-muted">
-          <Clock className="h-5 w-5 animate-spin mr-3 text-accent-sapphire" />
-          <span>PARSING TELEMETRY LEDGER...</span>
-        </div>
-      ) : data ? (
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {loading ? (
+                <div className="flex flex-1 items-center justify-center text-sm font-mono text-text-muted">
+                  <Clock className="h-5 w-5 animate-spin mr-3 text-accent-sapphire" />
+                  <span>PARSING TELEMETRY LEDGER...</span>
+                </div>
+              ) : data ? (
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Spec-Sheet Header & Metadata Grid */}
           <div className="border border-border-subtle bg-surface-card p-5 rounded-lg shadow-card">
             <h2 className="text-lg md:text-xl font-bold text-white leading-snug font-sans mb-4">

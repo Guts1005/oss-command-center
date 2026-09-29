@@ -135,8 +135,68 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
       }`}
     >
       <div className="flex flex-col gap-2">
-        {/* Line 1: Header (Identifiers Left, Status & Action Right) */}
-        <div className="flex items-center justify-between gap-3">
+        {/* Mobile Header (Tier 1: Repo + Relative Time, Tier 2: Action & Status Badges) */}
+        <div className="flex flex-col sm:hidden gap-1.5">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+              {showNewIndicator && (
+                <span
+                  className="border border-amber-500/80 bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold px-1.5 py-0.2 rounded tracking-wide shadow-sm shrink-0"
+                  title="Telemetry update pending inspection"
+                >
+                  [NEW]
+                </span>
+              )}
+              <span
+                className={`px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase border rounded shrink-0 ${
+                  item.platform === 'github'
+                    ? 'border-border-bold text-text-whisper bg-base'
+                    : 'border-[#fc6d26]/70 text-[#fc6d26] bg-[#fc6d26]/15'
+                }`}
+              >
+                {item.platform === 'github' ? '[GH]' : '[GL]'}
+              </span>
+              {item.type === 'pr' ? (
+                <GitPullRequest className="h-3.5 w-3.5 text-accent-glacial shrink-0" />
+              ) : (
+                <CircleDot className="h-3.5 w-3.5 text-accent-glacial shrink-0" />
+              )}
+              <span className="font-mono text-xs font-bold truncate tracking-tight group-hover:text-white transition-colors">
+                {repoOwner && <span className="text-text-muted font-normal">{repoOwner}/</span>}
+                <span className="text-white">{repoName}</span>
+                <span className="text-text-whisper ml-0.5">#{item.number}</span>
+              </span>
+            </div>
+            <span className="text-text-muted text-[11px] font-mono tracking-tight shrink-0">
+              {formatRelativeTime(item.last_activity_at)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {item.action_needed === 'reply' && (
+              <span className="flex items-center gap-1 border border-status-awaiting-reply/80 bg-status-awaiting-reply/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-awaiting-reply shadow-sm">
+                <MessageSquare className="h-3 w-3" />
+                <span>[ACTION: OWE_REPLY]</span>
+              </span>
+            )}
+            {item.action_needed === 'push-changes' && (
+              <span className="flex items-center gap-1 border border-status-action-needed/80 bg-status-action-needed/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-action-needed shadow-sm">
+                <AlertTriangle className="h-3 w-3" />
+                <span>[ACTION: REQ_CHANGES]</span>
+              </span>
+            )}
+            {getStatusBadge(normalizedStatus)}
+            {item.author && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-text-muted font-mono ml-auto">
+                <UserIcon className="h-3 w-3" />
+                <span>@{item.author}</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Header (Exact Single Row on >= sm) */}
+        <div className="hidden sm:flex items-center justify-between gap-3">
           {/* Left: Platform, Type, Repo#Number, New badge */}
           <div className="flex items-center gap-2 min-w-0">
             {showNewIndicator && (
@@ -179,7 +239,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
 
             {/* Author */}
             {item.author && (
-              <span className="hidden sm:inline-flex items-center gap-1 text-xs text-text-muted font-mono ml-1">
+              <span className="inline-flex items-center gap-1 text-xs text-text-muted font-mono ml-1">
                 <UserIcon className="h-3 w-3" />
                 <span>@{item.author}</span>
               </span>
@@ -194,8 +254,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 title="Maintainer feedback requires developer reply"
               >
                 <MessageSquare className="h-3 w-3" />
-                <span className="hidden sm:inline">[ACTION: OWE_REPLY]</span>
-                <span className="sm:hidden">[REPLY]</span>
+                <span>[ACTION: OWE_REPLY]</span>
               </span>
             )}
             {item.action_needed === 'push-changes' && (
@@ -204,8 +263,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 title="Maintainer requested code revisions"
               >
                 <AlertTriangle className="h-3 w-3" />
-                <span className="hidden sm:inline">[ACTION: REQ_CHANGES]</span>
-                <span className="sm:hidden">[CHANGES]</span>
+                <span>[ACTION: REQ_CHANGES]</span>
               </span>
             )}
 

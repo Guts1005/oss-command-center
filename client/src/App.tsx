@@ -11,17 +11,19 @@ import { TrackContributionModal } from './components/TrackContributionModal';
 import { QuickGuideModal } from './components/QuickGuideModal';
 import { AuthModal } from './components/AuthModal';
 import { IntegrationsModal } from './components/IntegrationsModal';
+import { MobileBottomDock } from './components/MobileBottomDock';
 
 import { sendDesktopNotification } from './utils/notifications';
 
 const AppContent: React.FC = () => {
-  const { user } = useAuth();
+  const { user, integrations } = useAuth();
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState<boolean>(false);
 
   // Filters state
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -276,8 +278,8 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
-      <div className="flex-1 flex flex-col min-h-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5">
+    <div className="flex h-screen h-[100dvh] min-h-[100dvh] flex-col bg-base diffused-bg text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3.5">
         {/* Compact Single-Tier Header */}
         <HeaderTelemetry
           stats={stats}
@@ -304,6 +306,7 @@ const AppContent: React.FC = () => {
           onSearchChange={setSearchQuery}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          isMobileFiltersOpen={isMobileFiltersOpen}
         />
 
         {/* Main Scannable Contribution Stream */}
@@ -377,6 +380,25 @@ const AppContent: React.FC = () => {
           fetchStats();
           fetchContributions();
         }}
+      />
+
+      {/* Mobile Bottom Thumb Navigation Dock */}
+      <MobileBottomDock
+        onScrollToTop={() => {
+          document.getElementById('stream-feed-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        isFiltersOpen={isMobileFiltersOpen}
+        onToggleFilters={() => setIsMobileFiltersOpen((prev) => !prev)}
+        onOpenTrackModal={() => setIsTrackModalOpen(true)}
+        onOpenIntegrationsModal={() => {
+          if (user) {
+            setIsIntegrationsModalOpen(true);
+          } else {
+            setIsAuthModalOpen(true);
+          }
+        }}
+        actionNeededCount={stats?.actionNeeded ?? 0}
+        integrationsCount={integrations.length}
       />
     </div>
   );

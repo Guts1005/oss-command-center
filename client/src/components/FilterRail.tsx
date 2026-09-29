@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import { Stats } from '../types';
 
@@ -17,6 +17,7 @@ interface FilterRailProps {
   onSearchChange: (query: string) => void;
   sortBy: string;
   onSortChange: (sort: string) => void;
+  isMobileFiltersOpen?: boolean;
 }
 
 export const FilterRail: React.FC<FilterRailProps> = ({
@@ -33,6 +34,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
   onSearchChange,
   sortBy,
   onSortChange,
+  isMobileFiltersOpen = false,
 }) => {
   const tabs = [
     {
@@ -101,8 +103,8 @@ export const FilterRail: React.FC<FilterRailProps> = ({
         </div>
 
         {/* Center: Consolidated KPI Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar shrink-0">
-          <div className="inline-flex items-center p-0.5 rounded-lg border border-border-subtle bg-base/80 shadow-inner gap-1 relative">
+        <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar shrink-0 w-full lg:w-auto touch-pan-x">
+          <div className="inline-flex items-center p-0.5 rounded-lg border border-border-subtle bg-base/80 shadow-inner gap-1 relative w-max">
             {tabs.map((tab) => {
               const isActive =
                 tab.id === 'action-needed'
@@ -122,7 +124,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                       onStatusChange(tab.id);
                     }
                   }}
-                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none ${
+                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none whitespace-nowrap ${
                     isActive
                       ? tab.urgent
                         ? 'text-status-action-needed'
@@ -164,8 +166,8 @@ export const FilterRail: React.FC<FilterRailProps> = ({
           </div>
         </div>
 
-        {/* Right: Auxiliary Filters (Scope + Platform + Sort) */}
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+        {/* Right: Auxiliary Filters on Desktop / Tablet (>= sm) */}
+        <div className="hidden sm:flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
           {/* Scope Split: All / External / Own Repo */}
           <div className="inline-flex items-center h-8 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono relative">
             {[
@@ -226,6 +228,79 @@ export const FilterRail: React.FC<FilterRailProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Mobile Collapsible Auxiliary Filters Tray (< sm) */}
+      <AnimatePresence>
+        {isMobileFiltersOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="sm:hidden border-t border-border-subtle/70 pt-2 flex flex-wrap items-center justify-between gap-2 overflow-hidden"
+          >
+            {/* Scope Split */}
+            <div className="inline-flex items-center h-8 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono relative">
+              {[
+                { id: 'all', label: 'ALL' },
+                { id: 'external', label: 'EXT' },
+                { id: 'own', label: 'OWN' },
+              ].map((sc) => {
+                const isSelected = scopeFilter === sc.id;
+                return (
+                  <button
+                    key={sc.id}
+                    type="button"
+                    onClick={() => onScopeChange(sc.id)}
+                    className={`relative px-2.5 py-1 rounded-md font-bold transition-colors cursor-pointer select-none text-xs z-10 ${
+                      isSelected ? 'text-white' : 'text-text-muted hover:text-white'
+                    }`}
+                  >
+                    {isSelected && (
+                      <motion.div
+                        layoutId="activeScopePillMobile"
+                        className="absolute inset-0 rounded-md bg-surface-elevated border border-accent-sapphire/60 shadow-sm"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <span className="relative z-10">{sc.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Platform Selector */}
+              <div className="flex items-center h-8 border border-border-subtle bg-base/80 rounded-lg px-2 text-xs font-mono text-text-muted">
+                <span className="mr-1 text-text-muted text-[11px]">PLAT:</span>
+                <select
+                  value={platformFilter}
+                  onChange={(e) => onPlatformChange(e.target.value)}
+                  className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs"
+                >
+                  <option value="all" className="bg-surface text-white">ALL</option>
+                  <option value="github" className="bg-surface text-white">GH</option>
+                  <option value="gitlab" className="bg-surface text-white">GL</option>
+                </select>
+              </div>
+
+              {/* Sort Selector */}
+              <div className="flex items-center h-8 border border-border-subtle bg-base/80 rounded-lg px-2 text-xs font-mono text-text-muted">
+                <span className="mr-1 text-text-muted text-[11px]">SORT:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => onSortChange(e.target.value)}
+                  className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs"
+                >
+                  <option value="recent" className="bg-surface text-white">RECENT</option>
+                  <option value="unread" className="bg-surface text-white">UNREAD</option>
+                  <option value="difficulty" className="bg-surface text-white">DIFF</option>
+                </select>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
