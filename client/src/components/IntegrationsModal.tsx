@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { Github, Gitlab, Key, CheckCircle, RefreshCw, Trash2, ExternalLink, X, ShieldCheck, AlertCircle } from 'lucide-react';
+import { GitHubLogo, GitLabLogo } from './BrandLogos';
 
 interface IntegrationsModalProps {
   isOpen: boolean;
@@ -137,16 +138,11 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   <Key className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide leading-snug">
-                      Linked Upstream Accounts
-                    </h2>
-                    <span className="hidden sm:inline-block border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
-                      [TELEMETRY_VAULT]
-                    </span>
-                  </div>
+                  <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide leading-snug">
+                    Linked Accounts
+                  </h2>
                   <p className="text-xs md:text-sm text-text-muted font-sans mt-0.5">
-                    Automated multi-platform telemetry harvesting &amp; encrypted token store.
+                    Connect your GitHub and GitLab accounts to import contributions.
                   </p>
                 </div>
               </div>
@@ -163,29 +159,24 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
               </motion.button>
             </div>
 
-            {/* Unauthenticated Warning */}
-            {!user && (
-              <div className="mb-5 border border-status-action-needed/80 bg-status-action-needed/15 p-3.5 rounded-lg text-sm text-status-action-needed">
-                <div className="flex items-center gap-2 font-bold mb-1 font-mono">
-                  <AlertCircle className="h-4 w-4" />
-                  <span>[AUTHENTICATION_REQUIRED]</span>
-                </div>
-                <p className="text-xs text-text-muted leading-relaxed font-sans">
-                  Session is unauthenticated or expired. Sign in to your tenant account to manage upstream credentials.
-                </p>
+          {/* Unauthenticated Warning */}
+          {!user && (
+            <div className="mb-5 border border-status-action-needed/80 bg-status-action-needed/15 p-3.5 rounded-lg text-sm text-status-action-needed">
+              <div className="flex items-center gap-2 font-bold mb-1 font-sans">
+                <AlertCircle className="h-4 w-4" />
+                <span>Authentication Required</span>
               </div>
-            )}
-
-            {/* Security Disclosure */}
-            <div className="mb-5 border border-border-subtle bg-surface-card p-3.5 rounded-lg text-xs text-text-muted leading-relaxed">
-              <div className="flex items-center gap-2 font-bold text-status-merged mb-1 font-mono">
-                <ShieldCheck className="h-4 w-4" />
-                <span>[SECURITY SPEC: ZERO-LEAKAGE AES-256-GCM]</span>
-              </div>
-              <p>
-                Personal Access Tokens are encrypted with authenticated AES-256-GCM using unique 96-bit IVs and 128-bit authentication tags prior to SQLite persistence. Decrypted solely in memory for API calls.
+              <p className="text-xs text-text-muted leading-relaxed font-sans">
+                Session is unauthenticated or expired. Sign in to your account to manage credentials.
               </p>
             </div>
+          )}
+
+          {/* Subtle Encryption Indicator */}
+          <div className="mb-4 flex items-center gap-1.5 text-xs text-text-muted font-mono">
+            <ShieldCheck className="h-3.5 w-3.5 text-status-merged shrink-0" />
+            <span>Encrypted</span>
+          </div>
 
             {/* Status Notification */}
             {statusMessage && (
@@ -224,14 +215,14 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                     className="flex items-center gap-1.5 text-xs font-mono font-bold border border-border-subtle bg-surface-elevated px-3 py-1 rounded text-text-whisper hover:border-accent-sapphire hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <RefreshCw className={`h-3 w-3 ${isSyncingNow ? 'animate-spin text-accent-sapphire' : ''}`} />
-                    <span>{isSyncingNow ? '[SYNCING...]' : '[SYNC_ALL]'}</span>
+                    <span>{isSyncingNow ? 'Syncing...' : 'Sync All'}</span>
                   </motion.button>
                 )}
               </div>
 
               {accountList.length === 0 ? (
-                <div className="border border-border-subtle bg-base p-4 rounded-lg text-center text-xs md:text-sm font-mono text-text-muted">
-                  [ZERO_LINKED_ACCOUNTS] Link your GitHub or GitLab profile below.
+                <div className="border border-border-subtle bg-base p-4 rounded-lg text-center text-xs md:text-sm font-sans text-text-muted">
+                  No linked accounts. Connect your GitHub or GitLab profile below.
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -250,20 +241,20 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-text-primary">
                               {acc.platform === 'github' ? (
-                                <Github className="h-5 w-5" />
+                                <GitHubLogo className="h-5 w-5 text-white" />
                               ) : (
-                                <Gitlab className="h-5 w-5 text-[#fc6d26]" />
+                                <GitLabLogo className="h-5 w-5" />
                               )}
                             </div>
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
                                 <span className="font-mono text-sm sm:text-base font-bold text-white truncate">{acc.username}</span>
                                 <span className="border border-border-subtle bg-base px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-mono uppercase font-bold text-text-muted">
-                                  [{acc.platform}]
+                                  {acc.platform}
                                 </span>
                                 {acc.has_token && (
                                   <span className="border border-status-merged/60 bg-status-merged/15 px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-mono text-status-merged font-bold">
-                                    [AES_ENCRYPTED]
+                                    Encrypted
                                   </span>
                                 )}
                               </div>
@@ -345,27 +336,27 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
 
             {/* Add Connection Form */}
             <div className="border-t border-border-subtle/80 pt-4">
-              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-white mb-3">
-                [ADD_NEW_INTEGRATION]
+              <h3 className="text-sm font-bold text-white mb-3 font-sans">
+                Connect Account
               </h3>
 
               <form onSubmit={handleConnect} className="space-y-4">
                 {/* Platform Selector */}
-                <div className="grid grid-cols-2 gap-2.5 font-mono">
+                <div className="grid grid-cols-2 gap-2.5 font-sans">
                   <motion.button
                     type="button"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                     onClick={() => setPlatform('github')}
-                    className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-semibold transition-all cursor-pointer ${
                       platform === 'github'
                         ? 'border-accent-sapphire bg-accent-sapphire/20 text-white shadow-sm'
                         : 'border-border-subtle bg-base text-text-muted hover:text-white'
                     }`}
                   >
-                    <Github className="h-4 w-4" />
-                    <span>[GITHUB]</span>
+                    <GitHubLogo className="h-4 w-4 text-white" />
+                    <span>GitHub</span>
                   </motion.button>
                   <motion.button
                     type="button"
@@ -373,21 +364,21 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                     whileTap={{ scale: 0.97 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                     onClick={() => setPlatform('gitlab')}
-                    className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-bold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-semibold transition-all cursor-pointer ${
                       platform === 'gitlab'
                         ? 'border-[#fc6d26] bg-[#fc6d26]/20 text-[#fc6d26] shadow-sm'
                         : 'border-border-subtle bg-base text-text-muted hover:text-white'
                     }`}
                   >
-                    <Gitlab className="h-4 w-4" />
-                    <span>[GITLAB]</span>
+                    <GitLabLogo className="h-4 w-4" />
+                    <span>GitLab</span>
                   </motion.button>
                 </div>
 
                 {/* Username Input */}
                 <div>
                   <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
-                    {platform === 'github' ? 'GITHUB USERNAME' : 'GITLAB USERNAME'}
+                    {platform === 'github' ? 'GitHub Username' : 'GitLab Username'}
                   </label>
                   <input
                     type="text"
@@ -403,7 +394,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                 {platform === 'gitlab' && (
                   <div>
                     <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
-                      GITLAB INSTANCE HOST
+                      GitLab Instance Host
                     </label>
                     <input
                       type="text"
@@ -419,7 +410,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-muted">
-                      PERSONAL ACCESS TOKEN (OPTIONAL / RECOMMENDED)
+                      Personal Access Token (Optional)
                     </label>
                     <a
                       href={
@@ -429,9 +420,9 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs font-mono text-accent-sapphire hover:underline font-bold"
+                      className="flex items-center gap-1 text-xs font-sans text-accent-sapphire hover:underline font-semibold"
                     >
-                      <span>[GENERATE_TOKEN]</span>
+                      <span>Generate Token</span>
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   </div>
@@ -447,16 +438,22 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   </p>
                 </div>
 
-                <motion.button
-                  type="submit"
-                  whileHover={{ scale: 1.015, boxShadow: '0 0 16px rgba(116,157,208,0.35)' }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                  disabled={isSubmitting}
-                  className="w-full border border-accent-sapphire bg-accent-sapphire/25 py-3.5 rounded-md font-mono font-bold uppercase tracking-wider text-white hover:bg-accent-sapphire/35 disabled:opacity-50 transition-colors text-sm md:text-base cursor-pointer shadow-sm"
-                >
-                  {isSubmitting ? '[ENCRYPTING_&_LINKING...]' : `[LINK_${platform.toUpperCase()}_ACCOUNT]`}
-                </motion.button>
+                <div className="pt-1">
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.015, boxShadow: '0 0 16px rgba(116,157,208,0.35)' }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    disabled={isSubmitting}
+                    className="w-full border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 py-3.5 rounded-md font-sans font-semibold text-white disabled:opacity-50 transition-colors text-sm md:text-base cursor-pointer shadow-sm"
+                  >
+                    {isSubmitting ? 'Connecting...' : `Connect ${platform === 'github' ? 'GitHub' : 'GitLab'} Account`}
+                  </motion.button>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-text-muted mt-3 font-mono">
+                    <ShieldCheck className="h-3.5 w-3.5 text-status-merged shrink-0" />
+                    <span>Encrypted</span>
+                  </div>
+                </div>
               </form>
             </div>
           </motion.div>

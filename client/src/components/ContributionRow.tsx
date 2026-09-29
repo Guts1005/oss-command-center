@@ -1,6 +1,7 @@
 import React from 'react';
 import { Contribution } from '../types';
 import { GitPullRequest, CircleDot, AlertTriangle, MessageSquare, Clock, ArrowRight, User as UserIcon } from 'lucide-react';
+import { GitHubLogo, GitLabLogo } from './BrandLogos';
 
 interface ContributionRowProps {
   item: Contribution;
@@ -148,13 +149,18 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 </span>
               )}
               <span
-                className={`px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase border rounded shrink-0 ${
+                className={`px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase border rounded shrink-0 flex items-center gap-1 ${
                   item.platform === 'github'
                     ? 'border-border-bold text-text-whisper bg-base'
                     : 'border-[#fc6d26]/70 text-[#fc6d26] bg-[#fc6d26]/15'
                 }`}
               >
-                {item.platform === 'github' ? '[GH]' : '[GL]'}
+                {item.platform === 'github' ? (
+                  <GitHubLogo className="h-2.5 w-2.5 text-white shrink-0" />
+                ) : (
+                  <GitLabLogo className="h-2.5 w-2.5 shrink-0" />
+                )}
+                <span>{item.platform === 'github' ? 'GH' : 'GL'}</span>
               </span>
               {item.type === 'pr' ? (
                 <GitPullRequest className="h-3.5 w-3.5 text-accent-glacial shrink-0" />
@@ -210,13 +216,18 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
 
             {/* Platform Tag */}
             <span
-              className={`px-1.5 py-0.5 font-mono text-[11px] font-bold uppercase border rounded shrink-0 ${
+              className={`px-1.5 py-0.5 font-mono text-[11px] font-bold uppercase border rounded shrink-0 flex items-center gap-1.5 ${
                 item.platform === 'github'
                   ? 'border-border-bold text-text-whisper bg-base'
                   : 'border-[#fc6d26]/70 text-[#fc6d26] bg-[#fc6d26]/15'
               }`}
             >
-              {item.platform === 'github' ? '[GH]' : '[GL]'}
+              {item.platform === 'github' ? (
+                <GitHubLogo className="h-3 w-3 text-white shrink-0" />
+              ) : (
+                <GitLabLogo className="h-3 w-3 shrink-0" />
+              )}
+              <span>{item.platform === 'github' ? 'GH' : 'GL'}</span>
             </span>
 
             {/* Type Icon */}

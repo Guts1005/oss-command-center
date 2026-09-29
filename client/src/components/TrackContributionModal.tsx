@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { X, PlusCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { GitHubLogo, GitLabLogo } from './BrandLogos';
 
 interface TrackContributionModalProps {
   isOpen: boolean;
@@ -149,8 +150,8 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
 
               {/* Quick Examples */}
               <div className="border-t border-border-subtle/80 pt-4">
-                <span className="text-xs text-text-muted block mb-2.5 uppercase font-mono font-bold">
-                  [TELEMETRY_FIXTURES] QUICK TEST EXAMPLES:
+                <span className="text-xs text-text-muted block mb-2.5 font-sans font-semibold">
+                  Quick Examples:
                 </span>
                 <div className="flex flex-wrap gap-2.5">
                   <motion.button
@@ -159,9 +160,10 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                     whileTap={{ scale: 0.96 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                     onClick={() => handleExampleClick('https://github.com/astral-sh/ruff/pull/28429')}
-                    className="border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-semibold text-text-whisper hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer shadow-sm"
+                    className="flex items-center gap-1.5 border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-medium text-text-whisper hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer shadow-sm"
                   >
-                    [astral-sh/ruff#28429]
+                    <GitHubLogo className="h-3 w-3 text-white shrink-0" />
+                    <span>astral-sh/ruff#28429</span>
                   </motion.button>
                   <motion.button
                     type="button"
@@ -169,9 +171,10 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                     whileTap={{ scale: 0.96 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                     onClick={() => handleExampleClick('https://gitlab.rtems.org/rtems/rtos/rtems/-/merge_requests/1479')}
-                    className="border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-semibold text-text-whisper hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer shadow-sm"
+                    className="flex items-center gap-1.5 border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-medium text-text-whisper hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer shadow-sm"
                   >
-                    [rtems/rtos/rtems!1479]
+                    <GitLabLogo className="h-3 w-3 shrink-0" />
+                    <span>rtems/rtos/rtems!1479</span>
                   </motion.button>
                 </div>
               </div>
@@ -185,9 +188,9 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   onClick={onClose}
                   disabled={isLoading}
-                  className="border border-border-subtle bg-base px-4 py-2.5 rounded-md text-xs md:text-sm font-mono font-bold text-text-muted hover:border-border-bold hover:text-white transition-colors cursor-pointer"
+                  className="border border-border-subtle bg-base px-4 py-2.5 rounded-md text-xs md:text-sm font-sans font-medium text-text-muted hover:border-border-bold hover:text-white transition-colors cursor-pointer"
                 >
-                  [CANCEL]
+                  Cancel
                 </motion.button>
                 <motion.button
                   type="submit"
@@ -195,17 +198,17 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                   whileTap={{ scale: 0.96 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   disabled={isLoading}
-                  className="flex items-center gap-2 border border-accent-sapphire bg-accent-sapphire/25 px-5 py-2.5 rounded-md text-xs md:text-sm font-mono font-bold text-text-whisper hover:bg-accent-sapphire/35 disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
+                  className="flex items-center gap-2 border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 px-5 py-2.5 rounded-md text-xs md:text-sm font-sans font-semibold text-white disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin text-accent-sapphire" />
-                      <span>[FETCHING...]</span>
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      <span>Tracking...</span>
                     </>
                   ) : (
                     <>
-                      <PlusCircle className="h-4 w-4 text-accent-sapphire" />
-                      <span>[INGEST_CONTRIBUTION]</span>
+                      <PlusCircle className="h-4 w-4 text-white" />
+                      <span>Track Contribution</span>
                     </>
                   )}
                 </motion.button>

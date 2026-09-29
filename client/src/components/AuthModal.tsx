@@ -83,16 +83,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm sm:text-base md:text-lg font-bold text-white font-sans tracking-wide">
-                      {isRegister ? 'Register Tenant Account' : 'Authenticate Tenant'}
-                    </h2>
-                    <span className="hidden sm:inline-block border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
-                      [AUTH_GCM]
-                    </span>
-                  </div>
-                  <p className="text-[11px] sm:text-xs md:text-sm text-text-muted font-sans mt-0.5">
-                    Multi-tenant encrypted workspace &amp; credential vault.
+                  <h2 className="text-base sm:text-lg font-bold text-white font-sans tracking-wide">
+                    {isRegister ? 'Register User' : 'Sign In'}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-text-muted font-sans mt-0.5">
+                    Connect your account to track your open source contributions.
                   </p>
                 </div>
               </div>
@@ -110,7 +105,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </div>
 
             {/* Mode Switch */}
-            <div className="grid grid-cols-2 gap-2 border border-border-subtle bg-base p-1 rounded-lg mb-4 sm:mb-5 text-xs md:text-sm font-bold font-mono">
+            <div className="grid grid-cols-2 gap-2 border border-border-subtle bg-base p-1 rounded-lg mb-4 sm:mb-5 text-xs sm:text-sm font-semibold font-sans">
               <button
                 type="button"
                 onClick={() => {
@@ -123,7 +118,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     : 'text-text-muted hover:text-white'
                 }`}
               >
-                [SIGN_IN]
+                Sign In
               </button>
               <button
                 type="button"
@@ -137,19 +132,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     : 'text-text-muted hover:text-white'
                 }`}
               >
-                [REGISTER_TENANT]
+                Register
               </button>
-            </div>
-
-            {/* Security Assurance Banner (Compact on mobile) */}
-            <div className="mb-4 sm:mb-5 border border-border-subtle bg-surface-card p-2.5 sm:p-3 rounded-lg text-xs text-text-whisper leading-relaxed">
-              <div className="flex items-center gap-1.5 font-bold text-status-merged">
-                <Lock className="h-3.5 w-3.5 shrink-0" />
-                <span className="text-[11px] sm:text-xs">[ENCRYPTION AT REST: AES-256-GCM]</span>
-              </div>
-              <p className="text-[11px] sm:text-xs text-text-muted mt-0.5 hidden sm:block">
-                All linked platform tokens are encrypted with authenticated AES-256-GCM using unique IVs. Zero plaintext credentials touch disk.
-              </p>
             </div>
 
         {/* Error Alert */}
@@ -164,7 +148,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
-              {isRegister ? 'TENANT USERNAME' : 'TENANT USERNAME OR EMAIL'}
+              {isRegister ? 'USERNAME' : 'USERNAME OR EMAIL'}
             </label>
             <div className="relative flex items-center border border-border-subtle bg-base rounded-md focus-within:border-accent-sapphire focus-within:ring-1 focus-within:ring-accent-sapphire">
               <span className="pl-3.5 text-text-muted">
@@ -204,7 +188,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
           <div>
             <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
-              PASSPHRASE {isRegister && <span className="text-text-muted">(MIN 8 CHARS)</span>}
+              PASSWORD {isRegister && <span className="text-text-muted">(MIN 8 CHARS)</span>}
             </label>
             <div className="relative flex items-center border border-border-subtle bg-base rounded-md focus-within:border-accent-sapphire focus-within:ring-1 focus-within:ring-accent-sapphire">
               <span className="pl-3.5 text-text-muted">
@@ -235,10 +219,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               disabled={isLoading}
-              className="w-full border border-accent-sapphire bg-accent-sapphire/25 py-3.5 rounded-md font-mono text-sm md:text-base font-bold text-white hover:bg-accent-sapphire/35 disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
+              className="w-full border border-accent-sapphire bg-accent-sapphire py-3.5 rounded-md font-sans text-sm md:text-base font-semibold text-white hover:bg-accent-sapphire/90 disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
             >
-              {isLoading ? '[AUTHENTICATING...]' : isRegister ? '[CREATE_TENANT_ACCOUNT]' : '[SIGN_IN_TENANT]'}
+              {isLoading ? 'Authenticating...' : isRegister ? 'Register User' : 'Sign In'}
             </motion.button>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-text-muted mt-3.5 font-mono">
+              <Lock className="h-3 w-3 text-status-merged shrink-0" />
+              <span>Encrypted</span>
+            </div>
           </div>
         </form>
           </motion.div>

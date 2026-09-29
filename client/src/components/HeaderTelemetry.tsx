@@ -17,6 +17,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { requestNotificationPermission, playNotificationSound } from '../utils/notifications';
+import { OSSBrandLogo } from './BrandLogos';
 
 interface HeaderTelemetryProps {
   stats: Stats | null;
@@ -80,20 +81,14 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
     <header className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-3 py-2 sm:px-5 sm:py-2.5">
       {/* Mobile Top Bar (< sm): Slim single row with zero screen crowding */}
       <div className="flex sm:hidden items-center justify-between gap-1.5">
-        {/* Left: Brand & Online Indicator (Never truncated) */}
+        {/* Left: Brand & Title (Never truncated, no glowing green dot) */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire shadow-inner">
-            <GitMerge className="h-3.5 w-3.5" />
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base shadow-inner">
+            <OSSBrandLogo className="h-4 w-4" />
           </div>
-          <div className="flex items-center gap-1.5">
-            <h1 className="text-xs font-extrabold tracking-tight text-white uppercase font-sans whitespace-nowrap">
-              OSS COMMAND
-            </h1>
-            <span
-              className="h-2 w-2 rounded-full bg-status-merged shrink-0 shadow-[0_0_8px_rgba(74,222,128,0.8)] animate-pulse"
-              title="Telemetry Online"
-            />
-          </div>
+          <h1 className="text-xs font-extrabold tracking-tight text-white uppercase font-sans whitespace-nowrap">
+            OSS COMMAND
+          </h1>
         </div>
 
         {/* Right: Quick Utilities */}
@@ -119,7 +114,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
             {soundEnabled ? <Volume2 className="h-3 w-3" /> : <VolumeX className="h-3 w-3" />}
           </button>
 
-          {/* Tenant Session Pill */}
+          {/* User Session Pill */}
           {user ? (
             <button
               onClick={onOpenIntegrationsModal}
@@ -132,31 +127,28 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
           ) : (
             <button
               onClick={onOpenAuthModal}
-              className="flex items-center gap-1 h-7 px-2 rounded-lg border border-accent-sapphire bg-accent-sapphire/20 text-xs font-mono font-bold text-text-whisper cursor-pointer"
+              className="flex items-center gap-1 h-7 px-2 rounded-lg border border-accent-sapphire bg-accent-sapphire/20 text-xs font-sans font-semibold text-text-whisper cursor-pointer"
               title="Sign in"
             >
               <Lock className="h-3 w-3 text-accent-sapphire shrink-0" />
-              <span className="text-[11px]">AUTH</span>
+              <span className="text-[11px]">Sign In</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Desktop / Tablet Bar (>= sm): Preserved 100% untouched */}
+      {/* Desktop / Tablet Bar (>= sm) */}
       <div className="hidden sm:flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        {/* Left: Brand & Online Pill */}
+        {/* Left: Brand & Version */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire shadow-inner">
-            <GitMerge className="h-5 w-5" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base shadow-inner">
+            <OSSBrandLogo className="h-5 w-5" />
           </div>
           <div className="flex items-center gap-2">
             <h1 className="text-base md:text-lg font-extrabold tracking-tight text-white uppercase font-sans">
               OSS COMMAND CENTER
             </h1>
-            <span className="border border-status-merged/50 bg-status-merged/15 px-2 py-0.5 rounded text-[11px] font-bold font-mono text-status-merged">
-              [SYS: ONLINE]
-            </span>
-            <span className="hidden sm:inline-block border border-border-subtle bg-surface-elevated px-1.5 py-0.5 rounded text-[11px] font-mono text-text-muted">
+            <span className="border border-border-subtle bg-surface-elevated px-2 py-0.5 rounded text-[11px] font-mono text-text-muted">
               v1.0
             </span>
           </div>
@@ -236,7 +228,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
             </button>
           </div>
 
-          {/* Group 3: Tenant Session */}
+          {/* Group 3: User Session */}
           {user ? (
             <div className="flex items-center h-9 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
               <div className="flex items-center gap-1.5 h-full px-2.5 text-xs font-mono font-bold text-white bg-base/50">
@@ -276,7 +268,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               title="Sign in or register"
             >
               <Lock className="h-3.5 w-3.5 text-accent-sapphire" />
-              <span>SIGN_IN</span>
+              <span>Sign In</span>
             </button>
           )}
         </div>

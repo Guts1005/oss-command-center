@@ -80,33 +80,33 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   if (!isAuthenticated) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-2.5 sm:p-12 pb-28 sm:pb-8 bg-base text-center overflow-y-auto">
-        <div className="border border-border-subtle bg-surface p-4 sm:p-8 md:p-10 rounded-xl max-w-xl w-full text-left font-mono shadow-card my-auto">
-          <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-3 text-sm gap-2">
-            <div className="flex items-center gap-2 text-accent-sapphire font-bold text-xs sm:text-base md:text-lg min-w-0">
-              <Shield className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-              <span className="truncate hidden sm:inline">[ENCRYPTED_WORKSPACE_LOCKED]</span>
-              <span className="truncate sm:hidden">[WORKSPACE_LOCKED]</span>
+        <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card my-auto">
+          <div className="flex items-center gap-3 border-b border-border-subtle pb-4 mb-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
+              <Lock className="h-5 w-5" />
             </div>
-            <span className="border border-border-bold bg-base px-2 py-0.5 rounded text-[10px] sm:text-xs text-text-muted shrink-0">
-              AUTH_REQUIRED
-            </span>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-white font-sans">
+                Login or Register to start working
+              </h2>
+              <p className="text-xs sm:text-sm text-text-whisper mt-1 font-sans">
+                Connect your GitHub or GitLab accounts to track your contributions in real time.
+              </p>
+            </div>
           </div>
-          <p className="text-xs sm:text-sm md:text-base text-text-whisper mb-2 sm:mb-3 font-sans leading-relaxed">
-            OSS Command Center is running in multi-tenant encrypted mode. Contribution telemetry, pull requests, and platform tokens remain strictly isolated to authenticated tenant accounts.
-          </p>
-          <p className="text-[11px] sm:text-xs md:text-sm text-text-muted mb-4 sm:mb-7 font-sans leading-relaxed">
-            Sign in or create a tenant account to connect your GitHub and GitLab credentials and track your personal open-source merge pipeline.
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
             {onOpenAuthModal && (
               <button
                 onClick={onOpenAuthModal}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 border border-accent-sapphire bg-accent-sapphire/25 hover:bg-accent-sapphire/35 px-4 py-2.5 sm:px-5 sm:py-3 rounded-lg font-mono text-xs sm:text-sm font-bold text-white transition-all cursor-pointer shadow-sm"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all cursor-pointer shadow-sm font-sans"
               >
-                <Lock className="h-4 w-4 text-accent-sapphire" />
-                <span>[SIGN_IN_OR_REGISTER]</span>
+                <span>Sign in or Register</span>
               </button>
             )}
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-text-muted mt-5 pt-3 border-t border-border-subtle/50 font-mono">
+            <Shield className="h-3.5 w-3.5 text-status-merged shrink-0" />
+            <span>Encrypted</span>
           </div>
         </div>
       </div>
@@ -116,29 +116,29 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   if (items.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-2.5 sm:p-12 pb-28 sm:pb-8 bg-base text-center overflow-y-auto">
-        <div className="border border-border-subtle bg-surface p-4 sm:p-8 rounded-xl max-w-lg w-full text-left font-mono shadow-card my-auto">
+        <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card my-auto">
           <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-3 text-sm">
-            <span className="text-status-awaiting-reply font-bold text-xs sm:text-base">[ZERO_RECORDS_LOCATED]</span>
-            <span className="text-text-muted text-[11px] sm:text-xs">CODE: NULL_SET</span>
+            <span className="text-white font-bold text-xs sm:text-base font-sans">No contributions found</span>
+            <span className="text-text-muted text-[11px] sm:text-xs font-mono">0 items</span>
           </div>
           <p className="text-xs sm:text-sm text-text-whisper mb-4 font-sans leading-relaxed">
-            No contributions matched the active filter criteria or query string. Reset the current filter or ingest a new contribution URL.
+            No contributions matched the active filter criteria or query string. Reset the current filter or track a new contribution URL.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
             {onResetFilters && (
               <button
                 onClick={onResetFilters}
-                className="w-full sm:w-auto border border-border-bold bg-surface-elevated px-4 py-2 rounded-md font-mono text-xs sm:text-sm font-bold text-text-primary hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer text-center"
+                className="w-full sm:w-auto border border-border-bold bg-surface-elevated px-4 py-2 rounded-md font-sans text-xs sm:text-sm font-semibold text-text-primary hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer text-center"
               >
-                [RESET_FILTERS]
+                Reset Filters
               </button>
             )}
             {onOpenTrackModal && (
               <button
                 onClick={onOpenTrackModal}
-                className="w-full sm:w-auto border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-md font-mono text-xs sm:text-sm font-bold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer text-center"
+                className="w-full sm:w-auto border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-md font-sans text-xs sm:text-sm font-semibold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer text-center"
               >
-                [+ TRACK_ITEM]
+                + Track Contribution
               </button>
             )}
           </div>
@@ -221,7 +221,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
             SYS: OPTIMAL
           </span>
           <span className="hidden md:inline">•</span>
-          <span className="hidden md:inline">ENCRYPTION: AES-256-GCM</span>
+          <span className="hidden md:inline">Encrypted</span>
           <span className="hidden md:inline">•</span>
           <span>
             RECORDS: <span className="font-bold text-white">{items.length}</span>
