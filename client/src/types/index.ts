@@ -35,6 +35,7 @@ export interface Stats {
   actionNeeded: number;
   awaitingMaintainer: number;
   merged: number;
+  closed?: number;
   unreadCount: number;
   lastSync: string | null;
 }

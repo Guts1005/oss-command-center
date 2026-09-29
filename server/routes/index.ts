@@ -40,6 +40,7 @@ apiRouter.get('/stats', (req: AuthenticatedRequest, res) => {
     const actionNeeded = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND action_needed != 'none'").get(userId) as any)?.count || 0;
     const awaitingMaintainer = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status IN ('open', 'opened', 'submitted', 'awaiting-reply') AND action_needed = 'none'").get(userId) as any)?.count || 0;
     const merged = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'merged'").get(userId) as any)?.count || 0;
+    const closed = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'closed'").get(userId) as any)?.count || 0;
     const unreadCount = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND unread = 1').get(userId) as any)?.count || 0;
     const lastSync = getLastSyncTime();
 
@@ -48,6 +49,7 @@ apiRouter.get('/stats', (req: AuthenticatedRequest, res) => {
       actionNeeded,
       awaitingMaintainer,
       merged,
+      closed,
       unreadCount,
       lastSync
     });
@@ -65,6 +67,7 @@ apiRouter.get('/contributions', (req: AuthenticatedRequest, res) => {
       return res.json([]);
     }
     const platform = typeof req.query.platform === 'string' ? req.query.platform : (Array.isArray(req.query.platform) ? String(req.query.platform[0]) : undefined);
+    const scope = typeof req.query.scope === 'string' ? req.query.scope : (Array.isArray(req.query.scope) ? String(req.query.scope[0]) : undefined);
     const status = typeof req.query.status === 'string' ? req.query.status : (Array.isArray(req.query.status) ? String(req.query.status[0]) : undefined);
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : (Array.isArray(req.query.search) ? String(req.query.search[0]).trim() : undefined);
     const sort = typeof req.query.sort === 'string' ? req.query.sort : (Array.isArray(req.query.sort) ? String(req.query.sort[0]) : undefined);
@@ -77,6 +80,22 @@ apiRouter.get('/contributions', (req: AuthenticatedRequest, res) => {
     if (platform && platform !== 'all') {
       query += ' AND platform = ?';
       params.push(platform);
+    }
+
+    if (scope && scope !== 'all') {
+      const integrations = db.prepare('SELECT username FROM user_integrations WHERE user_id = ?').all(userId) as any[];
+      const usernames = integrations.map(i => i.username.toLowerCase()).filter(Boolean);
+      if (usernames.length > 0) {
+        if (scope === 'own') {
+          const conditions = usernames.map(() => 'LOWER(repo) LIKE ?').join(' OR ');
+          query += ` AND (${conditions})`;
+          params.push(...usernames.map(u => `${u}/%`));
+        } else if (scope === 'external') {
+          const conditions = usernames.map(() => 'LOWER(repo) NOT LIKE ?').join(' AND ');
+          query += ` AND (${conditions})`;
+          params.push(...usernames.map(u => `${u}/%`));
+        }
+      }
     }
 
     if (status && status !== 'all') {

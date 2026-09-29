@@ -26,6 +26,7 @@ const AppContent: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<string>('all');
+  const [scopeFilter, setScopeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('recent');
 
@@ -58,6 +59,7 @@ const AppContent: React.FC = () => {
           status: statusFilter,
           platform: platformFilter,
           action: actionFilter,
+          scope: scopeFilter !== 'all' ? scopeFilter : undefined,
           search: searchQuery || undefined,
           sort: sortBy,
         },
@@ -68,7 +70,7 @@ const AppContent: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter, platformFilter, actionFilter, searchQuery, sortBy]);
+  }, [statusFilter, platformFilter, actionFilter, scopeFilter, searchQuery, sortBy]);
 
   // Initial load and user change reload
   useEffect(() => {
@@ -79,6 +81,7 @@ const AppContent: React.FC = () => {
         actionNeeded: 0,
         awaitingMaintainer: 0,
         merged: 0,
+        closed: 0,
         unreadCount: 0,
         lastSync: null
       });
@@ -98,6 +101,7 @@ const AppContent: React.FC = () => {
         actionNeeded: 0,
         awaitingMaintainer: 0,
         merged: 0,
+        closed: 0,
         unreadCount: 0,
         lastSync: null
       });
@@ -158,43 +162,36 @@ const AppContent: React.FC = () => {
     return () => clearInterval(timer);
   }, [fetchStats, fetchContributions, user]);
 
-  // Direct filter routing from telemetry cards
-  const handleSelectFilter = (filterKey: string) => {
-    if (filterKey === 'action-needed') {
-      setStatusFilter('all');
-      setActionFilter('action-needed');
-    } else {
-      setActionFilter('all');
-      setStatusFilter(filterKey);
-    }
-  };
-
   const handleResetFilters = () => {
     setStatusFilter('all');
     setActionFilter('all');
     setPlatformFilter('all');
+    setScopeFilter('all');
     setSearchQuery('');
+    setSortBy('recent');
   };
 
   // Trigger sync
   const handleSync = async () => {
-    if (isSyncing) return;
-    setIsSyncing(true);
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     try {
-      if (user) {
-        await axios.post('/api/integrations/sync');
-      } else {
-        await axios.post('/api/sync');
-      }
+      setIsSyncing(true);
+      await axios.post('/api/sync');
       await Promise.all([fetchStats(), fetchContributions()]);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Sync failed:', err);
+      if (err.response?.status === 401) {
+        setIsAuthModalOpen(true);
+      }
     } finally {
       setIsSyncing(false);
     }
   };
 
-  // Global keyboard shortcuts (Ctrl+K, Esc, ?)
+  // Global keybindings
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -241,8 +238,8 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex h-screen flex-col bg-base text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
-      <div className="flex-1 flex flex-col min-h-0 w-full max-w-[1880px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-5">
-        {/* Header with Quick Guide, Auth, Notification toggle and Track buttons */}
+      <div className="flex-1 flex flex-col min-h-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3.5">
+        {/* Compact Single-Tier Header */}
         <HeaderTelemetry
           stats={stats}
           onSync={handleSync}
@@ -251,18 +248,19 @@ const AppContent: React.FC = () => {
           onOpenGuideModal={() => setIsGuideModalOpen(true)}
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
           onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
-          onSelectFilter={handleSelectFilter}
-          activeFilter={actionFilter !== 'all' ? actionFilter : statusFilter}
         />
 
-        {/* Filter and Query Rail */}
+        {/* Consolidated Query & KPI Filter Toolbar */}
         <FilterRail
+          stats={stats}
           statusFilter={statusFilter}
           onStatusChange={setStatusFilter}
           platformFilter={platformFilter}
           onPlatformChange={setPlatformFilter}
           actionFilter={actionFilter}
           onActionChange={setActionFilter}
+          scopeFilter={scopeFilter}
+          onScopeChange={setScopeFilter}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           sortBy={sortBy}
@@ -300,29 +298,28 @@ const AppContent: React.FC = () => {
         onClose={() => setIsCommandPaletteOpen(false)}
         items={contributions}
         onSelect={(id) => {
-          setSelectedId(id);
           setIsCommandPaletteOpen(false);
+          setSelectedId(id);
         }}
       />
 
-      {/* Track Contribution Modal */}
+      {/* Ingest / Track Contribution Modal */}
       <TrackContributionModal
         isOpen={isTrackModalOpen}
         onClose={() => setIsTrackModalOpen(false)}
-        onSuccess={(newId) => {
+        onSuccess={() => {
           fetchStats();
           fetchContributions();
-          setSelectedId(newId);
         }}
       />
 
-      {/* Quick Guide & Status Legend Modal */}
+      {/* Operational Reference Guide Modal (?) */}
       <QuickGuideModal
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}
       />
 
-      {/* Authentication Modal */}
+      {/* User Auth Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
@@ -332,14 +329,10 @@ const AppContent: React.FC = () => {
         }}
       />
 
-      {/* Linked Accounts & Integrations Modal */}
+      {/* Integrations Management Modal */}
       <IntegrationsModal
         isOpen={isIntegrationsModalOpen}
         onClose={() => setIsIntegrationsModalOpen(false)}
-        onSyncTriggered={() => {
-          fetchStats();
-          fetchContributions();
-        }}
         onAccountsChanged={() => {
           fetchStats();
           fetchContributions();

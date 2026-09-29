@@ -4,9 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   RefreshCw,
   GitMerge,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
   PlusCircle,
   HelpCircle,
   Lock,
@@ -28,8 +25,6 @@ interface HeaderTelemetryProps {
   onOpenGuideModal?: () => void;
   onOpenAuthModal?: () => void;
   onOpenIntegrationsModal?: () => void;
-  onSelectFilter?: (filter: string) => void;
-  activeFilter?: string;
 }
 
 export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
@@ -40,8 +35,6 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   onOpenGuideModal,
   onOpenAuthModal,
   onOpenIntegrationsModal,
-  onSelectFilter,
-  activeFilter,
 }) => {
   const { user, logout, integrations } = useAuth();
 
@@ -83,227 +76,123 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   };
 
   return (
-    <header className="border border-border-subtle bg-surface rounded-xl shadow-card select-none mb-6 overflow-hidden">
-      {/* Tier 1: Main Control Bar (Brand Identity Left, Neat Clustered Actions Right) */}
-      <div className="px-6 py-4 md:px-8 md:py-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-        {/* Left: System Identity & Status HUD */}
-        <div className="flex items-center gap-3.5 shrink-0">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire shadow-inner">
-            <GitMerge className="h-6 w-6" />
+    <header className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-4 py-2.5 md:px-5 md:py-2.5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        {/* Left: Brand & Online Pill */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire shadow-inner">
+            <GitMerge className="h-5 w-5" />
           </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-white uppercase font-sans">
-                OSS COMMAND CENTER
-              </h1>
-              <span className="border border-status-merged/50 bg-status-merged/15 px-2.5 py-0.5 rounded text-xs font-bold font-mono text-status-merged">
-                [SYS: ONLINE]
-              </span>
-              <span className="hidden sm:inline-block border border-border-subtle bg-surface-elevated px-2 py-0.5 rounded text-xs font-mono text-text-muted">
-                v1.0 // SEC-GCM
-              </span>
-            </div>
-            <p className="text-xs md:text-sm font-medium text-text-muted mt-0.5 font-sans">
-              MULTI-TENANT ENCRYPTED TELEMETRY HUB // GITHUB &amp; GITLAB
-            </p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-base md:text-lg font-extrabold tracking-tight text-white uppercase font-sans">
+              OSS COMMAND CENTER
+            </h1>
+            <span className="border border-status-merged/50 bg-status-merged/15 px-2 py-0.5 rounded text-[11px] font-bold font-mono text-status-merged">
+              [SYS: ONLINE]
+            </span>
+            <span className="hidden sm:inline-block border border-border-subtle bg-surface-elevated px-1.5 py-0.5 rounded text-[11px] font-mono text-text-muted">
+              v1.0
+            </span>
           </div>
         </div>
 
-        {/* Right: Organized Action & Toolbar Groups (Neatly clustered, uniform height) */}
-        <div className="flex items-center gap-3 flex-wrap xl:flex-nowrap shrink-0">
-          {/* Group 1: Primary Ingest Action */}
+        {/* Right: Primary Track + Clustered Utilities + User Capsule */}
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+          {/* Group 1: Primary Action (Filled Highlight) */}
           {onOpenTrackModal && (
             <button
               onClick={onOpenTrackModal}
-              className="flex items-center gap-2 h-10 border border-accent-sapphire bg-accent-sapphire/25 px-4 rounded-lg font-mono font-bold text-xs md:text-sm text-text-whisper hover:bg-accent-sapphire/35 hover:text-white transition-all shadow-sm cursor-pointer shrink-0"
-              title="Ingest new contribution URL"
+              className="flex items-center gap-1.5 h-9 bg-accent-sapphire hover:bg-accent-sapphire/85 text-white px-3.5 rounded-lg font-mono font-bold text-xs md:text-sm transition-all shadow-sm cursor-pointer shrink-0"
+              title="Track new contribution URL"
             >
-              <PlusCircle className="h-4 w-4 text-accent-sapphire" />
+              <PlusCircle className="h-4 w-4" />
               <span>+ TRACK</span>
             </button>
           )}
 
-          {/* Group 2: System Utility Toolbelt */}
-          <div className="flex items-center h-10 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
-            {/* Sync Button */}
+          {/* Group 2: System Utilities Toolbelt */}
+          <div className="flex items-center h-9 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
+            {/* Sync */}
             <button
               onClick={onSync}
               disabled={isSyncing}
-              className="flex items-center gap-1.5 h-full px-3.5 text-xs md:text-sm font-mono text-text-muted hover:text-white hover:bg-surface-elevated transition-colors disabled:opacity-50 cursor-pointer"
-              title="Poll upstream GitHub & GitLab APIs"
+              className="flex items-center gap-1.5 h-full px-3 text-xs font-mono text-text-muted hover:text-white hover:bg-surface-elevated transition-colors disabled:opacity-50 cursor-pointer"
+              title="Poll upstream GitHub and GitLab APIs"
             >
               <RefreshCw className={`h-3.5 w-3.5 text-accent-glacial ${isSyncing ? 'animate-spin text-accent-sapphire' : ''}`} />
               <span className="hidden sm:inline font-medium">{isSyncing ? 'SYNCING...' : `SYNC: ${formatTime(stats?.lastSync)}`}</span>
             </button>
 
-            {/* Guide Quick Reference */}
+            {/* Guide */}
             {onOpenGuideModal && (
               <button
                 onClick={onOpenGuideModal}
-                className="flex items-center gap-1.5 h-full px-3 text-xs md:text-sm font-mono text-text-muted hover:text-white hover:bg-surface-elevated transition-colors cursor-pointer"
-                title="Open operational reference manual (?)"
+                className="flex items-center gap-1.5 h-full px-2.5 text-xs font-mono text-text-muted hover:text-white hover:bg-surface-elevated transition-colors cursor-pointer"
+                title="Operational reference guide (?)"
               >
                 <HelpCircle className="h-3.5 w-3.5" />
-                <span className="font-medium">GUIDE</span>
+                <span className="hidden md:inline font-medium">GUIDE</span>
               </button>
             )}
 
-            {/* Desktop Notification Toggle */}
+            {/* Notifications */}
             <button
               onClick={handleToggleNotifications}
-              className={`h-full px-3 transition-colors cursor-pointer flex items-center justify-center ${
+              className={`h-full px-2.5 transition-colors cursor-pointer flex items-center justify-center ${
                 notifPermission === 'granted'
                   ? 'text-accent-sapphire hover:text-white bg-accent-sapphire/10'
                   : 'text-text-muted hover:text-white hover:bg-surface-elevated'
               }`}
-              title={
-                notifPermission === 'granted'
-                  ? 'Desktop notification alerts active'
-                  : 'Enable desktop notifications for maintainer responses'
-              }
+              title={notifPermission === 'granted' ? 'Desktop alerts active' : 'Enable desktop notifications'}
             >
-              {notifPermission === 'granted' ? (
-                <Bell className="h-4 w-4" />
-              ) : (
-                <BellOff className="h-4 w-4" />
-              )}
+              {notifPermission === 'granted' ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
             </button>
 
-            {/* Sound Chime Toggle */}
+            {/* Sound Chime */}
             <button
               onClick={handleToggleSound}
-              className={`h-full px-3 transition-colors cursor-pointer flex items-center justify-center ${
-                soundEnabled
-                  ? 'text-status-merged hover:text-white bg-status-merged/10'
-                  : 'text-text-muted hover:text-white hover:bg-surface-elevated'
+              className={`h-full px-2.5 transition-colors cursor-pointer flex items-center justify-center ${
+                soundEnabled ? 'text-status-merged hover:text-white bg-status-merged/10' : 'text-text-muted hover:text-white hover:bg-surface-elevated'
               }`}
-              title={soundEnabled ? 'Audio chime active' : 'Audio chime muted'}
+              title={soundEnabled ? 'Chime active' : 'Chime muted'}
             >
-              {soundEnabled ? (
-                <Volume2 className="h-4 w-4" />
-              ) : (
-                <VolumeX className="h-4 w-4" />
-              )}
+              {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
             </button>
           </div>
 
-          {/* Group 3: Tenant User Session */}
+          {/* Group 3: Tenant Session */}
           {user ? (
-            <div className="flex items-center h-10 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
-              <div className="flex items-center gap-1.5 h-full px-3.5 text-xs md:text-sm font-mono font-bold text-white bg-base/50">
+            <div className="flex items-center h-9 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
+              <div className="flex items-center gap-1.5 h-full px-2.5 text-xs font-mono font-bold text-white bg-base/50">
                 <UserIcon className="h-3.5 w-3.5 text-accent-sapphire" />
                 <span>@{user.username}</span>
               </div>
               <button
                 onClick={onOpenIntegrationsModal}
-                className="flex items-center gap-1.5 h-full bg-surface-elevated px-3 text-xs md:text-sm font-mono font-bold text-text-whisper hover:text-white hover:bg-surface-active transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 h-full bg-surface-elevated px-2.5 text-xs font-mono font-bold text-text-whisper hover:text-white transition-colors cursor-pointer"
                 title="Manage linked GitHub and GitLab accounts"
               >
-                <Key className="h-3.5 w-3.5 text-status-awaiting-reply" />
+                <Key className="h-3 w-3 text-status-awaiting-reply" />
                 <span>ACCOUNTS ({integrations.length})</span>
               </button>
               <button
                 onClick={() => logout()}
-                className="h-full px-3 text-text-muted hover:text-status-action-needed hover:bg-surface-elevated transition-colors cursor-pointer flex items-center justify-center"
-                title="Sign out of active session"
+                className="h-full px-2.5 text-text-muted hover:text-status-action-needed transition-colors cursor-pointer flex items-center justify-center"
+                title="Sign out"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-3.5 w-3.5" />
               </button>
             </div>
           ) : (
             <button
               onClick={onOpenAuthModal}
-              className="flex items-center gap-2 h-10 border border-accent-sapphire bg-accent-sapphire/20 px-4 rounded-lg font-mono font-bold text-xs md:text-sm text-text-whisper hover:bg-accent-sapphire/35 transition-all cursor-pointer shadow-sm shrink-0"
-              title="Sign in or register for a private encrypted workspace"
+              className="flex items-center gap-1.5 h-9 border border-accent-sapphire bg-accent-sapphire/20 px-3.5 rounded-lg font-mono font-bold text-xs md:text-sm text-text-whisper hover:bg-accent-sapphire/35 transition-all cursor-pointer shadow-sm shrink-0"
+              title="Sign in or register"
             >
-              <Lock className="h-4 w-4 text-accent-sapphire" />
+              <Lock className="h-3.5 w-3.5 text-accent-sapphire" />
               <span>SIGN_IN</span>
             </button>
           )}
-        </div>
-      </div>
-
-      {/* Tier 2: Dedicated Full-Width Telemetry KPI Strip */}
-      <div className="border-t border-border-subtle bg-base/60 px-6 py-2.5 md:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-3 font-mono text-xs">
-        {/* Left: KPI Filter Chips */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <span className="text-text-muted uppercase font-bold tracking-wider mr-1 hidden lg:inline">
-            TELEMETRY KPI:
-          </span>
-
-          {/* Action Needed Metric Chip */}
-          <button
-            onClick={() => onSelectFilter?.('action-needed')}
-            className={`flex items-center gap-2 px-3 py-1 rounded-md font-bold transition-all cursor-pointer border ${
-              activeFilter === 'action-needed'
-                ? 'border-status-action-needed bg-status-action-needed/25 text-status-action-needed shadow-sm ring-1 ring-status-action-needed'
-                : (stats?.actionNeeded ?? 0) > 0
-                ? 'border-status-action-needed/50 bg-status-action-needed/15 text-status-action-needed hover:bg-status-action-needed/25'
-                : 'border-border-subtle bg-surface text-text-muted hover:text-white'
-            }`}
-            title="Filter: Contributions requiring developer action"
-          >
-            <span className={`h-2 w-2 rounded-full bg-status-action-needed shrink-0 ${(stats?.actionNeeded ?? 0) > 0 ? 'animate-pulse' : ''}`} />
-            <span>ACTION_REQ:</span>
-            <span className="text-sm font-extrabold">{stats?.actionNeeded ?? 0}</span>
-          </button>
-
-          {/* In Review Metric Chip */}
-          <button
-            onClick={() => onSelectFilter?.('active')}
-            className={`flex items-center gap-2 px-3 py-1 rounded-md font-bold transition-all cursor-pointer border ${
-              activeFilter === 'active'
-                ? 'border-accent-sapphire bg-accent-sapphire/25 text-text-whisper shadow-sm ring-1 ring-accent-sapphire'
-                : 'border-border-subtle bg-surface text-text-muted hover:text-white hover:border-accent-sapphire'
-            }`}
-            title="Filter: Contributions currently awaiting maintainer review"
-          >
-            <span className="h-2 w-2 rounded-full bg-accent-sapphire shrink-0" />
-            <span>IN_REVIEW:</span>
-            <span className="text-sm font-extrabold text-white">{stats?.awaitingMaintainer ?? 0}</span>
-          </button>
-
-          {/* Merged Metric Chip */}
-          <button
-            onClick={() => onSelectFilter?.('merged')}
-            className={`flex items-center gap-2 px-3 py-1 rounded-md font-bold transition-all cursor-pointer border ${
-              activeFilter === 'merged'
-                ? 'border-status-merged bg-status-merged/25 text-status-merged shadow-sm ring-1 ring-status-merged'
-                : 'border-border-subtle bg-surface text-text-muted hover:text-status-merged hover:border-status-merged/50'
-            }`}
-            title="Filter: Upstream accepted contributions"
-          >
-            <span className="h-2 w-2 rounded-full bg-status-merged shrink-0" />
-            <span>MERGED:</span>
-            <span className="text-sm font-extrabold text-white">{stats?.merged ?? 0}</span>
-          </button>
-
-          {/* Total Metric Chip */}
-          <button
-            onClick={() => onSelectFilter?.('all')}
-            className={`flex items-center gap-2 px-3 py-1 rounded-md font-bold transition-all cursor-pointer border ${
-              activeFilter === 'all'
-                ? 'border-border-bold bg-surface-elevated text-white shadow-sm'
-                : 'border-border-subtle bg-surface text-text-muted hover:text-white'
-            }`}
-            title="Show all tracked contributions"
-          >
-            <span className="h-2 w-2 rounded-full bg-text-muted shrink-0" />
-            <span>TOTAL_TRACKED:</span>
-            <span className="text-sm font-extrabold text-white">{stats?.total ?? 0}</span>
-          </button>
-        </div>
-
-        {/* Right: Operational Status Info */}
-        <div className="hidden sm:flex items-center gap-3 text-text-muted shrink-0 font-mono text-[11px]">
-          <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-status-merged" />
-            <span>SYS: OPTIMAL</span>
-          </span>
-          <span>•</span>
-          <span>POLL: 30s</span>
-          <span>•</span>
-          <span>ENCRYPTION: AES-256-GCM</span>
         </div>
       </div>
     </header>

@@ -146,19 +146,19 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-base">
       {/* Stream Section Header */}
-      <div className="flex items-center justify-between px-2 pb-3 select-none">
-        <div className="flex items-center gap-2 text-xs md:text-sm font-mono font-bold text-text-muted uppercase tracking-wider">
-          <Terminal className="h-4 w-4 text-accent-sapphire" />
-          <span>CONTRIBUTION TELEMETRY STREAM ({items.length} ACTIVE RECORDS)</span>
+      <div className="flex items-center justify-between px-1 pb-2 select-none">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold text-text-muted uppercase tracking-wider">
+          <Terminal className="h-3.5 w-3.5 text-accent-sapphire" />
+          <span>CONTRIBUTION TELEMETRY STREAM ({items.length} RECORDS)</span>
         </div>
-        <div className="hidden sm:flex items-center gap-4 text-xs font-mono text-text-muted">
-          <span>NAVIGATE: <kbd className="border border-border-bold bg-surface-card px-1.5 py-0.5 rounded text-text-whisper">j</kbd>/<kbd className="border border-border-bold bg-surface-card px-1.5 py-0.5 rounded text-text-whisper">k</kbd></span>
-          <span>SELECT: <kbd className="border border-border-bold bg-surface-card px-1.5 py-0.5 rounded text-text-whisper">Enter</kbd></span>
+        <div className="hidden sm:flex items-center gap-3 text-xs font-mono text-text-muted">
+          <span>NAV: <kbd className="border border-border-bold bg-surface-card px-1.5 py-0.2 rounded text-text-whisper">j</kbd>/<kbd className="border border-border-bold bg-surface-card px-1.5 py-0.2 rounded text-text-whisper">k</kbd></span>
+          <span>OPEN: <kbd className="border border-border-bold bg-surface-card px-1.5 py-0.2 rounded text-text-whisper">Enter</kbd></span>
         </div>
       </div>
 
-      {/* Separated Card Rows */}
-      <div className="overflow-y-auto flex-1 pr-1 pb-4">
+      {/* Separated Card Rows with Stream Scroll Fade Mask */}
+      <div className="overflow-y-auto flex-1 pr-1 pb-2 stream-scroll-mask">
         {items.map((item, idx) => {
           const isHighlighted = idx === highlightedIndex;
           const isSelected = item.id === selectedId;
@@ -166,7 +166,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
           return (
             <div
               key={item.id}
-              className={isHighlighted && !isSelected ? 'ring-2 ring-accent-sapphire/60 rounded-lg' : ''}
+              className={isHighlighted && !isSelected ? 'ring-1 ring-accent-sapphire/70 rounded-lg' : ''}
             >
               <ContributionRow
                 item={item}
@@ -181,28 +181,34 @@ export const ContributionList: React.FC<ContributionListProps> = ({
         })}
       </div>
 
-      {/* Sapphire Console Footer HUD */}
-      <div className="border border-border-subtle bg-surface px-6 py-3.5 rounded-lg shadow-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 font-mono text-xs md:text-sm text-text-muted select-none mt-2">
+      {/* Sapphire Console Footer HUD (Chrome Surface with Top Highlight) */}
+      <div className="border border-border-subtle chrome-surface px-4 py-2 rounded-lg shadow-card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 font-mono text-xs text-text-muted select-none mt-2">
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-white font-bold">[CONSOLE]</span>
           <span>
-            <kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">j</kbd>/<kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">k</kbd> NAVIGATE
+            <kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">j</kbd>/<kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">k</kbd> NAVIGATE
           </span>
           <span>
-            <kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">Enter</kbd> TELEMETRY
+            <kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">Enter</kbd> TELEMETRY
           </span>
           <span>
-            <kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">/</kbd> QUERY
+            <kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">/</kbd> QUERY
           </span>
           <span>
-            <kbd className="border border-border-bold bg-base px-2 py-0.5 rounded text-text-whisper">Esc</kbd> DISMISS
+            <kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">Esc</kbd> DISMISS
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span>RECORDS: </span>
-          <span className="font-bold text-white text-base">{items.length}</span>
-          <span> // STATUS: </span>
-          <span className="text-status-merged font-bold">ONLINE</span>
+        <div className="flex items-center gap-3">
+          <span className="hidden md:inline">
+            <span className="h-1.5 w-1.5 rounded-full bg-status-merged inline-block mr-1" />
+            SYS: OPTIMAL
+          </span>
+          <span className="hidden md:inline">•</span>
+          <span className="hidden md:inline">ENCRYPTION: AES-256-GCM</span>
+          <span className="hidden md:inline">•</span>
+          <span>
+            RECORDS: <span className="font-bold text-white">{items.length}</span>
+          </span>
         </div>
       </div>
     </div>
