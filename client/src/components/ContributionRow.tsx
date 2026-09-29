@@ -107,13 +107,13 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
   let surfaceOpacity = 'opacity-100';
 
   if (item.action_needed === 'push-changes') {
-    // Subtle ambient rose perimeter glow across all edges
+    // True crimson red ambient glow across all edges (zero pink tint)
     cardGlowStyle =
-      'border-rose-500/35 bg-gradient-to-r from-rose-500/[0.04] to-transparent shadow-[0_0_14px_-2px_rgba(244,63,94,0.18)] hover:shadow-[0_0_20px_-1px_rgba(244,63,94,0.26)] hover:border-rose-500/50';
+      'border-red-500/40 bg-red-950/[0.12] shadow-[0_0_15px_-1px_rgba(239,68,68,0.24),0_0_4px_0_rgba(220,38,38,0.22)] hover:shadow-[0_0_22px_0_rgba(239,68,68,0.36),0_0_6px_0_rgba(220,38,38,0.30)] hover:border-red-500/65';
   } else if (item.action_needed === 'reply') {
     // Subtle ambient amber perimeter glow across all edges
     cardGlowStyle =
-      'border-amber-500/35 bg-gradient-to-r from-amber-500/[0.04] to-transparent shadow-[0_0_14px_-2px_rgba(245,158,11,0.16)] hover:shadow-[0_0_20px_-1px_rgba(245,158,11,0.24)] hover:border-amber-500/50';
+      'border-amber-500/40 bg-amber-950/[0.12] shadow-[0_0_15px_-1px_rgba(245,158,11,0.22),0_0_4px_0_rgba(245,158,11,0.18)] hover:shadow-[0_0_22px_0_rgba(245,158,11,0.32),0_0_6px_0_rgba(245,158,11,0.26)] hover:border-amber-500/65';
   } else if (normalizedStatus === 'merged') {
     cardGlowStyle = 'border-emerald-500/25 hover:border-emerald-500/40';
     surfaceOpacity = 'opacity-75 hover:opacity-100';

@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import { Stats } from '../types';
 
@@ -101,7 +102,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
 
         {/* Center: Consolidated KPI Filter Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar shrink-0">
-          <div className="inline-flex items-center p-0.5 rounded-lg border border-border-subtle bg-base/80 shadow-inner gap-1">
+          <div className="inline-flex items-center p-0.5 rounded-lg border border-border-subtle bg-base/80 shadow-inner gap-1 relative">
             {tabs.map((tab) => {
               const isActive =
                 tab.id === 'action-needed'
@@ -111,6 +112,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => {
                     if (tab.id === 'action-needed') {
                       onStatusChange('all');
@@ -120,23 +122,34 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                       onStatusChange(tab.id);
                     }
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all text-xs font-bold font-mono cursor-pointer shrink-0 ${
+                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none ${
                     isActive
                       ? tab.urgent
-                        ? 'border border-status-action-needed/80 bg-status-action-needed/25 text-status-action-needed shadow-sm ring-1 ring-status-action-needed'
-                        : 'border border-accent-sapphire bg-accent-sapphire/25 text-white shadow-sm ring-1 ring-accent-sapphire'
+                        ? 'text-status-action-needed'
+                        : 'text-white'
                       : tab.urgent
-                      ? 'border border-status-action-needed/40 bg-status-action-needed/10 text-status-action-needed hover:bg-status-action-needed/20'
-                      : 'border border-transparent text-text-muted hover:text-white hover:bg-surface-elevated'
+                      ? 'text-status-action-needed/80 hover:text-status-action-needed'
+                      : 'text-text-muted hover:text-white'
                   }`}
                 >
-                  {tab.urgent && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-status-action-needed animate-pulse shrink-0" />
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeFilterTabPill"
+                      className={`absolute inset-0 rounded-md border shadow-sm ${
+                        tab.urgent
+                          ? 'border-status-action-needed/80 bg-status-action-needed/25 ring-1 ring-status-action-needed'
+                          : 'border-accent-sapphire bg-accent-sapphire/25 ring-1 ring-accent-sapphire'
+                      }`}
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
                   )}
-                  <span>{tab.label}</span>
+                  {tab.urgent && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-status-action-needed animate-pulse shrink-0 relative z-10" />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
                   {tab.count !== null && (
                     <span
-                      className={`text-[11px] px-1.5 py-0.2 rounded font-extrabold ${
+                      className={`relative z-10 text-[11px] px-1.5 py-0.2 rounded font-extrabold transition-colors ${
                         isActive
                           ? 'bg-white/20 text-white'
                           : 'bg-surface-elevated text-text-muted'
@@ -154,25 +167,34 @@ export const FilterRail: React.FC<FilterRailProps> = ({
         {/* Right: Auxiliary Filters (Scope + Platform + Sort) */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
           {/* Scope Split: All / External / Own Repo */}
-          <div className="inline-flex items-center h-8 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono">
+          <div className="inline-flex items-center h-8 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono relative">
             {[
               { id: 'all', label: 'ALL' },
               { id: 'external', label: 'EXT' },
               { id: 'own', label: 'OWN' },
-            ].map((sc) => (
-              <button
-                key={sc.id}
-                onClick={() => onScopeChange(sc.id)}
-                className={`px-2 py-0.5 rounded font-bold transition-all cursor-pointer ${
-                  scopeFilter === sc.id
-                    ? 'bg-surface-elevated text-white border border-border-subtle shadow-sm'
-                    : 'text-text-muted hover:text-white'
-                }`}
-                title={`Filter repository scope: ${sc.label}`}
-              >
-                {sc.label}
-              </button>
-            ))}
+            ].map((sc) => {
+              const isSelected = scopeFilter === sc.id;
+              return (
+                <button
+                  key={sc.id}
+                  type="button"
+                  onClick={() => onScopeChange(sc.id)}
+                  className={`relative px-2.5 py-1 rounded-md font-bold transition-colors cursor-pointer select-none text-xs z-10 ${
+                    isSelected ? 'text-white' : 'text-text-muted hover:text-white'
+                  }`}
+                  title={`Filter repository scope: ${sc.label}`}
+                >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="activeScopePill"
+                      className="absolute inset-0 rounded-md bg-surface-elevated border border-accent-sapphire/60 shadow-sm"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span className="relative z-10">{sc.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Platform Selector */}

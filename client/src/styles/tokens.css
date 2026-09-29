@@ -36,7 +36,7 @@
   --color-status-merged: #4ade80;        /* Crisp Emerald Success */
   --color-status-in-review: #749DD0;     /* Sapphire In-Review */
   --color-status-awaiting-reply: #fbbf24;/* Warm Signal Amber */
-  --color-status-action-needed: #f87171; /* High-Urgency Coral Red */
+  --color-status-action-needed: #ef4444; /* High-Urgency Crimson Red */
   --color-status-draft: #AAA59F;         /* Neutral Stone Grey */
   --color-status-open: #749DD0;          /* Pending Review Sapphire */
   --color-status-bounty: #fbbf24;        /* Rewarded Bounty Amber */
