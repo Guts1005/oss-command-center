@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Stats } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -98,16 +99,26 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
 
         {/* Right: Primary Track + Clustered Utilities + User Capsule */}
         <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
-          {/* Group 1: Primary Action (Filled Highlight) */}
+          {/* Group 1: Primary Action (Filled Highlight with Spring Micro-interaction) */}
           {onOpenTrackModal && (
-            <button
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(116,157,208,0.5)' }}
+              whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 450, damping: 25 }}
               onClick={onOpenTrackModal}
-              className="flex items-center gap-1.5 h-9 bg-accent-sapphire hover:bg-accent-sapphire/85 text-white px-3.5 rounded-lg font-mono font-bold text-xs md:text-sm transition-all shadow-sm cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 h-9 bg-accent-sapphire hover:bg-accent-sapphire/90 text-white px-3.5 rounded-lg font-mono font-bold text-xs md:text-sm shadow-sm cursor-pointer shrink-0 group"
               title="Track new contribution URL"
             >
-              <PlusCircle className="h-4 w-4" />
+              <motion.div
+                whileHover={{ rotate: 90 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                className="flex items-center"
+              >
+                <PlusCircle className="h-4 w-4" />
+              </motion.div>
               <span>+ TRACK</span>
-            </button>
+            </motion.button>
           )}
 
           {/* Group 2: System Utilities Toolbelt */}
@@ -167,14 +178,24 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
                 <UserIcon className="h-3.5 w-3.5 text-accent-sapphire" />
                 <span>@{user.username}</span>
               </div>
-              <button
+              <motion.button
+                type="button"
+                whileHover={{ backgroundColor: 'rgba(251, 191, 36, 0.22)', color: '#ffffff' }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.15 }}
                 onClick={onOpenIntegrationsModal}
-                className="flex items-center gap-1.5 h-full bg-surface-elevated px-2.5 text-xs font-mono font-bold text-text-whisper hover:text-white transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 h-full bg-surface-elevated px-2.5 text-xs font-mono font-bold text-text-whisper hover:text-white transition-colors cursor-pointer group"
                 title="Manage linked GitHub and GitLab accounts"
               >
-                <Key className="h-3 w-3 text-status-awaiting-reply" />
+                <motion.div
+                  whileHover={{ rotate: -20, scale: 1.15 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                  className="flex items-center"
+                >
+                  <Key className="h-3 w-3 text-status-awaiting-reply" />
+                </motion.div>
                 <span>ACCOUNTS ({integrations.length})</span>
-              </button>
+              </motion.button>
               <button
                 onClick={() => logout()}
                 className="h-full px-2.5 text-text-muted hover:text-status-action-needed transition-colors cursor-pointer flex items-center justify-center"

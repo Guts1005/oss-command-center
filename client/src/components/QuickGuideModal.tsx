@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X, HelpCircle, CheckCircle2, AlertTriangle, MessageSquare, Clock, Keyboard, Terminal } from 'lucide-react';
 
 interface QuickGuideModalProps {
@@ -7,19 +8,42 @@ interface QuickGuideModalProps {
 }
 
 export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm select-none">
-      <div className="relative w-full max-w-2xl border border-border-subtle bg-surface p-6 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-        {/* Dismiss Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-all cursor-pointer"
-          title="Dismiss (Esc)"
-        >
-          <X className="h-4 w-4" />
-        </button>
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none">
+          {/* Backdrop with smooth fade */}
+          <motion.div
+            key="guide-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/85 backdrop-blur-sm"
+          />
+
+          {/* Modal Container with Spring Physics */}
+          <motion.div
+            key="guide-modal-card"
+            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 12 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 380, mass: 0.8 }}
+            className="relative w-full max-w-2xl border border-border-subtle bg-surface p-6 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto z-10"
+          >
+            {/* Dismiss Button */}
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              onClick={onClose}
+              className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
+              title="Dismiss (Esc)"
+            >
+              <X className="h-4 w-4" />
+            </motion.button>
 
         {/* Console Header */}
         <div className="flex items-center gap-3.5 mb-6 border-b border-border-subtle/80 pb-4">
@@ -160,14 +184,20 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
 
         {/* Footer */}
         <div className="flex justify-end border-t border-border-subtle/80 pt-4">
-          <button
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             onClick={onClose}
-            className="border border-border-subtle bg-surface-elevated px-5 py-2.5 rounded-md text-sm font-mono font-bold text-white hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer"
+            className="border border-border-subtle bg-surface-elevated px-5 py-2.5 rounded-md text-sm font-mono font-bold text-white hover:border-accent-sapphire hover:bg-surface-active transition-colors cursor-pointer"
           >
             [DISMISS_MANUAL]
-          </button>
+          </motion.button>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 };

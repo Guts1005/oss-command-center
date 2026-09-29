@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, Lock, User, Mail, KeyRound, AlertTriangle, Eye, EyeOff, X } from 'lucide-react';
 
@@ -17,8 +18,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,37 +50,61 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm select-none">
-      {/* Modal Container */}
-      <div className="relative w-full max-w-lg border border-border-subtle bg-surface p-7 rounded-xl shadow-2xl z-10">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border-subtle/80 pb-4 mb-5">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
-              <Shield className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide">
-                  {isRegister ? 'Register Tenant Account' : 'Authenticate Tenant'}
-                </h2>
-                <span className="border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
-                  [AUTH_GCM]
-                </span>
-              </div>
-              <p className="text-xs md:text-sm text-text-muted font-sans mt-0.5">
-                Multi-tenant encrypted workspace &amp; credential vault.
-              </p>
-            </div>
-          </div>
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none">
+          {/* Backdrop with smooth fade */}
+          <motion.div
+            key="auth-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-all cursor-pointer"
-            title="Dismiss (Esc)"
+            className="absolute inset-0 bg-black/85 backdrop-blur-sm"
+          />
+
+          {/* Modal Container with Spring Physics */}
+          <motion.div
+            key="auth-modal-card"
+            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 12 }}
+            transition={{ type: 'spring', damping: 26, stiffness: 380, mass: 0.8 }}
+            className="relative w-full max-w-lg border border-border-subtle bg-surface p-7 rounded-xl shadow-2xl z-10"
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border-subtle/80 pb-4 mb-5">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide">
+                      {isRegister ? 'Register Tenant Account' : 'Authenticate Tenant'}
+                    </h2>
+                    <span className="border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
+                      [AUTH_GCM]
+                    </span>
+                  </div>
+                  <p className="text-xs md:text-sm text-text-muted font-sans mt-0.5">
+                    Multi-tenant encrypted workspace &amp; credential vault.
+                  </p>
+                </div>
+              </div>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                onClick={onClose}
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
+                title="Dismiss (Esc)"
+              >
+                <X className="h-4 w-4" />
+              </motion.button>
+            </div>
 
         {/* Mode Switch */}
         <div className="grid grid-cols-2 gap-2 border border-border-subtle bg-base p-1.5 rounded-lg mb-5 text-xs md:text-sm font-bold font-mono">
@@ -203,16 +226,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           </div>
 
           <div className="pt-2">
-            <button
+            <motion.button
               type="submit"
+              whileHover={{ scale: 1.015, boxShadow: '0 0 16px rgba(116,157,208,0.35)' }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               disabled={isLoading}
-              className="w-full border border-accent-sapphire bg-accent-sapphire/25 py-3.5 rounded-md font-mono text-sm md:text-base font-bold text-white hover:bg-accent-sapphire/35 disabled:opacity-50 transition-all cursor-pointer shadow-sm"
+              className="w-full border border-accent-sapphire bg-accent-sapphire/25 py-3.5 rounded-md font-mono text-sm md:text-base font-bold text-white hover:bg-accent-sapphire/35 disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
             >
               {isLoading ? '[AUTHENTICATING...]' : isRegister ? '[CREATE_TENANT_ACCOUNT]' : '[SIGN_IN_TENANT]'}
-            </button>
+            </motion.button>
           </div>
         </form>
-      </div>
-    </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 };
