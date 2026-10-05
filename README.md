@@ -134,6 +134,19 @@ Navigate to the hosted instance at [oss-command-center.onrender.com](https://oss
 
 ---
 
+## Self-Hosting and Production Deployment
+
+OSS Command Center is self-hostable with a single Docker command or deployable to cloud PaaS providers:
+
+* **Docker Compose:** Persistent SQLite volumes, automated health checks, and Caddy reverse proxy.
+* **Render.com:** Pre-configured [`render.yaml`](./render.yaml) infrastructure blueprint with automated build pipelines.
+* **Fly.io:** Global edge container deployment with persistent NVMe volume mounting.
+* **Disaster Recovery:** Continuous SQLite WAL replication via Litestream and automated point-in-time snapshot scripts ([`scripts/backup-db.sh`](./scripts/backup-db.sh)).
+
+For end-to-end setup instructions, environment secret generation, and recovery runbooks, refer to the complete [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+
+---
+
 ## License
 
 Distributed under the **MIT License**. See [`LICENSE`](./LICENSE) for full details.

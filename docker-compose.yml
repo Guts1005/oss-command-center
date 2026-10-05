@@ -1,0 +1,30 @@
+services:
+  oss-command-center:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oss-command-center
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    environment:
+      - NODE_ENV=production
+      - PORT=3100
+      - DB_PATH=/app/data/contributions.db
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-default_insecure_key_change_in_production_32b}
+      - ENCRYPTION_MASTER_KEY=${ENCRYPTION_KEY:-default_insecure_key_change_in_production_32b}
+      - SESSION_SECRET=${SESSION_SECRET:-default_session_secret_change_in_production}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET:-}
+      - GITLAB_WEBHOOK_SECRET=${GITLAB_WEBHOOK_SECRET:-}
+    volumes:
+      - oss_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  oss_data:
+    driver: local

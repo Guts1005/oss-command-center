@@ -5,10 +5,13 @@ services:
     plan: free
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: APP_SECRET_KEY
+        generateValue: true
+      - key: ENCRYPTION_MASTER_KEY
         generateValue: true
       - key: DB_PATH
         value: ./contributions.db

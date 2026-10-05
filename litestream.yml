@@ -1,0 +1,16 @@
+# litestream.yml
+# Continuous SQLite disaster recovery replication configuration
+# Reference: https://litestream.io/reference/config/
+
+dbs:
+  - path: /app/data/contributions.db
+    replicas:
+      - type: s3
+        bucket: "${LITESTREAM_BUCKET}"
+        path: "oss-command-center/db"
+        region: "${AWS_REGION:-auto}"
+        endpoint: "${LITESTREAM_ENDPOINT}"
+        access-key-id: "${AWS_ACCESS_KEY_ID}"
+        secret-access-key: "${AWS_SECRET_ACCESS_KEY}"
+        sync-interval: 10s
+        retention: 72h

@@ -9,7 +9,7 @@ const KEY_LENGTH = 32; // 256 bits
  * Falls back to a deterministic development key if not configured in .env.
  */
 function getMasterKey(): Buffer {
-  const secret = process.env.ENCRYPTION_KEY || 'oss-command-center-default-dev-secret-key-32b';
+  const secret = process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_MASTER_KEY || 'oss-command-center-default-dev-secret-key-32b';
   // Use scrypt to derive a 256-bit key with a fixed application salt
   return crypto.scryptSync(secret, 'oss-command-center-token-salt-v1', KEY_LENGTH);
 }

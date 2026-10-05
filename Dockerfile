@@ -34,9 +34,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3100
 
-# Install runtime SQLite libraries if needed
+# Install runtime packages: ca-certificates, curl for health checks, sqlite3
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
+    curl \
+    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy built assets and production node_modules from builder
@@ -51,5 +53,8 @@ VOLUME ["/app/data"]
 ENV DB_PATH=/app/data/contributions.db
 
 EXPOSE 3100
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:3100/health || exit 1
 
 CMD ["npm", "start"]
