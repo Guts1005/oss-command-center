@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import axios from 'axios';
 import App from './App';
 import './styles/tokens.css';
+import 'lenis/dist/lenis.css';
 
 axios.defaults.withCredentials = true;
 

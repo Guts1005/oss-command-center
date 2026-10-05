@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import axios from 'axios';
 import { Contribution, Stats } from './types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -13,6 +14,13 @@ import { AuthModal } from './components/AuthModal';
 import { IntegrationsModal } from './components/IntegrationsModal';
 import { MobileBottomDock } from './components/MobileBottomDock';
 import { OfflineBanner } from './components/OfflineBanner';
+import { useViewRouting } from './hooks/useViewRouting';
+import { useTheme } from './hooks/useTheme';
+import { AnalyticsView } from './components/views/AnalyticsView';
+import { RepositoriesView } from './components/views/RepositoriesView';
+import { SettingsView } from './components/views/SettingsView';
+import { SecurityPolicyView } from './components/views/SecurityPolicyView';
+import { AboutView } from './components/views/AboutView';
 
 import { sendDesktopNotification } from './utils/notifications';
 
@@ -44,6 +52,8 @@ function useModalHistory(isOpen: boolean, onClose: () => void, modalKey: string)
 
 const AppContent: React.FC = () => {
   const { user, integrations } = useAuth();
+  const { viewMode, setViewMode } = useViewRouting();
+  const { theme, toggleTheme } = useTheme();
 
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -279,6 +289,8 @@ const AppContent: React.FC = () => {
           setIsCommandPaletteOpen(false);
         } else if (selectedId) {
           setSelectedId(null);
+        } else if (viewMode === 'about' || viewMode === 'security') {
+          setViewMode('stream');
         }
       }
     };
@@ -292,6 +304,8 @@ const AppContent: React.FC = () => {
     isAuthModalOpen,
     isIntegrationsModalOpen,
     selectedId,
+    viewMode,
+    setViewMode,
   ]);
 
   // Sync mobile hardware back button and browser navigation with active modals
@@ -317,50 +331,112 @@ const AppContent: React.FC = () => {
       {/* Offline Status / Reconnection Resilience Banner */}
       <OfflineBanner />
 
-      <div className="flex-1 flex flex-col min-h-0 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3.5">
+      <div className="flex-1 flex flex-col min-h-0 w-full px-3 sm:px-6 lg:px-8 py-2 sm:py-3.5">
         {/* Compact Single-Tier Header */}
         <HeaderTelemetry
           stats={stats}
           onSync={handleSync}
           isSyncing={isSyncing}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          theme={theme}
+          onToggleTheme={toggleTheme}
           onOpenTrackModal={() => setIsTrackModalOpen(true)}
           onOpenGuideModal={() => setIsGuideModalOpen(true)}
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
           onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
         />
 
-        {/* Consolidated Query & KPI Filter Toolbar */}
-        <FilterRail
-          stats={stats}
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          platformFilter={platformFilter}
-          onPlatformChange={setPlatformFilter}
-          actionFilter={actionFilter}
-          onActionChange={setActionFilter}
-          scopeFilter={scopeFilter}
-          onScopeChange={setScopeFilter}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          isMobileFiltersOpen={isMobileFiltersOpen}
-        />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={viewMode}
+            initial={{ opacity: 0, y: 8, filter: 'blur(3px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className="flex-1 flex flex-col min-h-0 relative w-full"
+          >
+            {viewMode === 'stream' && (
+              <>
+                {/* Consolidated Query & KPI Filter Toolbar */}
+                <FilterRail
+                  stats={stats}
+                  statusFilter={statusFilter}
+                  onStatusChange={setStatusFilter}
+                  platformFilter={platformFilter}
+                  onPlatformChange={setPlatformFilter}
+                  actionFilter={actionFilter}
+                  onActionChange={setActionFilter}
+                  scopeFilter={scopeFilter}
+                  onScopeChange={setScopeFilter}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  isMobileFiltersOpen={isMobileFiltersOpen}
+                />
 
-        {/* Main Scannable Contribution Stream */}
-        <main className="flex-1 flex flex-col min-h-0 relative">
-          <ContributionList
-            items={contributions}
-            selectedId={selectedId}
-            onSelectItem={handleSelectItem}
-            isLoading={isLoading}
-            isRefreshing={isRefreshing}
-            onOpenTrackModal={() => setIsTrackModalOpen(true)}
-            onResetFilters={handleResetFilters}
-            isAuthenticated={Boolean(user)}
-            onOpenAuthModal={() => setIsAuthModalOpen(true)}
-          />
-        </main>
+                {/* Main Scannable Contribution Stream */}
+                <main className="flex-1 flex flex-col min-h-0 relative">
+                  <ContributionList
+                    items={contributions}
+                    selectedId={selectedId}
+                    onSelectItem={handleSelectItem}
+                    isLoading={isLoading}
+                    isRefreshing={isRefreshing}
+                    onOpenTrackModal={() => setIsTrackModalOpen(true)}
+                    onResetFilters={handleResetFilters}
+                    isAuthenticated={Boolean(user)}
+                    onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                  />
+                </main>
+              </>
+            )}
+
+            {viewMode === 'analytics' && (
+              <main className="flex-1 flex flex-col min-h-0 relative">
+                <AnalyticsView stats={stats} />
+              </main>
+            )}
+
+            {viewMode === 'repos' && (
+              <main className="flex-1 flex flex-col min-h-0 relative">
+                <RepositoriesView
+                  contributions={contributions}
+                  onSelectRepoFilter={(repo) => {
+                    setSearchQuery(repo);
+                    setViewMode('stream');
+                  }}
+                />
+              </main>
+            )}
+
+            {viewMode === 'settings' && (
+              <main className="flex-1 flex flex-col min-h-0 relative">
+                <SettingsView
+                  onNavigateView={setViewMode}
+                />
+              </main>
+            )}
+
+            {viewMode === 'security' && (
+              <main className="flex-1 flex flex-col min-h-0 relative">
+                <SecurityPolicyView
+                  onBack={() => setViewMode('stream')}
+                />
+              </main>
+            )}
+
+            {viewMode === 'about' && (
+              <main className="flex-1 flex flex-col min-h-0 relative">
+                <AboutView
+                  onBack={() => setViewMode('stream')}
+                  onNavigateView={setViewMode}
+                />
+              </main>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Slide-over Detail Inspection Drawer */}
@@ -398,6 +474,7 @@ const AppContent: React.FC = () => {
       <QuickGuideModal
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}
+        onNavigateView={setViewMode}
       />
 
       {/* User Auth Modal */}
@@ -422,22 +499,14 @@ const AppContent: React.FC = () => {
 
       {/* Mobile Bottom Thumb Navigation Dock */}
       <MobileBottomDock
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         onScrollToTop={() => {
           document.getElementById('stream-feed-container')?.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onRefresh={handleSync}
-        isFiltersOpen={isMobileFiltersOpen}
-        onToggleFilters={() => setIsMobileFiltersOpen((prev) => !prev)}
         onOpenTrackModal={() => setIsTrackModalOpen(true)}
-        onOpenIntegrationsModal={() => {
-          if (user) {
-            setIsIntegrationsModalOpen(true);
-          } else {
-            setIsAuthModalOpen(true);
-          }
-        }}
         actionNeededCount={stats?.actionNeeded ?? 0}
-        integrationsCount={integrations.length}
       />
     </div>
   );

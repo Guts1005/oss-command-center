@@ -117,7 +117,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/85 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
           />
 
           {/* Modal / Bottom Sheet Container with Spring Physics */}
@@ -127,7 +127,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 24 }}
             transition={{ type: 'spring', damping: 28, stiffness: 380, mass: 0.85 }}
-            className="relative w-full max-w-3xl border-t sm:border border-border-subtle bg-surface p-4 sm:p-7 rounded-t-2xl sm:rounded-xl shadow-2xl z-10 max-h-[88dvh] overflow-y-auto pb-safe"
+            className="relative w-full max-w-3xl border-t sm:border border-border-subtle bg-surface p-4 sm:p-7 rounded-t-2xl sm:rounded-xl shadow-[inset_0_1px_0_rgba(207,231,248,0.04),0_25px_50px_-12px_rgba(0,0,0,0.8)] z-10 max-h-[88dvh] overflow-y-auto pb-safe"
           >
             {/* Mobile Tactile Grab Handle */}
             <div className="sm:hidden w-12 h-1.5 bg-border-bold/80 rounded-full mx-auto mb-3 cursor-grab shrink-0" />
@@ -262,7 +262,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                                 {acc.host && <span>HOST: <span className="text-text-muted">{acc.host}</span></span>}
                                 <span>STATUS: <span className="text-status-merged font-bold uppercase">{acc.sync_status}</span></span>
                                 {acc.last_synced_at && (
-                                  <span>LAST_SYNC: <span className="text-text-muted">{new Date(acc.last_synced_at).toLocaleTimeString()}</span></span>
+                                  <span>LAST SYNC: <span className="text-text-muted">{new Date(acc.last_synced_at).toLocaleTimeString()}</span></span>
                                 )}
                               </div>
                             </div>
@@ -310,7 +310,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                                   disabled={isDeletingNow}
                                   className="border border-status-action-needed bg-status-action-needed/30 px-3 py-1.5 rounded text-xs font-bold uppercase text-status-action-needed hover:bg-status-action-needed/50 disabled:opacity-50 transition-colors cursor-pointer"
                                 >
-                                  {isDeletingNow ? '[PURGING...]' : '[CONFIRM_PURGE]'}
+                                  {isDeletingNow ? '[PURGING...]' : '[CONFIRM DISCONNECT]'}
                                 </motion.button>
                                 <motion.button
                                   type="button"

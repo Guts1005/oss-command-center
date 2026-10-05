@@ -56,8 +56,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 md:pt-24 bg-black/85 backdrop-blur-sm p-4 select-none">
-      <div className="w-full max-w-3xl border border-border-subtle bg-surface rounded-xl shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 md:pt-24 bg-black/80 backdrop-blur-sm p-4 select-none">
+      <div className="w-full max-w-3xl border border-border-subtle bg-surface rounded-xl shadow-[inset_0_1px_0_rgba(207,231,248,0.04),0_25px_50px_-12px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden">
         {/* Search Input Bar */}
         <div className="flex items-center gap-3.5 border-b border-border-subtle bg-base px-6 py-4">
           <Search className="h-5 w-5 text-accent-sapphire shrink-0" />
@@ -78,7 +78,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         <div className="max-h-[460px] overflow-y-auto p-3 space-y-1.5">
           {filtered.length === 0 ? (
             <div className="p-10 text-center text-sm font-mono text-text-muted">
-              [NO_MATCHING_TELEMETRY_FOUND]
+              [NO MATCHING RESULTS FOUND]
             </div>
           ) : (
             filtered.map((item, idx) => {

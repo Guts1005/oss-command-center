@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Lenis from 'lenis';
 import { Contribution } from '../types';
 import { ContributionRow } from './ContributionRow';
 import { PlusCircle, Search, Terminal, Shield, Lock } from 'lucide-react';
@@ -28,6 +29,49 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   onOpenAuthModal,
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // 60fps desktop-optimized smooth scrolling with Lenis
+  useEffect(() => {
+    // Only enable smooth scrolling on desktop fine pointers (mouse / trackpad)
+    // Coarse pointer devices (touchscreens / mobile) retain native momentum scrolling for zero overhead
+    const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    if (isTouch || prefersReducedMotion || !containerRef.current) {
+      return;
+    }
+
+    const container = containerRef.current;
+    let lenis: Lenis | null = null;
+    let rafId: number;
+
+    try {
+      lenis = new Lenis({
+        wrapper: container,
+        content: (container.firstElementChild as HTMLElement) || container,
+        duration: 0.9,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
+        smoothWheel: true,
+        touchMultiplier: 1,
+      });
+
+      function raf(time: number) {
+        lenis?.raf(time);
+        rafId = requestAnimationFrame(raf);
+      }
+      rafId = requestAnimationFrame(raf);
+    } catch (err) {
+      console.warn('Lenis smooth scroll failed to initialize:', err);
+    }
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (lenis) lenis.destroy();
+    };
+  }, []);
 
   // Synchronize highlighted index with selectedId or clamped index
   useEffect(() => {
@@ -70,8 +114,8 @@ export const ContributionList: React.FC<ContributionListProps> = ({
       <div className="flex flex-1 items-center justify-center p-16 bg-base">
         <div className="border border-border-subtle bg-surface p-6 rounded-lg font-mono text-sm text-text-whisper flex items-center gap-4 shadow-card">
           <span className="inline-block h-3 w-3 bg-accent-sapphire rounded-full animate-ping" />
-          <span className="text-white font-bold text-base">[SYS_SYNC]</span>
-          <span>INGESTING CONTRIBUTION TELEMETRY...</span>
+          <span className="text-white font-bold text-base">[SYNCING]</span>
+          <span>LOADING CONTRIBUTIONS...</span>
         </div>
       </div>
     );
@@ -151,10 +195,9 @@ export const ContributionList: React.FC<ContributionListProps> = ({
     <div className="flex-1 flex flex-col min-h-0 bg-base">
       {/* Stream Section Header */}
       <div className="flex items-center justify-between px-1 pb-2 select-none">
-        <div className="flex items-center gap-2 text-[11px] sm:text-xs font-mono font-bold text-text-muted uppercase tracking-wider truncate">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold text-text-muted uppercase tracking-wider truncate">
           <Terminal className="h-3.5 w-3.5 text-accent-sapphire shrink-0" />
-          <span className="truncate hidden sm:inline">CONTRIBUTION TELEMETRY STREAM ({items.length} RECORDS)</span>
-          <span className="truncate sm:hidden">TELEMETRY STREAM ({items.length})</span>
+          <span className="truncate">CONTRIBUTIONS ({items.length})</span>
         </div>
         <div className="hidden sm:flex items-center gap-3 text-xs font-mono text-text-muted">
           <span>NAV: <kbd className="border border-border-bold bg-surface-card px-1.5 py-0.2 rounded text-text-whisper">j</kbd>/<kbd className="border border-border-bold bg-surface-card px-1.5 py-0.2 rounded text-text-whisper">k</kbd></span>
@@ -163,7 +206,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
       </div>
 
       {/* Separated Card Rows with Stream Scroll Fade Mask */}
-      <div id="stream-feed-container" className="overflow-y-auto flex-1 pr-1 pt-1.5 pb-28 sm:pb-2 stream-scroll-mask">
+      <div ref={containerRef} id="stream-feed-container" className="overflow-y-auto flex-1 pr-1 pt-1.5 pb-28 sm:pb-2 stream-scroll-mask">
         {isRefreshing && (
           <div className="h-0.5 w-full bg-accent-sapphire/20 overflow-hidden mb-1.5 rounded-full">
             <div className="h-full w-1/3 bg-accent-sapphire rounded-full animate-pulse" />
@@ -196,37 +239,6 @@ export const ContributionList: React.FC<ContributionListProps> = ({
             );
           })}
         </AnimatePresence>
-      </div>
-
-      {/* Sapphire Console Footer HUD (Chrome Surface with Top Highlight, Desktop only) */}
-      <div className="hidden sm:flex border border-border-subtle chrome-surface px-4 py-2 rounded-lg shadow-card flex-col sm:flex-row sm:items-center sm:justify-between gap-2 font-mono text-xs text-text-muted select-none mt-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-white font-bold">[CONSOLE]</span>
-          <span>
-            <kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">j</kbd>/<kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">k</kbd> NAVIGATE
-          </span>
-          <span>
-            <kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">Enter</kbd> TELEMETRY
-          </span>
-          <span>
-            <kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">/</kbd> QUERY
-          </span>
-          <span>
-            <kbd className="border border-border-bold bg-base px-1.5 py-0.2 rounded text-text-whisper">Esc</kbd> DISMISS
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden md:inline">
-            <span className="h-1.5 w-1.5 rounded-full bg-status-merged inline-block mr-1" />
-            SYS: OPTIMAL
-          </span>
-          <span className="hidden md:inline">•</span>
-          <span className="hidden md:inline">Encrypted</span>
-          <span className="hidden md:inline">•</span>
-          <span>
-            RECORDS: <span className="font-bold text-white">{items.length}</span>
-          </span>
-        </div>
       </div>
     </div>
   );

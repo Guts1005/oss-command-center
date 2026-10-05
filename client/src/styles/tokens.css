@@ -12,19 +12,19 @@
 
 :root {
   /* Substrates & Structural Machine Panels */
-  --color-bg-base: #28292f;              /* Deep Warm Charcoal Substrate */
-  --color-bg-surface: #33343B;           /* Primary Surface / Nav & Toolbar HUD */
-  --color-bg-surface-card: #3a3b44;      /* Independent Contribution Card Surface */
-  --color-bg-surface-elevated: #42444e;  /* Input & Nested Panel Surface */
-  --color-bg-surface-active: #4b4d58;    /* Selected / Focused Card Surface */
+  --color-bg-base: #17181C;              /* Deep Warm Charcoal Substrate (was #28292f) */
+  --color-bg-surface: #1E1F25;           /* Primary Surface / Nav & Toolbar HUD (was #33343B) */
+  --color-bg-surface-card: #24252C;      /* Independent Contribution Card Surface (was #3a3b44) */
+  --color-bg-surface-elevated: #2B2D35;  /* Input & Nested Panel Surface (was #42444e) */
+  --color-bg-surface-active: #363843;    /* Selected / Focused Card Surface (was #4b4d58) */
 
-  /* Structural Sapphire Framing (Crisp 1px - 2px definition, high separation) */
-  --color-border-subtle: #48547C;        /* Deep Slate Sapphire Border */
+  /* Structural Sapphire Framing (Crisp 1px - 2px definition, softened for dark contrast) */
+  --color-border-subtle: #3B4568;        /* Softened Slate Sapphire Border (was #48547C) */
   --color-border-bold: #5c6a99;          /* Bold Slate Sapphire Rule */
   --color-border-active: #749DD0;        /* Sapphire Blue Active Focus */
 
   /* High-Contrast Readability Typography */
-  --color-text-primary: #FFFFFF;         /* Crisp Pure White (Max Legibility) */
+  --color-text-primary: #F2F6FB;         /* Pearl White (Softened to eliminate glare against dark base) */
   --color-text-whisper: #CFE7F8;         /* Luminescent Ice Whisper Blue */
   --color-text-secondary: #CFE7F8;       /* Primary Subtitles & Telemetry Data */
   --color-text-muted: #AAA59F;           /* Warm Stone Grey (5.5:1 Contrast AA) */
@@ -58,7 +58,102 @@
   --space-5: 1.25rem;   /* 20px */
   --space-6: 1.5rem;    /* 24px */
   --space-8: 2rem;      /* 32px */
+
+  /* Specular Elevation & Depth Shadows (Dark Theme) */
+  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.45), 0 4px 14px -2px rgba(0, 0, 0, 0.4), 0 14px 28px -4px rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  --shadow-card-hover: 0 2px 4px 0 rgba(0, 0, 0, 0.5), 0 8px 24px -4px rgba(0, 0, 0, 0.55), 0 22px 40px -6px rgba(0, 0, 0, 0.65), 0 0 22px 0 rgba(116, 157, 208, 0.16), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+  --shadow-elevated: 0 1px 2px 0 rgba(0, 0, 0, 0.45), 0 8px 24px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.09);
 }
+
+/* ==========================================================================
+   CALIBRATED LIGHT MODE TOKENS
+   Preserving Sapphire Stream Whisper aesthetic with high contrast & tactile depth
+   ========================================================================== */
+:root[data-theme="light"],
+[data-theme="light"] {
+  /* Substrates & Structural Machine Panels */
+  --color-bg-base: #F0F3F8;              /* Soft Slate Canvas Substrate */
+  --color-bg-surface: #FFFFFF;           /* Crisp Pure White Primary Surface */
+  --color-bg-surface-card: #FFFFFF;      /* Independent Card Surface */
+  --color-bg-surface-elevated: #E8EEF5;  /* Nested Input & Filter Rail Surface */
+  --color-bg-surface-active: #DAE3F0;    /* Selected Card Surface */
+
+  /* Structural Sapphire Framing */
+  --color-border-subtle: #CAD5E8;        /* Soft Slate Sapphire Border */
+  --color-border-bold: #8BA4CA;          /* Slate Sapphire Rule */
+  --color-border-active: #3E669E;        /* Active Focus Sapphire */
+
+  /* High-Contrast Readability Typography */
+  --color-text-primary: #12141A;         /* Charcoal Primary Text (14:1 AAA Contrast) */
+  --color-text-whisper: #1C2B47;         /* Deep Sapphire Whisper */
+  --color-text-secondary: #2E3D5C;       /* Slate Sapphire Subtitles */
+  --color-text-muted: #5F6B84;           /* Calibrated Slate Grey (>4.5:1 AA Contrast) */
+  --color-text-dim: #8B97AC;             /* Inactive Guide Mark */
+
+  /* Semantic Telemetry Signals */
+  --color-accent-sapphire: #2B62A5;      /* Sapphire Blue Accent */
+  --color-accent-glacial: #486A96;       /* Glacial Slate Accent */
+  --color-status-merged: #16a34a;        /* Emerald Success */
+  --color-status-in-review: #2563eb;     /* In-Review Sapphire */
+  --color-status-awaiting-reply: #d97706;/* Signal Amber */
+  --color-status-action-needed: #dc2626; /* Crimson Alert */
+  --color-status-draft: #5F6B84;         /* Stone Grey */
+  --color-status-open: #2563eb;          /* Open Sapphire */
+  --color-status-bounty: #d97706;        /* Bounty Amber */
+
+  /* Platform Tokens */
+  --color-platform-github: #12141A;
+  --color-platform-gitlab: #e24329;
+
+  /* Specular Elevation & Depth Shadows (Light Theme) */
+  --shadow-card: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 4px 14px -2px rgba(15, 23, 42, 0.07), 0 12px 24px -4px rgba(15, 23, 42, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+  --shadow-card-hover: 0 2px 6px 0 rgba(15, 23, 42, 0.07), 0 8px 22px -3px rgba(15, 23, 42, 0.1), 0 18px 32px -4px rgba(15, 23, 42, 0.07), 0 0 20px 0 rgba(43, 98, 165, 0.12), inset 0 1px 0 0 rgba(255, 255, 255, 1);
+  --shadow-elevated: 0 1px 2px 0 rgba(15, 23, 42, 0.05), 0 6px 18px -3px rgba(15, 23, 42, 0.07), inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+}
+
+[data-theme="light"] .text-white {
+  color: var(--color-text-primary);
+}
+
+[data-theme="light"] button.bg-accent-sapphire,
+[data-theme="light"] .bg-accent-sapphire .text-white,
+[data-theme="light"] .bg-platform-gitlab,
+[data-theme="light"] .bg-platform-gitlab .text-white,
+[data-theme="light"] .bg-status-action-needed,
+[data-theme="light"] .bg-status-action-needed .text-white,
+[data-theme="light"] .bg-status-merged.text-white,
+[data-theme="light"] .bg-surface-active.text-white {
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .chrome-surface {
+  background-color: var(--color-bg-surface);
+  background-image: linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-elevated);
+}
+
+[data-theme="light"] .chrome-card {
+  background-color: var(--color-bg-surface-card);
+  background-image: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme="light"] .chrome-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-border-bold);
+}
+
+[data-theme="light"] .diffused-bg {
+  background-color: var(--color-bg-base);
+  background-image: 
+    radial-gradient(circle 800px at 50% 0px, rgba(116, 157, 208, 0.12) 0%, transparent 70%),
+    radial-gradient(circle 600px at 15% 45%, rgba(146, 170, 209, 0.08) 0%, transparent 60%),
+    radial-gradient(circle 700px at 85% 65%, rgba(74, 222, 128, 0.05) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
 
 /* Global Reset & Box Sizing */
 *, *::before, *::after {
@@ -106,15 +201,25 @@ body {
   background: var(--color-border-active);
 }
 
-/* Chrome Elevation with subtle top inset highlight and soft shadow */
+/* Chrome Elevation with specular top-edge bevel and multi-tier ambient occlusion */
 .chrome-surface {
   background-color: var(--color-bg-surface);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 20px -6px rgba(0, 0, 0, 0.6);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(0, 0, 0, 0.08) 100%);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-elevated);
 }
 
 .chrome-card {
   background-color: var(--color-bg-surface-card);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(0, 0, 0, 0.06) 100%);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.chrome-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--color-border-bold);
 }
 
 /* Stream scroll mask: only fades bottom edge into console HUD, keeping the top row 100% sharp and unclipped */
@@ -127,7 +232,7 @@ body {
 .diffused-bg {
   background-color: var(--color-bg-base);
   background-image: 
-    radial-gradient(circle 800px at 50% 0px, rgba(116, 157, 208, 0.09) 0%, transparent 70%),
+    radial-gradient(circle 800px at 50% 0px, rgba(116, 157, 208, 0.07) 0%, transparent 70%),
     radial-gradient(circle 600px at 15% 45%, rgba(146, 170, 209, 0.035) 0%, transparent 60%),
     radial-gradient(circle 700px at 85% 65%, rgba(74, 222, 128, 0.025) 0%, transparent 60%);
   background-attachment: fixed;

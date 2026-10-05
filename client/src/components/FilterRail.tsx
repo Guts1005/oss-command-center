@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import { Stats } from '../types';
+import { CustomDropdown, DropdownOption } from './CustomDropdown';
 
 interface FilterRailProps {
   stats: Stats | null;
@@ -36,6 +37,18 @@ export const FilterRail: React.FC<FilterRailProps> = ({
   onSortChange,
   isMobileFiltersOpen = false,
 }) => {
+  const platformOptions: DropdownOption[] = [
+    { value: 'all', label: 'ALL' },
+    { value: 'github', label: 'GitHub' },
+    { value: 'gitlab', label: 'GitLab' },
+  ];
+
+  const sortOptions: DropdownOption[] = [
+    { value: 'recent', label: 'RECENT' },
+    { value: 'unread', label: 'UNREAD' },
+    { value: 'difficulty', label: 'DIFFICULTY' },
+  ];
+
   const tabs = [
     {
       id: 'all',
@@ -45,14 +58,14 @@ export const FilterRail: React.FC<FilterRailProps> = ({
     },
     {
       id: 'action-needed',
-      label: 'ACTION_REQ',
+      label: 'ACTION NEEDED',
       count: stats?.actionNeeded ?? 0,
       isAction: true,
       urgent: (stats?.actionNeeded ?? 0) > 0,
     },
     {
       id: 'active',
-      label: 'IN_REVIEW',
+      label: 'IN REVIEW',
       count: stats?.awaitingMaintainer ?? 0,
       isAction: false,
     },
@@ -77,10 +90,10 @@ export const FilterRail: React.FC<FilterRailProps> = ({
   ];
 
   return (
-    <div className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-3 py-2 md:px-4 md:py-2">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+    <div className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-3 py-2 md:px-4 md:py-2 w-full max-w-full overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 min-w-0 w-full flex-wrap">
         {/* Left: Terminal Query Search Input */}
-        <div className="relative flex items-center w-full lg:w-[210px] shrink-0">
+        <div className="relative flex items-center w-full lg:w-[165px] xl:w-[200px] shrink-0">
           <span className="absolute left-3 text-accent-sapphire text-xs font-mono font-bold">
             &gt;
           </span>
@@ -103,7 +116,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
         </div>
 
         {/* Desktop / Tablet View (>= sm): Preserved Single Horizontal Flex Bar */}
-        <div className="hidden sm:flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar shrink-0 w-full lg:w-auto">
+        <div className="hidden sm:flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar min-w-0 flex-1 max-w-max">
           <div className="inline-flex items-center p-0.5 rounded-lg border border-border-subtle bg-base/80 shadow-inner gap-1 relative w-max">
             {tabs.map((tab) => {
               const isActive =
@@ -124,7 +137,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                       onStatusChange(tab.id);
                     }
                   }}
-                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none whitespace-nowrap ${
+                  className={`relative flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors text-xs font-bold font-mono cursor-pointer shrink-0 z-10 select-none whitespace-nowrap ${
                     isActive
                       ? tab.urgent
                         ? 'text-status-action-needed'
@@ -148,13 +161,23 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                   {tab.urgent && (
                     <span className="h-1.5 w-1.5 rounded-full bg-status-action-needed animate-pulse shrink-0 relative z-10" />
                   )}
-                  <span className="relative z-10">{tab.label}</span>
+                  <span className="relative z-10">
+                    {tab.id === 'action-needed' ? (
+                      <span>
+                        ACTION<span className="hidden xl:inline"> NEEDED</span>
+                      </span>
+                    ) : (
+                      tab.label
+                    )}
+                  </span>
                   {tab.count !== null && (
                     <span
-                      className={`relative z-10 text-[11px] px-1.5 py-0.2 rounded font-extrabold transition-colors ${
+                      className={`relative z-10 text-[10px] px-1.5 py-0.5 rounded border font-mono font-bold transition-all shadow-xs ${
                         isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-surface-elevated text-text-muted'
+                          ? tab.urgent
+                            ? 'border-status-action-needed/60 bg-status-action-needed/30 text-white'
+                            : 'border-white/30 bg-white/20 text-white'
+                          : 'border-border-subtle bg-surface-elevated/90 text-text-muted'
                       }`}
                     >
                       {tab.count}
@@ -210,8 +233,12 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                 <span className="truncate">{mobileLabel}</span>
                 {tab.count !== null && (
                   <span
-                    className={`text-[10px] px-1 py-0.2 rounded font-extrabold shrink-0 ${
-                      isActive ? 'bg-white/20 text-white' : 'bg-surface-elevated text-text-muted'
+                    className={`text-[10px] px-1.5 py-0.5 rounded border font-mono font-bold shrink-0 transition-all shadow-xs ${
+                      isActive
+                        ? tab.urgent
+                          ? 'border-status-action-needed/60 bg-status-action-needed/30 text-white'
+                          : 'border-white/30 bg-white/20 text-white'
+                        : 'border-border-subtle bg-surface-elevated/90 text-text-muted'
                     }`}
                   >
                     {tab.count}
@@ -223,7 +250,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
         </div>
 
         {/* Right: Auxiliary Filters on Desktop / Tablet (>= sm) */}
-        <div className="hidden sm:flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0 ml-auto lg:ml-0">
           {/* Scope Split: All / External / Own Repo */}
           <div className="inline-flex items-center h-8 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono relative">
             {[
@@ -237,7 +264,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                   key={sc.id}
                   type="button"
                   onClick={() => onScopeChange(sc.id)}
-                  className={`relative px-2.5 py-1 rounded-md font-bold transition-colors cursor-pointer select-none text-xs z-10 ${
+                  className={`relative px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer select-none text-xs z-10 ${
                     isSelected ? 'text-white' : 'text-text-muted hover:text-white'
                   }`}
                   title={`Filter repository scope: ${sc.label}`}
@@ -256,32 +283,20 @@ export const FilterRail: React.FC<FilterRailProps> = ({
           </div>
 
           {/* Platform Selector */}
-          <div className="flex items-center h-8 border border-border-subtle bg-base/80 rounded-lg px-2 text-xs font-mono text-text-muted">
-            <span className="mr-1 text-text-muted text-[11px]">PLATFORM:</span>
-            <select
-              value={platformFilter}
-              onChange={(e) => onPlatformChange(e.target.value)}
-              className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs"
-            >
-              <option value="all" className="bg-surface text-white">ALL</option>
-              <option value="github" className="bg-surface text-white">GH</option>
-              <option value="gitlab" className="bg-surface text-white">GL</option>
-            </select>
-          </div>
+          <CustomDropdown
+            label="PLATFORM:"
+            value={platformFilter}
+            options={platformOptions}
+            onChange={onPlatformChange}
+          />
 
           {/* Sort Selector */}
-          <div className="flex items-center h-8 border border-border-subtle bg-base/80 rounded-lg px-2 text-xs font-mono text-text-muted">
-            <span className="mr-1 text-text-muted text-[11px]">SORT:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => onSortChange(e.target.value)}
-              className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs"
-            >
-              <option value="recent" className="bg-surface text-white">RECENT</option>
-              <option value="unread" className="bg-surface text-white">UNREAD</option>
-              <option value="difficulty" className="bg-surface text-white">DIFF</option>
-            </select>
-          </div>
+          <CustomDropdown
+            label="SORT:"
+            value={sortBy}
+            options={sortOptions}
+            onChange={onSortChange}
+          />
         </div>
       </div>
 
@@ -327,33 +342,20 @@ export const FilterRail: React.FC<FilterRailProps> = ({
 
             {/* Row 2: Platform & Sort Controls in 2 Equal Columns */}
             <div className="grid grid-cols-2 gap-2 w-full">
-              {/* Platform Selector */}
-              <div className="flex items-center justify-between h-9 border border-border-subtle bg-base/80 rounded-lg px-2.5 text-xs font-mono text-text-muted w-full">
-                <span className="text-text-muted text-[11px] font-bold">PLATFORM:</span>
-                <select
-                  value={platformFilter}
-                  onChange={(e) => onPlatformChange(e.target.value)}
-                  className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs text-right"
-                >
-                  <option value="all" className="bg-surface text-white">ALL</option>
-                  <option value="github" className="bg-surface text-white">GH</option>
-                  <option value="gitlab" className="bg-surface text-white">GL</option>
-                </select>
-              </div>
-
-              {/* Sort Selector */}
-              <div className="flex items-center justify-between h-9 border border-border-subtle bg-base/80 rounded-lg px-2.5 text-xs font-mono text-text-muted w-full">
-                <span className="text-text-muted text-[11px] font-bold">SORT:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => onSortChange(e.target.value)}
-                  className="bg-transparent text-white font-bold cursor-pointer focus:outline-none text-xs text-right"
-                >
-                  <option value="recent" className="bg-surface text-white">RECENT</option>
-                  <option value="unread" className="bg-surface text-white">UNREAD</option>
-                  <option value="difficulty" className="bg-surface text-white">DIFF</option>
-                </select>
-              </div>
+              <CustomDropdown
+                label="PLATFORM:"
+                value={platformFilter}
+                options={platformOptions}
+                onChange={onPlatformChange}
+                className="w-full"
+              />
+              <CustomDropdown
+                label="SORT:"
+                value={sortBy}
+                options={sortOptions}
+                onChange={onSortChange}
+                className="w-full"
+              />
             </div>
           </motion.div>
         )}

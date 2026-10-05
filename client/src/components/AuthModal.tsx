@@ -61,7 +61,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/85 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
           />
 
           {/* Modal / Bottom Sheet Container with Spring Physics */}
@@ -71,7 +71,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 24 }}
             transition={{ type: 'spring', damping: 28, stiffness: 380, mass: 0.8 }}
-            className="relative w-full max-w-lg border-t sm:border border-border-subtle bg-surface p-5 sm:p-7 rounded-t-2xl sm:rounded-xl shadow-2xl z-10 max-h-[90dvh] overflow-y-auto pb-safe"
+            className="relative w-full max-w-lg border-t sm:border border-border-subtle bg-surface p-5 sm:p-7 rounded-t-2xl sm:rounded-xl shadow-[inset_0_1px_0_rgba(207,231,248,0.04),0_25px_50px_-12px_rgba(0,0,0,0.8)] z-10 max-h-[90dvh] overflow-y-auto pb-safe"
           >
             {/* Mobile Tactile Grab Handle */}
             <div className="sm:hidden w-12 h-1.5 bg-border-bold/80 rounded-full mx-auto mb-3 cursor-grab shrink-0" />

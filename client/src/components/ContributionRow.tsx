@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Contribution } from '../types';
 import { GitPullRequest, CircleDot, AlertTriangle, MessageSquare, Clock, ArrowRight, User as UserIcon } from 'lucide-react';
 import { GitHubLogo, GitLabLogo } from './BrandLogos';
@@ -24,7 +25,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
       case 'opened':
         return (
           <span className="border border-accent-sapphire bg-accent-sapphire/20 text-text-whisper px-2.5 py-0.5 rounded font-mono text-xs font-bold tracking-tight shadow-sm">
-            [IN_REVIEW]
+            [IN REVIEW]
           </span>
         );
       case 'draft':
@@ -88,7 +89,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
 
       return (
         <span className="inline-flex items-baseline gap-1.5 flex-wrap">
-          <span className={`border px-1.5 py-0.2 rounded text-[11px] font-mono font-bold uppercase ${chipColor}`}>
+          <span className={`border px-1.5 py-0.2 rounded text-[10px] font-sans font-bold uppercase tracking-wider ${chipColor}`}>
             {type}
           </span>
           {scope && (
@@ -127,9 +128,17 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
   const showNewIndicator = item.unread === 1 && normalizedStatus !== 'merged' && normalizedStatus !== 'closed';
 
   return (
-    <div
+    <motion.div
       onClick={onClick}
-      className={`group border rounded-lg p-3.5 md:p-4 transition-all duration-200 chrome-card cursor-pointer select-none mb-2.5 ${cardGlowStyle} ${surfaceOpacity} ${
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.15}
+      onDragEnd={(_e, info) => {
+        if (Math.abs(info.offset.x) > 60) {
+          onClick();
+        }
+      }}
+      className={`group border rounded-lg p-3.5 md:p-4 transition-all duration-200 chrome-card cursor-pointer select-none mb-2.5 touch-pan-y ${cardGlowStyle} ${surfaceOpacity} ${
         isSelected
           ? 'border-accent-sapphire bg-surface-active ring-1 ring-accent-sapphire/80 shadow-[0_0_18px_-2px_rgba(116,157,208,0.25)] translate-x-0.5'
           : 'hover:bg-surface-active'
@@ -142,14 +151,14 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
             <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
               {showNewIndicator && (
                 <span
-                  className="border border-amber-500/80 bg-amber-500/20 text-amber-300 font-mono text-[10px] font-bold px-1.5 py-0.2 rounded tracking-wide shadow-sm shrink-0"
+                  className="border border-amber-500/80 bg-amber-500/20 text-amber-300 font-sans text-[10px] font-bold px-1.5 py-0.2 rounded tracking-wider shadow-sm shrink-0 uppercase"
                   title="Telemetry update pending inspection"
                 >
                   [NEW]
                 </span>
               )}
               <span
-                className={`px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase border rounded shrink-0 flex items-center gap-1 ${
+                className={`px-1.5 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wider border rounded shrink-0 flex items-center gap-1 ${
                   item.platform === 'github'
                     ? 'border-border-bold text-text-whisper bg-base'
                     : 'border-[#fc6d26]/70 text-[#fc6d26] bg-[#fc6d26]/15'
@@ -182,13 +191,13 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
             {item.action_needed === 'reply' && (
               <span className="flex items-center gap-1 border border-status-awaiting-reply/80 bg-status-awaiting-reply/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-awaiting-reply shadow-sm">
                 <MessageSquare className="h-3 w-3" />
-                <span>[OWE_REPLY]</span>
+                <span>[REPLY NEEDED]</span>
               </span>
             )}
             {item.action_needed === 'push-changes' && (
               <span className="flex items-center gap-1 border border-status-action-needed/80 bg-status-action-needed/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-action-needed shadow-sm">
                 <AlertTriangle className="h-3 w-3" />
-                <span>[REQ_CHANGES]</span>
+                <span>[CHANGES REQUESTED]</span>
               </span>
             )}
             {getStatusBadge(normalizedStatus)}
@@ -207,7 +216,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
           <div className="flex items-center gap-2 min-w-0">
             {showNewIndicator && (
               <span
-                className="border border-amber-500/80 bg-amber-500/20 text-amber-300 font-mono text-[11px] font-bold px-1.5 py-0.2 rounded tracking-wide shadow-sm shrink-0"
+                className="border border-amber-500/80 bg-amber-500/20 text-amber-300 font-sans text-[10px] font-bold px-1.5 py-0.2 rounded tracking-wider shadow-sm shrink-0 uppercase"
                 title="Telemetry update pending inspection"
               >
                 [NEW]
@@ -216,7 +225,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
 
             {/* Platform Tag */}
             <span
-              className={`px-1.5 py-0.5 font-mono text-[11px] font-bold uppercase border rounded shrink-0 flex items-center gap-1.5 ${
+              className={`px-1.5 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wider border rounded shrink-0 flex items-center gap-1.5 ${
                 item.platform === 'github'
                   ? 'border-border-bold text-text-whisper bg-base'
                   : 'border-[#fc6d26]/70 text-[#fc6d26] bg-[#fc6d26]/15'
@@ -265,7 +274,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 title="Maintainer feedback requires developer reply"
               >
                 <MessageSquare className="h-3 w-3" />
-                <span>[ACTION: OWE_REPLY]</span>
+                <span>[ACTION: REPLY NEEDED]</span>
               </span>
             )}
             {item.action_needed === 'push-changes' && (
@@ -274,7 +283,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 title="Maintainer requested code revisions"
               >
                 <AlertTriangle className="h-3 w-3" />
-                <span>[ACTION: REQ_CHANGES]</span>
+                <span>[ACTION: CHANGES REQUESTED]</span>
               </span>
             )}
 
@@ -333,6 +342,6 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

@@ -61,7 +61,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
     if (item.action_needed === 'push-changes') {
       return {
         variant: 'urgent',
-        badge: '[ACTION_REQUIRED: REQ_CHANGES]',
+        badge: '[ACTION: CHANGES REQUESTED]',
         heading: 'MAINTAINER REQUESTED CODE MODIFICATIONS',
         body: 'The upstream maintainer reviewed this PR and requested adjustments. Inspect feedback in the activity ledger below, apply commits in your local git branch, and push upstream.',
         icon: <AlertTriangle className="h-5 w-5 text-status-action-needed shrink-0 mt-0.5" />,
@@ -71,7 +71,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
     if (item.action_needed === 'reply') {
       return {
         variant: 'urgent',
-        badge: '[ACTION_REQUIRED: OWE_REPLY]',
+        badge: '[ACTION: REPLY NEEDED]',
         heading: 'MAINTAINER COMMENT REQ RESPONSE',
         body: 'A maintainer left a question or clarification request. Open the upstream discussion thread to post your technical response.',
         icon: <MessageSquare className="h-5 w-5 text-status-awaiting-reply shrink-0 mt-0.5" />,
@@ -81,7 +81,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
     if (status === 'merged') {
       return {
         variant: 'success',
-        badge: '[STATUS: ACCEPTED_&_MERGED]',
+        badge: '[STATUS: ACCEPTED & MERGED]',
         heading: 'CONTRIBUTION MERGED UPSTREAM',
         body: 'Your changes have been accepted and committed into the main upstream repository branch. Local branch can safely be retired.',
         icon: <CheckCircle2 className="h-5 w-5 text-status-merged shrink-0 mt-0.5" />,
@@ -100,7 +100,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
 
     return {
       variant: 'info',
-      badge: '[STATUS: AWAITING_MAINTAINER_REVIEW]',
+      badge: '[STATUS: AWAITING REVIEW]',
       heading: 'IN REVIEW QUEUE // NO ACTION REQUIRED',
       body: 'Your changes are cleanly submitted and awaiting maintainer triage. You spoke last in the thread.',
       icon: <Clock className="h-5 w-5 text-accent-sapphire shrink-0 mt-0.5" />,
@@ -124,7 +124,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-[2px] cursor-pointer"
+            className="fixed inset-0 bg-black/80 backdrop-blur-[2px] cursor-pointer"
             title="Click to dismiss inspector"
           />
 
@@ -136,7 +136,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 320, mass: 0.75 }}
-              className="flex w-full sm:w-screen max-w-full sm:max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-[-16px_0_40px_rgba(0,0,0,0.7)] select-none pt-safe pb-safe"
+              className="flex w-full sm:w-screen max-w-full sm:max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-[-16px_0_40px_rgba(0,0,0,0.75)] [box-shadow:inset_1px_0_0_rgba(207,231,248,0.04),-16px_0_40px_rgba(0,0,0,0.75)] select-none pt-safe pb-safe"
             >
               {/* Header Bar */}
               <div className="flex items-center justify-between border-b border-border-subtle bg-base px-4 py-3 sm:px-6 sm:py-4 gap-2">
@@ -269,7 +269,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
                         : 'border-border-subtle bg-base text-text-muted hover:text-text-whisper hover:border-accent-sapphire'
                     }`}
                   >
-                    {mode === 'none' ? '[WAITING]' : mode === 'reply' ? '[OWE_REPLY]' : '[REQ_CHANGES]'}
+                    {mode === 'none' ? '[WAITING]' : mode === 'reply' ? '[REPLY NEEDED]' : '[CHANGES REQUESTED]'}
                   </button>
                 ))}
               </div>
@@ -292,7 +292,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
               <span className="text-text-muted">
                 {saveSuccess ? (
                   <span className="text-status-merged flex items-center gap-1 font-bold">
-                    <Check className="h-4 w-4" /> [NOTES_PERSISTED_LOCALLY]
+                    <Check className="h-4 w-4" /> [NOTES SAVED]
                   </span>
                 ) : (
                   'Notes stored encrypted in local SQLite instance.'
@@ -303,7 +303,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
                 disabled={savingNotes}
                 className="border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-md font-mono text-xs md:text-sm font-bold text-text-whisper hover:bg-accent-sapphire/30 disabled:opacity-50 transition-all cursor-pointer"
               >
-                {savingNotes ? '[SAVING...]' : '[SAVE_NOTES]'}
+                {savingNotes ? '[SAVING...]' : '[SAVE NOTES]'}
               </button>
             </div>
           </div>
@@ -319,7 +319,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
             <div className="space-y-3">
               {data.events.length === 0 ? (
                 <div className="border border-border-subtle bg-surface-card p-5 rounded-lg text-center text-sm font-mono text-text-muted">
-                  [ZERO_ACTIVITY_EVENTS_RECORDED]
+                  [NO ACTIVITY RECORDED]
                 </div>
               ) : (
                 data.events.map((ev) => {
@@ -347,7 +347,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
                                   : 'border-status-action-needed text-status-action-needed bg-status-action-needed/15'
                               }`}
                             >
-                              [{ev.review_state}]
+                              [{ev.review_state.replace(/_/g, ' ')}]
                             </span>
                           )}
                         </div>

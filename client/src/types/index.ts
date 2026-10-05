@@ -58,3 +58,5 @@ export interface UserIntegration {
   created_at: string;
   has_token: boolean;
 }
+
+export type ViewMode = 'stream' | 'analytics' | 'repos' | 'settings' | 'security' | 'about';

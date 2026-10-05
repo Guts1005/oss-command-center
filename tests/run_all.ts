@@ -12,10 +12,16 @@ for (const f of [testDb, `${testDb}-wal`, `${testDb}-shm`]) {
 const env = { ...process.env, DB_PATH: 'test_isolated.db' };
 
 const testFiles = [
+  'tests/routing.test.ts',
+  'tests/theme.test.ts',
+  'tests/analytics.test.ts',
+  'tests/repositories.test.ts',
+  'tests/webhooks.test.ts',
   'tests/crypto.test.ts',
   'tests/db.test.ts',
   'tests/api_integration.test.ts',
-  'tests/multi_tenant.test.ts'
+  'tests/multi_tenant.test.ts',
+  'tests/settings_export.test.ts'
 ];
 
 let failed = false;

@@ -33,6 +33,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "framer-motion": "^13.4.5",
+    "lenis": "^1.3.26",
     "lucide-react": "^0.475.0",
     "postcss": "^8.5.1",
     "react": "^18.3.1",

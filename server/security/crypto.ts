@@ -92,3 +92,10 @@ export async function verifyPassword(password: string, storedHash: string): Prom
 export function generateSessionToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
+
+/**
+ * Signs a webhook payload using HMAC-SHA256.
+ */
+export function signPayload(payload: string, secret: string): string {
+  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
+}

@@ -43,8 +43,10 @@ export default {
         telemetry: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       boxShadow: {
-        'card': '0 4px 12px -2px rgba(0, 0, 0, 0.25)',
-        'card-hover': '0 6px 16px -2px rgba(72, 84, 124, 0.35)',
+        'card': 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
+        'elevated': 'var(--shadow-elevated)',
+        'glow-sapphire': '0 0 24px -2px rgba(116, 157, 208, 0.25)',
       }
     },
   },

@@ -56,6 +56,17 @@ export function initDatabase() {
       UNIQUE(user_id, platform, host)
     );
     CREATE INDEX IF NOT EXISTS idx_integrations_user ON user_integrations(user_id);
+
+    CREATE TABLE IF NOT EXISTS user_settings (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      audio_chime_enabled INTEGER NOT NULL DEFAULT 1,
+      sync_cadence_minutes INTEGER NOT NULL DEFAULT 30,
+      webhook_url TEXT,
+      webhook_secret TEXT,
+      webhook_events TEXT NOT NULL DEFAULT '["action_needed","review","merged"]',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `);
 
   // 4. Check if contributions table needs migration to multi-tenant
@@ -126,6 +137,7 @@ export function initDatabase() {
     db.prepare("DELETE FROM contributions WHERE user_id = 'default-local-user'").run();
     db.prepare("DELETE FROM activity_events WHERE user_id = 'default-local-user'").run();
     db.prepare("DELETE FROM user_integrations WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM user_settings WHERE user_id = 'default-local-user'").run();
     db.prepare("DELETE FROM sessions WHERE user_id = 'default-local-user'").run();
     db.prepare("DELETE FROM users WHERE id = 'default-local-user'").run();
   } catch (err: any) {
