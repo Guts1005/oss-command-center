@@ -23,7 +23,8 @@ const testFiles = [
   'tests/multi_tenant.test.ts',
   'tests/settings_export.test.ts',
   'tests/inbound_webhooks.test.ts',
-  'tests/pr_actions.test.ts'
+  'tests/pr_actions.test.ts',
+  'tests/production_hardening.test.ts'
 ];
 
 let failed = false;

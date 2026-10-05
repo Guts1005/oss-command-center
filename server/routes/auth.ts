@@ -1,11 +1,21 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
 import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 import { db } from '../db.js';
 import { hashPassword, verifyPassword, generateSessionToken } from '../security/crypto.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
 
 export const authRouter = Router();
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test',
+  message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' }
+});
 
 const RegisterSchema = z.object({
   email: z.string().email('Invalid email address').toLowerCase().trim(),
@@ -35,7 +45,7 @@ function setSessionCookie(res: Response, token: string) {
 }
 
 // POST /api/auth/register
-authRouter.post('/register', async (req, res) => {
+authRouter.post('/register', authLimiter, async (req, res) => {
   try {
     const parseResult = RegisterSchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -90,7 +100,7 @@ authRouter.post('/register', async (req, res) => {
 });
 
 // POST /api/auth/login
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', authLimiter, async (req, res) => {
   try {
     const parseResult = LoginSchema.safeParse(req.body);
     if (!parseResult.success) {
