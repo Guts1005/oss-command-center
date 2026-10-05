@@ -2,6 +2,8 @@ import { db, ContributionRecord } from '../db.js';
 import { syncUser } from './multi_engine.js';
 import { sseManager } from '../sse.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
+import { compileUserDigest, renderDigestHtml, renderDigestText } from '../email/digest.js';
+import { sendEmail } from '../email/transporter.js';
 
 interface WorkerStatus {
   active: boolean;
@@ -172,6 +174,56 @@ export async function executeBackgroundSyncPass(): Promise<{ usersProcessed: num
           });
         }
       }
+    }
+
+    // 4. Check if Email Digest is due for any active user with email_digest_enabled = 1
+    try {
+      const digestUsers = db.prepare(`
+        SELECT us.user_id, us.email_digest_cadence, us.email_digest_address, us.last_email_digest_at, u.email
+        FROM user_settings us
+        JOIN users u ON u.id = us.user_id
+        WHERE us.email_digest_enabled = 1
+      `).all() as any[];
+
+      for (const digestSettings of digestUsers) {
+        try {
+          const cadence = digestSettings.email_digest_cadence || 'weekly';
+          const intervalMs = cadence === 'daily' ? 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+          const lastDigestTime = digestSettings.last_email_digest_at ? new Date(digestSettings.last_email_digest_at).getTime() : 0;
+          const isDue = Date.now() - lastDigestTime >= intervalMs;
+
+          if (isDue) {
+            const targetEmail = digestSettings.email_digest_address || digestSettings.email;
+            if (targetEmail) {
+              const summary = compileUserDigest(digestSettings.user_id, cadence);
+              const dashboardUrl = process.env.APP_URL || 'http://localhost:3100';
+              const html = renderDigestHtml(summary, dashboardUrl);
+              const text = renderDigestText(summary, dashboardUrl);
+              const cadenceTitle = cadence === 'daily' ? 'Daily' : 'Weekly';
+              const subject = `${cadenceTitle} Contribution Briefing // OSS Command Center`;
+
+              const emailRes = await sendEmail({
+                to: targetEmail,
+                subject,
+                html,
+                text
+              });
+
+              if (emailRes.success) {
+                const nowIso = new Date().toISOString();
+                db.prepare('UPDATE user_settings SET last_email_digest_at = ? WHERE user_id = ?').run(nowIso, digestSettings.user_id);
+                console.log(`[Email Digest] Successfully delivered ${cadence} digest to ${targetEmail}`);
+              } else {
+                console.warn(`[Email Digest] Delivery failed for user ${digestSettings.user_id}: ${emailRes.error}`);
+              }
+            }
+          }
+        } catch (userDigestErr: any) {
+          console.warn(`[Email Digest] Error processing digest for user ${digestSettings.user_id}:`, userDigestErr.message);
+        }
+      }
+    } catch (digestCycleErr: any) {
+      console.warn('[Email Digest] Error in digest cycle:', digestCycleErr.message);
     }
 
     // Record telemetry in database

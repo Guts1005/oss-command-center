@@ -20,6 +20,9 @@ const settingsSchema = z.object({
   slack_webhook_url: z.string().url().or(z.literal('')).nullable().optional(),
   discord_webhook_url: z.string().url().or(z.literal('')).nullable().optional(),
   background_sync_enabled: z.boolean().optional(),
+  email_digest_enabled: z.boolean().optional(),
+  email_digest_cadence: z.enum(['daily', 'weekly']).optional(),
+  email_digest_address: z.string().email().or(z.literal('')).nullable().optional(),
 });
 
 // GET /api/settings
@@ -65,6 +68,10 @@ settingsRouter.get('/', (req: AuthenticatedRequest, res) => {
         slack_webhook_url: settings.slack_webhook_url || null,
         discord_webhook_url: settings.discord_webhook_url || null,
         background_sync_enabled: Boolean(settings.background_sync_enabled ?? 1),
+        email_digest_enabled: Boolean(settings.email_digest_enabled ?? 0),
+        email_digest_cadence: settings.email_digest_cadence || 'weekly',
+        email_digest_address: settings.email_digest_address || null,
+        last_email_digest_at: settings.last_email_digest_at || null,
       },
       vault: {
         integrations: integrations.map(i => ({
@@ -106,6 +113,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
       slack_webhook_url,
       discord_webhook_url,
       background_sync_enabled,
+      email_digest_enabled,
+      email_digest_cadence,
+      email_digest_address,
     } = parseResult.data;
 
     let settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
@@ -116,8 +126,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
         INSERT INTO user_settings (
           user_id, audio_chime_enabled, sync_cadence_minutes, webhook_url,
           webhook_secret, webhook_events, slack_webhook_url, discord_webhook_url,
-          background_sync_enabled, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          background_sync_enabled, email_digest_enabled, email_digest_cadence, email_digest_address,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         userId,
         audio_chime_enabled !== undefined ? (audio_chime_enabled ? 1 : 0) : 1,
@@ -128,6 +139,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
         slack_webhook_url !== undefined ? slack_webhook_url : null,
         discord_webhook_url !== undefined ? discord_webhook_url : null,
         background_sync_enabled !== undefined ? (background_sync_enabled ? 1 : 0) : 1,
+        email_digest_enabled !== undefined ? (email_digest_enabled ? 1 : 0) : 0,
+        email_digest_cadence || 'weekly',
+        email_digest_address || null,
         now,
         now
       );
@@ -140,6 +154,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
       const newSlack = slack_webhook_url !== undefined ? slack_webhook_url : settings.slack_webhook_url;
       const newDiscord = discord_webhook_url !== undefined ? discord_webhook_url : settings.discord_webhook_url;
       const newBg = background_sync_enabled !== undefined ? (background_sync_enabled ? 1 : 0) : settings.background_sync_enabled;
+      const newEmailDigest = email_digest_enabled !== undefined ? (email_digest_enabled ? 1 : 0) : settings.email_digest_enabled;
+      const newEmailCadence = email_digest_cadence !== undefined ? email_digest_cadence : (settings.email_digest_cadence || 'weekly');
+      const newEmailAddr = email_digest_address !== undefined ? email_digest_address : settings.email_digest_address;
 
       db.prepare(`
         UPDATE user_settings
@@ -151,9 +168,12 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
             slack_webhook_url = ?,
             discord_webhook_url = ?,
             background_sync_enabled = ?,
+            email_digest_enabled = ?,
+            email_digest_cadence = ?,
+            email_digest_address = ?,
             updated_at = ?
         WHERE user_id = ?
-      `).run(newAudio, newCadence, newUrl, newSecret, newEvents, newSlack, newDiscord, newBg, now, userId);
+      `).run(newAudio, newCadence, newUrl, newSecret, newEvents, newSlack, newDiscord, newBg, newEmailDigest, newEmailCadence, newEmailAddr, now, userId);
     }
 
     const updated = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
@@ -176,6 +196,10 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
         slack_webhook_url: updated.slack_webhook_url || null,
         discord_webhook_url: updated.discord_webhook_url || null,
         background_sync_enabled: Boolean(updated.background_sync_enabled ?? 1),
+        email_digest_enabled: Boolean(updated.email_digest_enabled ?? 0),
+        email_digest_cadence: updated.email_digest_cadence || 'weekly',
+        email_digest_address: updated.email_digest_address || null,
+        last_email_digest_at: updated.last_email_digest_at || null,
       }
     });
   } catch (err: any) {

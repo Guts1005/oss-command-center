@@ -26,7 +26,8 @@ const testFiles = [
   'tests/pr_actions.test.ts',
   'tests/production_hardening.test.ts',
   'tests/notifications_and_cron.test.ts',
-  'tests/oauth.test.ts'
+  'tests/oauth.test.ts',
+  'tests/email_digest.test.ts'
 ];
 
 let failed = false;

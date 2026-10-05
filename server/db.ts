@@ -81,6 +81,10 @@ export function initDatabase() {
       slack_webhook_url TEXT,
       discord_webhook_url TEXT,
       background_sync_enabled INTEGER NOT NULL DEFAULT 1,
+      email_digest_enabled INTEGER NOT NULL DEFAULT 0,
+      email_digest_cadence TEXT NOT NULL DEFAULT 'weekly',
+      email_digest_address TEXT,
+      last_email_digest_at TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -98,6 +102,18 @@ export function initDatabase() {
   }
   if (!existingSettingsCols.has('background_sync_enabled')) {
     db.exec("ALTER TABLE user_settings ADD COLUMN background_sync_enabled INTEGER NOT NULL DEFAULT 1;");
+  }
+  if (!existingSettingsCols.has('email_digest_enabled')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN email_digest_enabled INTEGER NOT NULL DEFAULT 0;");
+  }
+  if (!existingSettingsCols.has('email_digest_cadence')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN email_digest_cadence TEXT NOT NULL DEFAULT 'weekly';");
+  }
+  if (!existingSettingsCols.has('email_digest_address')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN email_digest_address TEXT;");
+  }
+  if (!existingSettingsCols.has('last_email_digest_at')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN last_email_digest_at TEXT;");
   }
 
   // Migrate users table for existing databases

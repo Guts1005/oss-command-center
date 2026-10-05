@@ -20,7 +20,11 @@ import {
   Copy,
   Check,
   Play,
-  MessageSquare
+  MessageSquare,
+  Mail,
+  Eye,
+  ExternalLink,
+  X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { playNotificationSound } from '../../utils/notifications';
@@ -40,6 +44,9 @@ interface UserSettingsState {
   slack_webhook_url: string;
   discord_webhook_url: string;
   background_sync_enabled: boolean;
+  email_digest_enabled: boolean;
+  email_digest_cadence: 'daily' | 'weekly';
+  email_digest_address: string;
 }
 
 interface WebhookTestResult {
@@ -63,6 +70,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
     slack_webhook_url: '',
     discord_webhook_url: '',
     background_sync_enabled: true,
+    email_digest_enabled: false,
+    email_digest_cadence: 'weekly',
+    email_digest_address: '',
   });
 
   // Client display preferences
@@ -100,6 +110,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
   const [cacheCleared, setCacheCleared] = React.useState(false);
   const [copiedType, setCopiedType] = React.useState<string | null>(null);
 
+  // Email Digest State
+  const [testingDigest, setTestingDigest] = React.useState(false);
+  const [digestTestResult, setDigestTestResult] = React.useState<{ success: boolean; message?: string; error?: string; targetEmail?: string } | null>(null);
+  const [previewModalOpen, setPreviewModalOpen] = React.useState(false);
+  const [previewLoading, setPreviewLoading] = React.useState(false);
+  const [previewTab, setPreviewTab] = React.useState<'html' | 'text'>('html');
+  const [previewData, setPreviewData] = React.useState<{ html: string; text: string; summary?: any } | null>(null);
+
   const handleCopyUrl = (type: string, url: string) => {
     navigator.clipboard.writeText(url);
     setCopiedType(type);
@@ -122,6 +140,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
           slack_webhook_url: res.data.settings.slack_webhook_url || '',
           discord_webhook_url: res.data.settings.discord_webhook_url || '',
           background_sync_enabled: Boolean(res.data.settings.background_sync_enabled ?? true),
+          email_digest_enabled: Boolean(res.data.settings.email_digest_enabled),
+          email_digest_cadence: res.data.settings.email_digest_cadence || 'weekly',
+          email_digest_address: res.data.settings.email_digest_address || '',
         });
       }
     } catch (err) {
@@ -149,6 +170,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
         slack_webhook_url: settings.slack_webhook_url.trim(),
         discord_webhook_url: settings.discord_webhook_url.trim(),
         background_sync_enabled: settings.background_sync_enabled,
+        email_digest_enabled: settings.email_digest_enabled,
+        email_digest_cadence: settings.email_digest_cadence,
+        email_digest_address: settings.email_digest_address.trim(),
       };
 
       if (settings.webhook_secret) {
@@ -172,6 +196,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
       console.error('[SettingsView] Failed to save settings:', err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Test email digest dispatch handler
+  const handleTestDigest = async () => {
+    try {
+      setTestingDigest(true);
+      setDigestTestResult(null);
+      const res = await axios.post('/api/digest/test', {
+        cadence: settings.email_digest_cadence,
+        email: settings.email_digest_address.trim() || undefined
+      });
+      setDigestTestResult({
+        success: true,
+        message: res.data.message || `Digest successfully sent to ${res.data.targetEmail}`,
+        targetEmail: res.data.targetEmail
+      });
+    } catch (err: any) {
+      setDigestTestResult({
+        success: false,
+        error: err.response?.data?.error || err.message || 'Digest test dispatch failed'
+      });
+    } finally {
+      setTestingDigest(false);
+    }
+  };
+
+  // Open email digest preview modal
+  const handleOpenDigestPreview = async () => {
+    try {
+      setPreviewModalOpen(true);
+      setPreviewLoading(true);
+      const res = await axios.get(`/api/digest/preview?cadence=${settings.email_digest_cadence}`);
+      setPreviewData(res.data);
+    } catch (err: any) {
+      console.error('[SettingsView] Failed to load digest preview:', err);
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -637,6 +699,133 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
               </div>
             </div>
           </div>
+
+          {/* Email Summaries & Digest Engine */}
+          <div className="chrome-card border border-border-subtle rounded-xl p-5 shadow-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-accent-sapphire" />
+                <h3 className="text-sm sm:text-base font-bold font-sans text-text-primary uppercase tracking-wider">
+                  EMAIL DIGEST & WEEKLY BRIEFINGS
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSettings(prev => ({ ...prev, email_digest_enabled: !prev.email_digest_enabled }))}
+                className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold border transition-colors cursor-pointer ${
+                  settings.email_digest_enabled
+                    ? 'border-status-merged/40 bg-status-merged/10 text-status-merged'
+                    : 'border-border-subtle bg-surface text-text-muted'
+                }`}
+              >
+                {settings.email_digest_enabled ? 'DIGEST ACTIVE' : 'DIGEST PAUSED'}
+              </button>
+            </div>
+
+            <p className="text-xs font-sans text-text-muted">
+              Receive structured contribution briefings with urgent reviews, replies owed, and recently merged code formatted in high-contrast obsidian email cards.
+            </p>
+
+            {/* Cadence Selection */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-mono text-text-muted uppercase">Dispatch Cadence</label>
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                {[
+                  { id: 'weekly', label: 'WEEKLY BRIEFING (RECOMMENDED)' },
+                  { id: 'daily', label: 'DAILY STANDUP' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSettings(prev => ({ ...prev, email_digest_cadence: item.id as 'daily' | 'weekly' }))}
+                    className={`p-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer text-center ${
+                      settings.email_digest_cadence === item.id
+                        ? 'border-border-active bg-surface-active text-text-primary'
+                        : 'border-border-subtle bg-surface text-text-muted hover:text-text-primary'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Recipient Address */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-mono text-text-muted uppercase">
+                  Target Recipient Email
+                </label>
+                <span className="text-[10px] font-mono text-text-muted">
+                  DEFAULT: {user?.email || 'account email'}
+                </span>
+              </div>
+              <input
+                type="email"
+                value={settings.email_digest_address}
+                onChange={(e) => setSettings(prev => ({ ...prev, email_digest_address: e.target.value }))}
+                placeholder={user?.email || 'developer@example.com'}
+                className="w-full bg-surface border border-border-subtle rounded-lg px-3 py-2 text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-border-active"
+              />
+              <p className="text-[10px] font-mono text-text-muted">
+                Leave blank to automatically deliver to your primary registered account email address.
+              </p>
+            </div>
+
+            {/* Actions: Preview & Test Dispatch */}
+            <div className="pt-2 border-t border-border-subtle space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleOpenDigestPreview}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors cursor-pointer"
+                  >
+                    <Eye className="h-3.5 w-3.5 text-accent-sapphire" />
+                    <span>PREVIEW DIGEST</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleTestDigest}
+                    disabled={testingDigest}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {testingDigest ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>DISPATCHING...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3.5 w-3.5 text-accent-glacial" />
+                        <span>SEND TEST DIGEST</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <span className="text-[10px] font-mono text-text-whisper">
+                  RESEND / SMTP / MOCK
+                </span>
+              </div>
+
+              {digestTestResult && (
+                <div className={`flex items-center gap-2 text-[11px] font-mono px-2.5 py-1 rounded border ${
+                  digestTestResult.success
+                    ? 'border-status-merged/40 bg-status-merged/10 text-status-merged'
+                    : 'border-status-closed/40 bg-status-closed/10 text-status-closed'
+                }`}>
+                  {digestTestResult.success ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                  ) : (
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  )}
+                  <span>{digestTestResult.message || digestTestResult.error}</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Webhook Routing & Data Controls */}
@@ -1047,6 +1236,120 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
           </div>
         </div>
       </div>
+
+      {/* Email Digest Preview Modal */}
+      {previewModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-150">
+          <div className="bg-base border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle bg-surface-card shrink-0">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-accent-sapphire" />
+                <h3 className="text-sm font-bold font-sans uppercase tracking-wider text-text-primary">
+                  EMAIL DIGEST LIVE PREVIEW
+                </h3>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-surface border border-border-subtle text-text-muted">
+                  {settings.email_digest_cadence}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center border border-border-subtle rounded-lg overflow-hidden bg-surface text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTab('html')}
+                    className={`px-3 py-1 font-bold transition-colors cursor-pointer ${
+                      previewTab === 'html'
+                        ? 'bg-accent-sapphire text-white'
+                        : 'text-text-muted hover:text-text-primary'
+                    }`}
+                  >
+                    HTML RENDER
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTab('text')}
+                    className={`px-3 py-1 font-bold transition-colors cursor-pointer ${
+                      previewTab === 'text'
+                        ? 'bg-accent-sapphire text-white'
+                        : 'text-text-muted hover:text-text-primary'
+                    }`}
+                  >
+                    PLAIN TEXT
+                  </button>
+                </div>
+
+                <a
+                  href={`/api/digest/preview?cadence=${settings.email_digest_cadence}&format=html`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-mono text-accent-sapphire hover:underline"
+                >
+                  <span>OPEN IN TAB</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setPreviewModalOpen(false)}
+                  className="p-1 rounded-lg border border-border-subtle text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-base">
+              {!user ? (
+                <div className="flex flex-col items-center justify-center py-20 px-4 text-center max-w-md mx-auto">
+                  <div className="p-3.5 rounded-2xl bg-accent-sapphire/10 border border-accent-sapphire/30 text-accent-sapphire mb-3">
+                    <Mail className="h-6 w-6" />
+                  </div>
+                  <h4 className="text-sm font-bold font-sans uppercase tracking-wider text-text-primary mb-1.5">
+                    AUTHENTICATION REQUIRED
+                  </h4>
+                  <p className="text-xs font-sans text-text-muted mb-4 leading-relaxed">
+                    Sign in to compile a personalized contribution briefing from your connected GitHub and GitLab accounts.
+                  </p>
+                </div>
+              ) : previewLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3 text-text-muted font-mono text-xs">
+                  <Loader2 className="h-6 w-6 animate-spin text-accent-sapphire" />
+                  <span>COMPILING CONTRIBUTION DIGEST...</span>
+                </div>
+              ) : previewTab === 'html' ? (
+                <div className="rounded-xl overflow-hidden border border-border-subtle shadow-inner bg-[#0a0d14]">
+                  <iframe
+                    title="Digest HTML Preview"
+                    srcDoc={previewData?.html || '<p style="padding:20px;color:#999;font-family:sans-serif;">No preview generated.</p>'}
+                    className="w-full h-[600px] border-0"
+                    sandbox="allow-same-origin"
+                  />
+                </div>
+              ) : (
+                <pre className="p-4 rounded-xl bg-surface border border-border-subtle font-mono text-xs text-text-primary whitespace-pre-wrap select-all leading-relaxed">
+                  {previewData?.text || 'No text preview available.'}
+                </pre>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3 border-t border-border-subtle bg-surface-card flex items-center justify-between shrink-0">
+              <span className="text-[11px] font-mono text-text-muted">
+                Obsidian and sapphire responsive template designed for modern email clients.
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewModalOpen(false)}
+                className="px-4 py-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors cursor-pointer"
+              >
+                CLOSE PREVIEW
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
