@@ -19,9 +19,23 @@ export function initDatabase() {
       password_hash TEXT NOT NULL,
       display_name TEXT,
       avatar_url TEXT,
+      github_id TEXT,
+      gitlab_id TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+  `);
+
+  // 1b. OAuth states table (CSRF protection and redirect tracking)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS oauth_states (
+      state TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      redirect_url TEXT,
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at);
   `);
 
   // 2. User sessions table (HttpOnly cryptographically secure session store)
@@ -84,6 +98,19 @@ export function initDatabase() {
   }
   if (!existingSettingsCols.has('background_sync_enabled')) {
     db.exec("ALTER TABLE user_settings ADD COLUMN background_sync_enabled INTEGER NOT NULL DEFAULT 1;");
+  }
+
+  // Migrate users table for existing databases
+  const usersTableInfo = db.prepare("PRAGMA table_info(users)").all() as any[];
+  const existingUsersCols = new Set(usersTableInfo.map(col => col.name));
+
+  if (!existingUsersCols.has('github_id')) {
+    db.exec("ALTER TABLE users ADD COLUMN github_id TEXT;");
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_id ON users(github_id) WHERE github_id IS NOT NULL;");
+  }
+  if (!existingUsersCols.has('gitlab_id')) {
+    db.exec("ALTER TABLE users ADD COLUMN gitlab_id TEXT;");
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_gitlab_id ON users(gitlab_id) WHERE gitlab_id IS NOT NULL;");
   }
 
   // 4. Check if contributions table needs migration to multi-tenant

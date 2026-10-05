@@ -5,6 +5,20 @@ import rateLimit from 'express-rate-limit';
 import { db } from '../db.js';
 import { hashPassword, verifyPassword, generateSessionToken } from '../security/crypto.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  isGitHubOAuthConfigured,
+  isGitLabOAuthConfigured,
+  getAppBaseUrl,
+  createOAuthState,
+  validateAndConsumeOAuthState,
+  getGitHubAuthorizeUrl,
+  getGitLabAuthorizeUrl,
+  exchangeGitHubCode,
+  exchangeGitLabCode,
+  fetchGitHubProfile,
+  fetchGitLabProfile,
+  findOrCreateOAuthUser
+} from '../auth/oauth.js';
 
 export const authRouter = Router();
 
@@ -41,6 +55,17 @@ function setSessionCookie(res: Response, token: string) {
     sameSite: 'lax',
     path: '/',
     maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000
+  });
+}
+
+function setOAuthStateCookie(res: Response, state: string) {
+  const isProd = process.env.NODE_ENV === 'production';
+  res.cookie('oss_oauth_state', state, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 10 * 60 * 1000
   });
 }
 
@@ -199,4 +224,164 @@ authRouter.get('/me', requireAuth, (req: AuthenticatedRequest, res) => {
       has_token: Boolean(i.has_token)
     }))
   });
+});
+
+// GET /api/auth/providers
+authRouter.get('/providers', (req, res) => {
+  return res.json({
+    github: isGitHubOAuthConfigured(),
+    gitlab: isGitLabOAuthConfigured()
+  });
+});
+
+// GET /api/auth/github
+authRouter.get('/github', (req, res) => {
+  if (!isGitHubOAuthConfigured()) {
+    return res.status(503).json({ error: 'GitHub OAuth is not configured on this server' });
+  }
+
+  const redirectPath = typeof req.query.redirect === 'string' ? req.query.redirect : '/?view=stream';
+  const state = createOAuthState('github', redirectPath);
+  setOAuthStateCookie(res, state);
+
+  const redirectUri = `${getAppBaseUrl(req)}/api/auth/github/callback`;
+  const authorizeUrl = getGitHubAuthorizeUrl(state, redirectUri);
+  return res.redirect(authorizeUrl);
+});
+
+// GET /api/auth/github/callback
+authRouter.get('/github/callback', async (req, res) => {
+  try {
+    const { code, state, error, error_description } = req.query;
+
+    if (error) {
+      console.warn('[GitHub OAuth Error]:', error, error_description);
+      return res.redirect(`/?error=oauth_denied&message=${encodeURIComponent(String(error_description || error))}`);
+    }
+
+    if (!code || !state || typeof code !== 'string' || typeof state !== 'string') {
+      return res.status(400).redirect('/?error=invalid_oauth_request');
+    }
+
+    // Verify state token against database
+    const stateValidation = validateAndConsumeOAuthState(state, 'github');
+    if (!stateValidation.valid) {
+      return res.status(403).redirect('/?error=invalid_or_expired_state');
+    }
+
+    res.clearCookie('oss_oauth_state', { path: '/' });
+
+    const redirectUri = `${getAppBaseUrl(req)}/api/auth/github/callback`;
+    const { accessToken } = await exchangeGitHubCode(code, redirectUri);
+    const profile = await fetchGitHubProfile(accessToken);
+
+    // Check if user is currently logged in to link integration
+    const currentSessionId = req.cookies?.['oss_session'];
+    let existingUserId: string | undefined;
+    if (currentSessionId) {
+      const sessionRow = db.prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?').get(
+        currentSessionId,
+        new Date().toISOString()
+      ) as any;
+      if (sessionRow) {
+        existingUserId = sessionRow.user_id;
+      }
+    }
+
+    const { user } = await findOrCreateOAuthUser('github', profile, accessToken, existingUserId);
+
+    // Create session
+    const sessionToken = generateSessionToken();
+    const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+    db.prepare(`
+      INSERT INTO sessions (id, user_id, expires_at, created_at)
+      VALUES (?, ?, ?, ?)
+    `).run(sessionToken, user.id, expiresAt, now);
+
+    setSessionCookie(res, sessionToken);
+
+    const targetUrl = stateValidation.redirectUrl || '/?view=stream&oauth=success';
+    return res.redirect(targetUrl);
+  } catch (err: any) {
+    console.error('[GitHub OAuth Callback Error]:', err);
+    return res.redirect(`/?error=oauth_exchange_failed&message=${encodeURIComponent(err.message || 'Authentication failed')}`);
+  }
+});
+
+// GET /api/auth/gitlab
+authRouter.get('/gitlab', (req, res) => {
+  if (!isGitLabOAuthConfigured()) {
+    return res.status(503).json({ error: 'GitLab OAuth is not configured on this server' });
+  }
+
+  const redirectPath = typeof req.query.redirect === 'string' ? req.query.redirect : '/?view=stream';
+  const state = createOAuthState('gitlab', redirectPath);
+  setOAuthStateCookie(res, state);
+
+  const redirectUri = `${getAppBaseUrl(req)}/api/auth/gitlab/callback`;
+  const authorizeUrl = getGitLabAuthorizeUrl(state, redirectUri);
+  return res.redirect(authorizeUrl);
+});
+
+// GET /api/auth/gitlab/callback
+authRouter.get('/gitlab/callback', async (req, res) => {
+  try {
+    const { code, state, error, error_description } = req.query;
+
+    if (error) {
+      console.warn('[GitLab OAuth Error]:', error, error_description);
+      return res.redirect(`/?error=oauth_denied&message=${encodeURIComponent(String(error_description || error))}`);
+    }
+
+    if (!code || !state || typeof code !== 'string' || typeof state !== 'string') {
+      return res.status(400).redirect('/?error=invalid_oauth_request');
+    }
+
+    // Verify state token against database
+    const stateValidation = validateAndConsumeOAuthState(state, 'gitlab');
+    if (!stateValidation.valid) {
+      return res.status(403).redirect('/?error=invalid_or_expired_state');
+    }
+
+    res.clearCookie('oss_oauth_state', { path: '/' });
+
+    const redirectUri = `${getAppBaseUrl(req)}/api/auth/gitlab/callback`;
+    const { accessToken } = await exchangeGitLabCode(code, redirectUri);
+    const profile = await fetchGitLabProfile(accessToken);
+
+    // Check if user is currently logged in to link integration
+    const currentSessionId = req.cookies?.['oss_session'];
+    let existingUserId: string | undefined;
+    if (currentSessionId) {
+      const sessionRow = db.prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?').get(
+        currentSessionId,
+        new Date().toISOString()
+      ) as any;
+      if (sessionRow) {
+        existingUserId = sessionRow.user_id;
+      }
+    }
+
+    const { user } = await findOrCreateOAuthUser('gitlab', profile, accessToken, existingUserId);
+
+    // Create session
+    const sessionToken = generateSessionToken();
+    const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+    db.prepare(`
+      INSERT INTO sessions (id, user_id, expires_at, created_at)
+      VALUES (?, ?, ?, ?)
+    `).run(sessionToken, user.id, expiresAt, now);
+
+    setSessionCookie(res, sessionToken);
+
+    const targetUrl = stateValidation.redirectUrl || '/?view=stream&oauth=success';
+    return res.redirect(targetUrl);
+  } catch (err: any) {
+    console.error('[GitLab OAuth Callback Error]:', err);
+    return res.redirect(`/?error=oauth_exchange_failed&message=${encodeURIComponent(err.message || 'Authentication failed')}`);
+  }
 });
