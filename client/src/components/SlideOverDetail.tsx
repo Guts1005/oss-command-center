@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Contribution, ActivityEvent } from '../types';
-import { X, ExternalLink, MessageSquare, Check, AlertTriangle, CheckCircle2, Clock, Bot, User } from 'lucide-react';
+import { X, ExternalLink, MessageSquare, Check, AlertTriangle, CheckCircle2, Clock, Bot, User, Send, RefreshCw, GitPullRequest, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
 interface SlideOverDetailProps {
@@ -17,6 +17,20 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
   const [actionNeeded, setActionNeeded] = useState<'reply' | 'push-changes' | 'none'>('none');
   const [savingNotes, setSavingNotes] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // In-App Direct Action states
+  const [isCommentBoxOpen, setIsCommentBoxOpen] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [postingComment, setPostingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [commentSuccess, setCommentSuccess] = useState(false);
+
+  const [requestingReview, setRequestingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  const [syncingItem, setSyncingItem] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState(false);
 
   useEffect(() => {
     if (!itemId) {
@@ -52,6 +66,70 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
       console.error('Failed to save notes:', err);
     } finally {
       setSavingNotes(false);
+    }
+  };
+
+  const handlePostComment = async () => {
+    if (!itemId || !commentText.trim()) return;
+    setPostingComment(true);
+    setCommentError(null);
+    setCommentSuccess(false);
+    try {
+      await axios.post(`/api/contributions/${encodeURIComponent(itemId)}/actions/comment`, {
+        comment: commentText.trim(),
+      });
+      setCommentSuccess(true);
+      setCommentText('');
+      setIsCommentBoxOpen(false);
+      setActionNeeded('none');
+      onItemUpdated();
+      const updated = await axios.get(`/api/contributions/${encodeURIComponent(itemId)}`);
+      setData(updated.data);
+      setTimeout(() => setCommentSuccess(false), 3000);
+    } catch (err: any) {
+      console.error('Failed to post comment:', err);
+      setCommentError(err.response?.data?.details || err.response?.data?.error || 'Failed to post comment');
+    } finally {
+      setPostingComment(false);
+    }
+  };
+
+  const handleRequestReview = async () => {
+    if (!itemId) return;
+    setRequestingReview(true);
+    setReviewError(null);
+    setReviewSuccess(false);
+    try {
+      await axios.post(`/api/contributions/${encodeURIComponent(itemId)}/actions/request-review`, {});
+      setReviewSuccess(true);
+      setActionNeeded('none');
+      onItemUpdated();
+      const updated = await axios.get(`/api/contributions/${encodeURIComponent(itemId)}`);
+      setData(updated.data);
+      setTimeout(() => setReviewSuccess(false), 3000);
+    } catch (err: any) {
+      console.error('Failed to request review:', err);
+      setReviewError(err.response?.data?.details || err.response?.data?.error || 'Failed to request review');
+    } finally {
+      setRequestingReview(false);
+    }
+  };
+
+  const handleSyncItem = async () => {
+    if (!itemId) return;
+    setSyncingItem(true);
+    setSyncSuccess(false);
+    try {
+      await axios.post(`/api/contributions/${encodeURIComponent(itemId)}/actions/sync`, {});
+      setSyncSuccess(true);
+      onItemUpdated();
+      const updated = await axios.get(`/api/contributions/${encodeURIComponent(itemId)}`);
+      setData(updated.data);
+      setTimeout(() => setSyncSuccess(false), 2500);
+    } catch (err: any) {
+      console.error('Failed to sync item:', err);
+    } finally {
+      setSyncingItem(false);
     }
   };
 
@@ -251,6 +329,177 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
               </div>
             );
           })()}
+
+          {/* In-App Direct Actions Toolbar */}
+          <div className="border border-border-subtle bg-surface-card p-5 rounded-lg space-y-3.5 shadow-card">
+            <div className="flex items-center justify-between border-b border-border-subtle/60 pb-3">
+              <div className="flex items-center gap-2">
+                <Send className="h-4 w-4 text-accent-sapphire" />
+                <span className="font-mono font-bold text-white uppercase text-xs tracking-wider">
+                  DIRECT IN-APP ACTIONS
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-border-subtle bg-base text-text-muted">
+                BI-DIRECTIONAL SYNC
+              </span>
+            </div>
+
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Post Comment or Reply button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCommentBoxOpen(!isCommentBoxOpen);
+                  setCommentError(null);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-mono font-bold transition-all cursor-pointer ${
+                  isCommentBoxOpen
+                    ? 'border-accent-sapphire bg-accent-sapphire/30 text-white'
+                    : 'border-border-subtle bg-base text-text-whisper hover:border-accent-sapphire hover:text-white'
+                }`}
+              >
+                <MessageSquare className="h-3.5 w-3.5 text-accent-sapphire" />
+                <span>{isCommentBoxOpen ? '[CLOSE REPLY DOCK]' : '[POST REPLY TO PR]'}</span>
+              </button>
+
+              {/* Re-request Review button (GitHub only) */}
+              {data.item.platform === 'github' && (
+                <button
+                  type="button"
+                  onClick={handleRequestReview}
+                  disabled={requestingReview}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-border-subtle bg-base text-text-whisper hover:border-accent-sapphire hover:text-white text-xs font-mono font-bold transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {requestingReview ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-accent-sapphire" />
+                      <span>[REQUESTING...]</span>
+                    </>
+                  ) : reviewSuccess ? (
+                    <>
+                      <CheckCircle2 className="h-3.5 w-3.5 text-status-merged" />
+                      <span className="text-status-merged">[REVIEW REQUESTED]</span>
+                    </>
+                  ) : (
+                    <>
+                      <GitPullRequest className="h-3.5 w-3.5 text-status-awaiting-reply" />
+                      <span>[RE-REQUEST REVIEW]</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* Targeted Sync Single Item */}
+              <button
+                type="button"
+                onClick={handleSyncItem}
+                disabled={syncingItem}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-border-subtle bg-base text-text-muted hover:border-accent-sapphire hover:text-text-whisper text-xs font-mono font-bold transition-all cursor-pointer disabled:opacity-50"
+              >
+                {syncingItem ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-accent-sapphire" />
+                    <span>[REFRESHING...]</span>
+                  </>
+                ) : syncSuccess ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-status-merged" />
+                    <span className="text-status-merged">[SYNCED]</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    <span>[SYNC THIS ITEM]</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Feedback banner for review error */}
+            {reviewError && (
+              <div className="flex items-start gap-2 bg-status-action-needed/15 border border-status-action-needed/50 p-2.5 rounded text-xs font-mono text-status-action-needed">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{reviewError}</span>
+              </div>
+            )}
+
+            {/* Comment success feedback */}
+            {commentSuccess && (
+              <div className="flex items-center gap-2 bg-status-merged/15 border border-status-merged/50 p-2.5 rounded text-xs font-mono text-status-merged">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>Reply dispatched upstream. Activity ledger updated.</span>
+              </div>
+            )}
+
+            {/* Expandable Comment Box with Ctrl+Enter shortcut */}
+            <AnimatePresence>
+              {isCommentBoxOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-2.5 pt-2 border-t border-border-subtle/50"
+                >
+                  <label className="block text-text-muted uppercase text-xs font-mono font-bold">
+                    Technical Reply / PR Comment (Markdown Enabled):
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        handlePostComment();
+                      }
+                    }}
+                    placeholder="Write technical reply or context for maintainers... (Press Ctrl+Enter to submit)"
+                    className="w-full border border-border-subtle bg-base p-3 rounded-md text-xs font-mono text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all"
+                  />
+                  {commentError && (
+                    <div className="flex items-start gap-2 text-status-action-needed text-xs font-mono">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <span>{commentError}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] font-mono text-text-muted">
+                      Posts directly via your connected {data.item.platform.toUpperCase()} token.
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsCommentBoxOpen(false)}
+                        className="px-3 py-1.5 rounded border border-border-subtle text-xs font-mono text-text-muted hover:text-white cursor-pointer"
+                      >
+                        [CANCEL]
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePostComment}
+                        disabled={postingComment || !commentText.trim()}
+                        className="flex items-center gap-1.5 px-4 py-1.5 rounded border border-accent-sapphire bg-accent-sapphire/30 text-white font-mono text-xs font-bold hover:bg-accent-sapphire/50 disabled:opacity-50 transition-all cursor-pointer"
+                      >
+                        {postingComment ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <span>[POSTING...]</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-3.5 w-3.5" />
+                            <span>[SUBMIT REPLY]</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Working Notes & Status Flag Override */}
           <div className="border border-border-subtle bg-surface-card p-5 rounded-lg space-y-4 text-sm shadow-card">

@@ -21,7 +21,9 @@ const testFiles = [
   'tests/db.test.ts',
   'tests/api_integration.test.ts',
   'tests/multi_tenant.test.ts',
-  'tests/settings_export.test.ts'
+  'tests/settings_export.test.ts',
+  'tests/inbound_webhooks.test.ts',
+  'tests/pr_actions.test.ts'
 ];
 
 let failed = false;

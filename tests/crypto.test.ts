@@ -35,8 +35,8 @@ async function runCryptoTests() {
 
   let authTagTamperingDetected = false;
   try {
-    // Corrupt auth tag
-    const corruptedTag = '0' + encrypted.authTag.slice(1);
+    // Corrupt auth tag deterministically
+    const corruptedTag = (encrypted.authTag.startsWith('0') ? '1' : '0') + encrypted.authTag.slice(1);
     decryptSecret(encrypted.ciphertext, encrypted.iv, corruptedTag);
   } catch {
     authTagTamperingDetected = true;

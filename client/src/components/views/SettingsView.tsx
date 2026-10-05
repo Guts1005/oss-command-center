@@ -16,7 +16,9 @@ import {
   Trash2,
   Layout,
   Sliders,
-  Radio
+  Radio,
+  Copy,
+  Check
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { playNotificationSound } from '../../utils/notifications';
@@ -82,6 +84,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
   const [testResult, setTestResult] = React.useState<WebhookTestResult | null>(null);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [cacheCleared, setCacheCleared] = React.useState(false);
+  const [copiedType, setCopiedType] = React.useState<string | null>(null);
+
+  const handleCopyUrl = (type: string, url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedType(type);
+    setTimeout(() => setCopiedType(null), 2500);
+  };
 
   // Load backend settings
   const loadSettings = React.useCallback(async () => {
@@ -482,8 +491,108 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
           </div>
         </div>
 
-        {/* Right Column: Outbound Webhook Routing & Data Controls */}
+        {/* Right Column: Webhook Routing & Data Controls */}
         <div className="space-y-4">
+          {/* Inbound Webhooks (Zero-Latency Instant Sync) */}
+          <div className="chrome-card border border-border-subtle rounded-xl p-5 shadow-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Radio className="h-4 w-4 text-accent-sapphire animate-pulse" />
+                <h3 className="text-sm sm:text-base font-bold font-sans text-text-primary uppercase tracking-wider">
+                  INBOUND WEBHOOKS (ZERO-LATENCY SYNC)
+                </h3>
+              </div>
+              <span className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded border border-status-merged/40 bg-status-merged/10 text-status-merged">
+                <span className="h-1.5 w-1.5 rounded-full bg-status-merged animate-ping" />
+                <span>REAL-TIME SSE ACTIVE</span>
+              </span>
+            </div>
+
+            <p className="text-xs font-sans text-text-muted">
+              Connect repository webhooks to receive instantaneous updates whenever reviews are posted or PRs are merged. Bypasses polling delays with zero latency.
+            </p>
+
+            {/* GitHub Inbound Webhook URL */}
+            <div className="space-y-1.5 bg-surface p-3.5 rounded-lg border border-border-subtle">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-text-primary uppercase">
+                  GitHub Webhook Endpoint
+                </span>
+                <span className="text-[10px] font-mono text-accent-sapphire">
+                  HMAC-SHA256 VERIFIED
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={user ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/github/${user.id}` : `${typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/github`}
+                  className="w-full bg-base border border-border-subtle rounded px-2.5 py-1.5 text-xs font-mono text-text-whisper select-all focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleCopyUrl('github', user ? `${window.location.origin}/api/webhooks/github/${user.id}` : `${window.location.origin}/api/webhooks/github`)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded border border-border-subtle bg-surface-card hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary shrink-0 transition-colors cursor-pointer"
+                >
+                  {copiedType === 'github' ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-status-merged" />
+                      <span className="text-status-merged">COPIED</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 text-text-muted" />
+                      <span>COPY</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="text-[10px] font-mono text-text-muted pt-1">
+                Configure in Repo Settings &gt; Webhooks: Content type: <code className="text-text-primary">application/json</code>, Secret: your webhook secret, Events: <code className="text-text-primary">Pull requests, Issue comments, Reviews</code>.
+              </p>
+            </div>
+
+            {/* GitLab Inbound Webhook URL */}
+            <div className="space-y-1.5 bg-surface p-3.5 rounded-lg border border-border-subtle">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-mono font-bold text-text-primary uppercase">
+                  GitLab Webhook Endpoint
+                </span>
+                <span className="text-[10px] font-mono text-accent-sapphire">
+                  TOKEN VERIFIED
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={user ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/gitlab/${user.id}` : `${typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/gitlab`}
+                  className="w-full bg-base border border-border-subtle rounded px-2.5 py-1.5 text-xs font-mono text-text-whisper select-all focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleCopyUrl('gitlab', user ? `${window.location.origin}/api/webhooks/gitlab/${user.id}` : `${window.location.origin}/api/webhooks/gitlab`)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded border border-border-subtle bg-surface-card hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary shrink-0 transition-colors cursor-pointer"
+                >
+                  {copiedType === 'gitlab' ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-status-merged" />
+                      <span className="text-status-merged">COPIED</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 text-text-muted" />
+                      <span>COPY</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="text-[10px] font-mono text-text-muted pt-1">
+                Configure in GitLab Project Settings &gt; Webhooks: Secret token: your webhook secret, Trigger: <code className="text-text-primary">Merge requests, Comments</code>.
+              </p>
+            </div>
+          </div>
+
           {/* Outbound Webhook Routing */}
           <div className="chrome-card border border-border-subtle rounded-xl p-5 shadow-card flex flex-col justify-between">
             <div>

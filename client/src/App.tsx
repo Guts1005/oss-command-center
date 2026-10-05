@@ -230,6 +230,47 @@ const AppContent: React.FC = () => {
     return () => clearInterval(timer);
   }, [fetchStats, fetchContributions, user]);
 
+  // Real-time Server-Sent Events (SSE) listener for instantaneous updates
+  useEffect(() => {
+    if (!user) return;
+
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const connectSSE = () => {
+      try {
+        eventSource = new EventSource('/api/events');
+
+        const handleLiveUpdate = () => {
+          fetchStats();
+          fetchContributions(false);
+        };
+
+        eventSource.addEventListener('contribution_updated', handleLiveUpdate);
+        eventSource.addEventListener('contribution_created', handleLiveUpdate);
+
+        eventSource.onerror = () => {
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+          reconnectTimeout = setTimeout(connectSSE, 5000);
+        };
+      } catch (err) {
+        console.error('SSE initialization error:', err);
+      }
+    };
+
+    connectSSE();
+
+    return () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [user, fetchStats, fetchContributions]);
+
   const handleResetFilters = () => {
     setStatusFilter('all');
     setActionFilter('all');

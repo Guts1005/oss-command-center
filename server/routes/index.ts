@@ -5,15 +5,21 @@ import { syncUser, getLastSyncTime } from '../sync/multi_engine.js';
 import { authRouter } from './auth.js';
 import { integrationsRouter } from './integrations.js';
 import { settingsRouter } from './settings.js';
+import { inboundWebhooksRouter } from './webhooks_inbound.js';
+import { eventsRouter } from './events.js';
+import { actionsRouter } from './actions.js';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 
 export const apiRouter = express.Router();
 
-// Mount Auth, Integrations, and Settings sub-routers
+// Mount Auth, Integrations, Settings, Webhooks, Events, and Actions sub-routers
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/integrations', integrationsRouter);
 apiRouter.use('/settings', settingsRouter);
+apiRouter.use('/webhooks', inboundWebhooksRouter);
+apiRouter.use('/events', eventsRouter);
+apiRouter.use('/contributions', actionsRouter);
 
 // Apply optionalAuth to all remaining contribution endpoints
 apiRouter.use(optionalAuth);

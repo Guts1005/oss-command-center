@@ -99,3 +99,27 @@ export function generateSessionToken(): string {
 export function signPayload(payload: string, secret: string): string {
   return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }
+
+/**
+ * Timing-safe HMAC-SHA256 webhook signature verification.
+ * Supports both GitHub (sha256=<hex>) and standard raw hex headers.
+ */
+export function verifyWebhookSignature(payload: string | Buffer, signatureHeader: string, secret: string): boolean {
+  if (!signatureHeader || !secret) return false;
+  try {
+    const expectedPrefix = 'sha256=';
+    const providedHex = signatureHeader.startsWith(expectedPrefix)
+      ? signatureHeader.slice(expectedPrefix.length)
+      : signatureHeader;
+
+    const computedHex = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+    const providedBuffer = Buffer.from(providedHex, 'hex');
+    const computedBuffer = Buffer.from(computedHex, 'hex');
+
+    if (providedBuffer.length !== computedBuffer.length) return false;
+    return crypto.timingSafeEqual(providedBuffer, computedBuffer);
+  } catch {
+    return false;
+  }
+}
