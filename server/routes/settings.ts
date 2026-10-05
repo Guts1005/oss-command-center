@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '../db.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { signPayload } from '../security/crypto.js';
+import { buildSlackPayload, buildDiscordPayload } from '../notifications/formatters.js';
 
 export const settingsRouter = express.Router();
 
@@ -16,6 +17,9 @@ const settingsSchema = z.object({
   webhook_url: z.string().url().or(z.literal('')).nullable().optional(),
   webhook_secret: z.string().nullable().optional(),
   webhook_events: z.array(z.string()).optional(),
+  slack_webhook_url: z.string().url().or(z.literal('')).nullable().optional(),
+  discord_webhook_url: z.string().url().or(z.literal('')).nullable().optional(),
+  background_sync_enabled: z.boolean().optional(),
 });
 
 // GET /api/settings
@@ -29,9 +33,10 @@ settingsRouter.get('/', (req: AuthenticatedRequest, res) => {
       db.prepare(`
         INSERT INTO user_settings (
           user_id, audio_chime_enabled, sync_cadence_minutes, webhook_url,
-          webhook_secret, webhook_events, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(userId, 1, 30, null, null, JSON.stringify(['action_needed', 'review', 'merged']), now, now);
+          webhook_secret, webhook_events, slack_webhook_url, discord_webhook_url,
+          background_sync_enabled, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(userId, 1, 30, null, null, JSON.stringify(['action_needed', 'review', 'merged']), null, null, 1, now, now);
 
       settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
     }
@@ -57,6 +62,9 @@ settingsRouter.get('/', (req: AuthenticatedRequest, res) => {
         webhook_url: settings.webhook_url || null,
         webhook_secret_set: Boolean(settings.webhook_secret && settings.webhook_secret.length > 0),
         webhook_events: parsedEvents,
+        slack_webhook_url: settings.slack_webhook_url || null,
+        discord_webhook_url: settings.discord_webhook_url || null,
+        background_sync_enabled: Boolean(settings.background_sync_enabled ?? 1),
       },
       vault: {
         integrations: integrations.map(i => ({
@@ -95,6 +103,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
       webhook_url,
       webhook_secret,
       webhook_events,
+      slack_webhook_url,
+      discord_webhook_url,
+      background_sync_enabled,
     } = parseResult.data;
 
     let settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
@@ -104,8 +115,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
       db.prepare(`
         INSERT INTO user_settings (
           user_id, audio_chime_enabled, sync_cadence_minutes, webhook_url,
-          webhook_secret, webhook_events, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          webhook_secret, webhook_events, slack_webhook_url, discord_webhook_url,
+          background_sync_enabled, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         userId,
         audio_chime_enabled !== undefined ? (audio_chime_enabled ? 1 : 0) : 1,
@@ -113,6 +125,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
         webhook_url !== undefined ? webhook_url : null,
         webhook_secret !== undefined ? webhook_secret : null,
         webhook_events ? JSON.stringify(webhook_events) : JSON.stringify(['action_needed', 'review', 'merged']),
+        slack_webhook_url !== undefined ? slack_webhook_url : null,
+        discord_webhook_url !== undefined ? discord_webhook_url : null,
+        background_sync_enabled !== undefined ? (background_sync_enabled ? 1 : 0) : 1,
         now,
         now
       );
@@ -122,6 +137,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
       const newUrl = webhook_url !== undefined ? webhook_url : settings.webhook_url;
       const newSecret = webhook_secret !== undefined ? webhook_secret : settings.webhook_secret;
       const newEvents = webhook_events ? JSON.stringify(webhook_events) : settings.webhook_events;
+      const newSlack = slack_webhook_url !== undefined ? slack_webhook_url : settings.slack_webhook_url;
+      const newDiscord = discord_webhook_url !== undefined ? discord_webhook_url : settings.discord_webhook_url;
+      const newBg = background_sync_enabled !== undefined ? (background_sync_enabled ? 1 : 0) : settings.background_sync_enabled;
 
       db.prepare(`
         UPDATE user_settings
@@ -130,9 +148,12 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
             webhook_url = ?,
             webhook_secret = ?,
             webhook_events = ?,
+            slack_webhook_url = ?,
+            discord_webhook_url = ?,
+            background_sync_enabled = ?,
             updated_at = ?
         WHERE user_id = ?
-      `).run(newAudio, newCadence, newUrl, newSecret, newEvents, now, userId);
+      `).run(newAudio, newCadence, newUrl, newSecret, newEvents, newSlack, newDiscord, newBg, now, userId);
     }
 
     const updated = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
@@ -152,6 +173,9 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
         webhook_url: updated.webhook_url || null,
         webhook_secret_set: Boolean(updated.webhook_secret && updated.webhook_secret.length > 0),
         webhook_events: parsedEvents,
+        slack_webhook_url: updated.slack_webhook_url || null,
+        discord_webhook_url: updated.discord_webhook_url || null,
+        background_sync_enabled: Boolean(updated.background_sync_enabled ?? 1),
       }
     });
   } catch (err: any) {
@@ -216,6 +240,92 @@ settingsRouter.post('/webhook-test', async (req: AuthenticatedRequest, res) => {
     return res.status(500).json({
       success: false,
       error: err.message || 'Webhook dispatch failed',
+      latencyMs,
+    });
+  }
+});
+
+// POST /api/settings/slack-test
+settingsRouter.post('/slack-test', async (req: AuthenticatedRequest, res) => {
+  const startTime = Date.now();
+  try {
+    const userId = req.user!.id;
+    const settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
+    const targetUrl = (req.body.slack_webhook_url || (settings && settings.slack_webhook_url) || '').trim();
+
+    if (!targetUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'No Slack webhook URL configured or provided for test'
+      });
+    }
+
+    const payload = buildSlackPayload({
+      event: 'ping',
+      message: 'Slack incoming webhook verified successfully from OSS Command Center.',
+    });
+
+    const outboundRes = await axios.post(targetUrl, payload, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 5000,
+      validateStatus: () => true,
+    });
+
+    const latencyMs = Date.now() - startTime;
+    return res.json({
+      success: outboundRes.status >= 200 && outboundRes.status < 300,
+      statusCode: outboundRes.status,
+      latencyMs,
+      message: `Slack responded with HTTP status ${outboundRes.status}`,
+    });
+  } catch (err: any) {
+    const latencyMs = Date.now() - startTime;
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Slack dispatch failed',
+      latencyMs,
+    });
+  }
+});
+
+// POST /api/settings/discord-test
+settingsRouter.post('/discord-test', async (req: AuthenticatedRequest, res) => {
+  const startTime = Date.now();
+  try {
+    const userId = req.user!.id;
+    const settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
+    const targetUrl = (req.body.discord_webhook_url || (settings && settings.discord_webhook_url) || '').trim();
+
+    if (!targetUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'No Discord webhook URL configured or provided for test'
+      });
+    }
+
+    const payload = buildDiscordPayload({
+      event: 'ping',
+      message: 'Discord webhook verified successfully from OSS Command Center.',
+    });
+
+    const outboundRes = await axios.post(targetUrl, payload, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 5000,
+      validateStatus: () => true,
+    });
+
+    const latencyMs = Date.now() - startTime;
+    return res.json({
+      success: outboundRes.status >= 200 && outboundRes.status < 300,
+      statusCode: outboundRes.status,
+      latencyMs,
+      message: `Discord responded with HTTP status ${outboundRes.status}`,
+    });
+  } catch (err: any) {
+    const latencyMs = Date.now() - startTime;
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Discord dispatch failed',
       latencyMs,
     });
   }

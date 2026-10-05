@@ -8,18 +8,20 @@ import { settingsRouter } from './settings.js';
 import { inboundWebhooksRouter } from './webhooks_inbound.js';
 import { eventsRouter } from './events.js';
 import { actionsRouter } from './actions.js';
+import { syncRouter } from './sync.js';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { z } from 'zod';
 
 export const apiRouter = express.Router();
 
-// Mount Auth, Integrations, Settings, Webhooks, Events, and Actions sub-routers
+// Mount Auth, Integrations, Settings, Webhooks, Events, Actions, and Sync sub-routers
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/integrations', integrationsRouter);
 apiRouter.use('/settings', settingsRouter);
 apiRouter.use('/webhooks', inboundWebhooksRouter);
 apiRouter.use('/events', eventsRouter);
 apiRouter.use('/contributions', actionsRouter);
+apiRouter.use('/sync', syncRouter);
 
 // Apply optionalAuth to all remaining contribution endpoints
 apiRouter.use(optionalAuth);

@@ -9,7 +9,7 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { db, initDatabase } from './db.js';
 import { apiRouter } from './routes/index.js';
-import { startPeriodicSync, syncAllUsers } from './sync/multi_engine.js';
+import { startBackgroundSyncWorker, stopBackgroundSyncWorker, executeBackgroundSyncPass } from './sync/worker.js';
 import { sseManager } from './sse.js';
 
 dotenv.config();
@@ -148,15 +148,17 @@ if (process.env.NODE_ENV !== 'test' && isDirectEntry) {
     console.log(`  Listening on: http://localhost:${PORT}`);
     console.log(`======================================================\n`);
 
-    // Start background sync cadence
-    startPeriodicSync(30);
+    // Start autonomous background sync worker
+    startBackgroundSyncWorker();
 
     // Initial background sync cycle
-    syncAllUsers().catch(err => console.error('[Startup Sync Error]:', err));
+    executeBackgroundSyncPass().catch(err => console.error('[Startup Sync Error]:', err));
   });
 
   const handleShutdown = (signal: string) => {
     console.log(`\n[Server] Received ${signal}. Initiating graceful shutdown...`);
+    stopBackgroundSyncWorker();
+
     if (server) {
       server.close(() => {
         console.log('[Server] HTTP listener closed.');

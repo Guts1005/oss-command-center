@@ -64,10 +64,27 @@ export function initDatabase() {
       webhook_url TEXT,
       webhook_secret TEXT,
       webhook_events TEXT NOT NULL DEFAULT '["action_needed","review","merged"]',
+      slack_webhook_url TEXT,
+      discord_webhook_url TEXT,
+      background_sync_enabled INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
   `);
+
+  // Migrate user_settings for existing databases
+  const settingsTableInfo = db.prepare("PRAGMA table_info(user_settings)").all() as any[];
+  const existingSettingsCols = new Set(settingsTableInfo.map(col => col.name));
+
+  if (!existingSettingsCols.has('slack_webhook_url')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN slack_webhook_url TEXT;");
+  }
+  if (!existingSettingsCols.has('discord_webhook_url')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN discord_webhook_url TEXT;");
+  }
+  if (!existingSettingsCols.has('background_sync_enabled')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN background_sync_enabled INTEGER NOT NULL DEFAULT 1;");
+  }
 
   // 4. Check if contributions table needs migration to multi-tenant
   const contribTableInfo = db.prepare("PRAGMA table_info(contributions)").all() as any[];
@@ -205,4 +222,18 @@ export interface ActivityEventRecord {
   review_state?: string | null;
   body_excerpt?: string | null;
   created_at: string;
+}
+
+export interface UserSettingsRecord {
+  user_id: string;
+  audio_chime_enabled: number;
+  sync_cadence_minutes: number;
+  webhook_url?: string | null;
+  webhook_secret?: string | null;
+  webhook_events: string;
+  slack_webhook_url?: string | null;
+  discord_webhook_url?: string | null;
+  background_sync_enabled: number;
+  created_at: string;
+  updated_at: string;
 }

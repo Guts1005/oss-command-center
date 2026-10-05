@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { db, ContributionRecord } from '../db.js';
 import { verifyWebhookSignature } from '../security/crypto.js';
 import { sseManager } from '../sse.js';
+import { dispatchNotification } from '../notifications/dispatcher.js';
 
 export const inboundWebhooksRouter = express.Router();
 
@@ -151,6 +152,22 @@ async function handleGitHubWebhook(req: Request, res: Response, targetUserId?: s
           action_needed: actionNeeded,
           action,
         });
+
+        if (status === 'merged') {
+          dispatchNotification(item.user_id, {
+            event: 'merged',
+            contribution: { ...item, status: 'merged' },
+            actor: payload.sender?.login || author,
+            message: `Pull request #${prNumber} merged into ${repo}.`,
+          }).catch(err => console.error('[Webhook Dispatch Error]:', err));
+        } else if (actionNeeded !== 'none') {
+          dispatchNotification(item.user_id, {
+            event: 'action_needed',
+            contribution: { ...item, action_needed: actionNeeded },
+            actor: payload.sender?.login || author,
+            message: `Pull request #${prNumber} updated: ${actionNeeded === 'reply' ? 'Reply needed' : 'Changes requested'}.`,
+          }).catch(err => console.error('[Webhook Dispatch Error]:', err));
+        }
       }
     } else if (targetUserId) {
       // Auto-ingest new PR if directed to a specific tenant
@@ -247,6 +264,16 @@ async function handleGitHubWebhook(req: Request, res: Response, targetUserId?: s
         action_needed: actionNeeded,
         review_state: reviewState,
       });
+
+      if (actionNeeded !== 'none') {
+        dispatchNotification(item.user_id, {
+          event: 'action_needed',
+          contribution: { ...item, action_needed: actionNeeded },
+          actor: reviewer,
+          reviewState,
+          message: `Review on #${prNumber}: ${reviewState} by @${reviewer}.`,
+        }).catch(err => console.error('[Webhook Dispatch Error]:', err));
+      }
     }
 
     return res.status(200).json({ status: 'ok', event, action, reviewState, prNumber });
@@ -307,6 +334,15 @@ async function handleGitHubWebhook(req: Request, res: Response, targetUserId?: s
         action_needed: nextAction,
         commenter,
       });
+
+      if (nextAction === 'reply') {
+        dispatchNotification(item.user_id, {
+          event: 'action_needed',
+          contribution: { ...item, action_needed: nextAction },
+          actor: commenter,
+          message: `New comment on #${prNumber} by @${commenter} requiring reply.`,
+        }).catch(err => console.error('[Webhook Dispatch Error]:', err));
+      }
     }
 
     return res.status(200).json({ status: 'ok', event, action, prNumber, commenter });
@@ -400,6 +436,15 @@ async function handleGitLabWebhook(req: Request, res: Response, targetUserId?: s
         number: mrNumber,
         status,
       });
+
+      if (status === 'merged') {
+        dispatchNotification(item.user_id, {
+          event: 'merged',
+          contribution: { ...item, status: 'merged' },
+          actor: payload.user?.username || 'gitlab',
+          message: `GitLab Merge Request !${mrNumber} merged into ${repo}.`,
+        }).catch(err => console.error('[Webhook Dispatch Error]:', err));
+      }
     }
 
     return res.status(200).json({ status: 'ok', event, mrNumber, itemStatus: status });

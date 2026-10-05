@@ -24,7 +24,8 @@ const testFiles = [
   'tests/settings_export.test.ts',
   'tests/inbound_webhooks.test.ts',
   'tests/pr_actions.test.ts',
-  'tests/production_hardening.test.ts'
+  'tests/production_hardening.test.ts',
+  'tests/notifications_and_cron.test.ts'
 ];
 
 let failed = false;

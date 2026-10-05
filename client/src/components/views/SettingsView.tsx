@@ -18,7 +18,9 @@ import {
   Sliders,
   Radio,
   Copy,
-  Check
+  Check,
+  Play,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { playNotificationSound } from '../../utils/notifications';
@@ -35,6 +37,9 @@ interface UserSettingsState {
   webhook_secret: string;
   webhook_secret_set: boolean;
   webhook_events: string[];
+  slack_webhook_url: string;
+  discord_webhook_url: string;
+  background_sync_enabled: boolean;
 }
 
 interface WebhookTestResult {
@@ -55,6 +60,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
     webhook_secret: '',
     webhook_secret_set: false,
     webhook_events: ['action_needed', 'review', 'merged'],
+    slack_webhook_url: '',
+    discord_webhook_url: '',
+    background_sync_enabled: true,
   });
 
   // Client display preferences
@@ -82,6 +90,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
   const [exporting, setExporting] = React.useState(false);
   const [testingWebhook, setTestingWebhook] = React.useState(false);
   const [testResult, setTestResult] = React.useState<WebhookTestResult | null>(null);
+  const [testingSlack, setTestingSlack] = React.useState(false);
+  const [slackTestResult, setSlackTestResult] = React.useState<WebhookTestResult | null>(null);
+  const [testingDiscord, setTestingDiscord] = React.useState(false);
+  const [discordTestResult, setDiscordTestResult] = React.useState<WebhookTestResult | null>(null);
+  const [triggeringSync, setTriggeringSync] = React.useState(false);
+  const [syncTriggerMessage, setSyncTriggerMessage] = React.useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
   const [cacheCleared, setCacheCleared] = React.useState(false);
   const [copiedType, setCopiedType] = React.useState<string | null>(null);
@@ -105,6 +119,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
           webhook_secret: '',
           webhook_secret_set: Boolean(res.data.settings.webhook_secret_set),
           webhook_events: res.data.settings.webhook_events || ['action_needed', 'review', 'merged'],
+          slack_webhook_url: res.data.settings.slack_webhook_url || '',
+          discord_webhook_url: res.data.settings.discord_webhook_url || '',
+          background_sync_enabled: Boolean(res.data.settings.background_sync_enabled ?? true),
         });
       }
     } catch (err) {
@@ -129,6 +146,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
         sync_cadence_minutes: settings.sync_cadence_minutes,
         webhook_url: settings.webhook_url.trim(),
         webhook_events: settings.webhook_events,
+        slack_webhook_url: settings.slack_webhook_url.trim(),
+        discord_webhook_url: settings.discord_webhook_url.trim(),
+        background_sync_enabled: settings.background_sync_enabled,
       };
 
       if (settings.webhook_secret) {
@@ -152,6 +172,90 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
       console.error('[SettingsView] Failed to save settings:', err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Test Slack webhook handler
+  const handleTestSlack = async () => {
+    if (!settings.slack_webhook_url) {
+      setSlackTestResult({
+        success: false,
+        error: 'Please enter a Slack incoming webhook URL before testing.',
+      });
+      return;
+    }
+    try {
+      setTestingSlack(true);
+      setSlackTestResult(null);
+      const res = await axios.post('/api/settings/slack-test', {
+        slack_webhook_url: settings.slack_webhook_url.trim(),
+      });
+      setSlackTestResult({
+        success: res.data.success,
+        statusCode: res.data.statusCode,
+        latencyMs: res.data.latencyMs,
+        message: res.data.message,
+      });
+    } catch (err: any) {
+      setSlackTestResult({
+        success: false,
+        error: err.response?.data?.error || err.message,
+        statusCode: err.response?.status,
+        latencyMs: err.response?.data?.latencyMs,
+      });
+    } finally {
+      setTestingSlack(false);
+    }
+  };
+
+  // Test Discord webhook handler
+  const handleTestDiscord = async () => {
+    if (!settings.discord_webhook_url) {
+      setDiscordTestResult({
+        success: false,
+        error: 'Please enter a Discord webhook URL before testing.',
+      });
+      return;
+    }
+    try {
+      setTestingDiscord(true);
+      setDiscordTestResult(null);
+      const res = await axios.post('/api/settings/discord-test', {
+        discord_webhook_url: settings.discord_webhook_url.trim(),
+      });
+      setDiscordTestResult({
+        success: res.data.success,
+        statusCode: res.data.statusCode,
+        latencyMs: res.data.latencyMs,
+        message: res.data.message,
+      });
+    } catch (err: any) {
+      setDiscordTestResult({
+        success: false,
+        error: err.response?.data?.error || err.message,
+        statusCode: err.response?.status,
+        latencyMs: err.response?.data?.latencyMs,
+      });
+    } finally {
+      setTestingDiscord(false);
+    }
+  };
+
+  // Manual trigger of background sync pass
+  const handleTriggerSync = async () => {
+    try {
+      setTriggeringSync(true);
+      setSyncTriggerMessage(null);
+      const res = await axios.post('/api/sync/trigger');
+      if (res.data && res.data.success) {
+        setSyncTriggerMessage(`Sync pass finished: ${res.data.usersProcessed} user(s), ${res.data.changesDetected} update(s) detected.`);
+        setTimeout(() => setSyncTriggerMessage(null), 5000);
+      }
+    } catch (err: any) {
+      setSyncTriggerMessage(`Sync pass failed: ${err.message}`);
+      setTimeout(() => setSyncTriggerMessage(null), 5000);
+    } finally {
+      setTriggeringSync(false);
     }
   };
 
@@ -360,37 +464,81 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
             </div>
           </div>
 
-          {/* Sync Daemon Cadence */}
-          <div className="border border-border-subtle bg-surface-card rounded-xl p-5 shadow-card">
-            <div className="flex items-center gap-2 mb-3">
-              <RefreshCw className="h-4 w-4 text-accent-glacial" />
-              <h3 className="text-xs font-mono font-bold text-text-primary uppercase tracking-wider">
-                BACKGROUND SYNC CADENCE
-              </h3>
+          {/* Autonomous Background Sync Worker */}
+          <div className="border border-border-subtle bg-surface-card rounded-xl p-5 shadow-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RefreshCw className={`h-4 w-4 text-accent-glacial ${triggeringSync ? 'animate-spin' : ''}`} />
+                <h3 className="text-xs font-mono font-bold text-text-primary uppercase tracking-wider">
+                  AUTONOMOUS BACKGROUND SYNC
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSettings(prev => ({ ...prev, background_sync_enabled: !prev.background_sync_enabled }))}
+                className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold border transition-colors cursor-pointer ${
+                  settings.background_sync_enabled
+                    ? 'border-status-merged/40 bg-status-merged/10 text-status-merged'
+                    : 'border-border-subtle bg-surface text-text-muted'
+                }`}
+              >
+                {settings.background_sync_enabled ? 'WORKER ACTIVE' : 'WORKER PAUSED'}
+              </button>
             </div>
-            <p className="text-xs font-sans text-text-muted mb-3">
-              Frequency of automated background sync cycles across connected GitHub and GitLab profiles.
+
+            <p className="text-xs font-sans text-text-muted">
+              Autonomous background worker polls connected accounts on a scheduled cadence even when the browser is closed, triggering real-time webhooks on state changes.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-              {[
-                { minutes: 15, label: '15 MIN' },
-                { minutes: 30, label: '30 MIN (STD)' },
-                { minutes: 60, label: '1 HOUR' },
-                { minutes: 1440, label: 'MANUAL ONLY' },
-              ].map((item) => (
-                <button
-                  key={item.minutes}
-                  type="button"
-                  onClick={() => setSettings(prev => ({ ...prev, sync_cadence_minutes: item.minutes }))}
-                  className={`p-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer text-center ${
-                    settings.sync_cadence_minutes === item.minutes
-                      ? 'border-border-active bg-surface-active text-text-primary'
-                      : 'border-border-subtle bg-surface text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-mono text-text-muted uppercase">Sync Cadence Interval</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+                {[
+                  { minutes: 15, label: '15 MIN' },
+                  { minutes: 30, label: '30 MIN (STD)' },
+                  { minutes: 60, label: '1 HOUR' },
+                  { minutes: 1440, label: 'DAILY' },
+                ].map((item) => (
+                  <button
+                    key={item.minutes}
+                    type="button"
+                    onClick={() => setSettings(prev => ({ ...prev, sync_cadence_minutes: item.minutes }))}
+                    className={`p-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer text-center ${
+                      settings.sync_cadence_minutes === item.minutes
+                        ? 'border-border-active bg-surface-active text-text-primary'
+                        : 'border-border-subtle bg-surface text-text-muted hover:text-text-primary'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <button
+                type="button"
+                onClick={handleTriggerSync}
+                disabled={triggeringSync}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {triggeringSync ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>SYNCING PASS...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-3.5 w-3.5 text-accent-glacial" />
+                    <span>RUN SYNC PASS NOW</span>
+                  </>
+                )}
+              </button>
+              {syncTriggerMessage && (
+                <span className="text-[11px] font-mono text-status-merged">
+                  {syncTriggerMessage}
+                </span>
+              )}
             </div>
           </div>
 
@@ -611,14 +759,143 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
                 Forward real-time contribution alerts to Discord, Slack, Telegram, or custom automation endpoints.
               </p>
 
-              {/* Webhook URL Input */}
+              {/* Slack Incoming Webhook */}
+              <div className="space-y-2 bg-surface p-3.5 rounded-lg border border-border-subtle mb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-3.5 w-3.5 text-accent-sapphire" />
+                    <span className="text-[11px] font-mono font-bold text-text-primary uppercase">
+                      Slack Incoming Webhook
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-accent-sapphire">
+                    BLOCK KIT ALERTS
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={settings.slack_webhook_url}
+                    onChange={(e) => setSettings(prev => ({ ...prev, slack_webhook_url: e.target.value }))}
+                    placeholder="https://hooks.slack.com/services/..."
+                    className="w-full bg-base border border-border-subtle rounded px-2.5 py-1.5 text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-border-active"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestSlack}
+                    disabled={testingSlack || !settings.slack_webhook_url}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded border border-border-subtle bg-surface-card hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary shrink-0 transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    {testingSlack ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>TESTING...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3.5 w-3.5 text-accent-sapphire" />
+                        <span>TEST SLACK</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                {slackTestResult && (
+                  <div className={`flex items-center gap-2 text-[11px] font-mono px-2.5 py-1 rounded border ${
+                    slackTestResult.success
+                      ? 'border-status-merged/40 bg-status-merged/10 text-status-merged'
+                      : 'border-status-closed/40 bg-status-closed/10 text-status-closed'
+                  }`}>
+                    {slackTestResult.success ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    ) : (
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    )}
+                    <span>
+                      {slackTestResult.success
+                        ? `Slack delivery verified (${slackTestResult.latencyMs}ms)`
+                        : (slackTestResult.error || 'Slack dispatch failed')}
+                    </span>
+                  </div>
+                )}
+                <p className="text-[10px] font-mono text-text-muted">
+                  Formats reviews, required actions, and merges as native Slack Block Kit cards.
+                </p>
+              </div>
+
+              {/* Discord Webhook */}
+              <div className="space-y-2 bg-surface p-3.5 rounded-lg border border-border-subtle mb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Radio className="h-3.5 w-3.5 text-accent-sapphire" />
+                    <span className="text-[11px] font-mono font-bold text-text-primary uppercase">
+                      Discord Channel Webhook
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-accent-sapphire">
+                    RICH EMBEDS
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={settings.discord_webhook_url}
+                    onChange={(e) => setSettings(prev => ({ ...prev, discord_webhook_url: e.target.value }))}
+                    placeholder="https://discord.com/api/webhooks/..."
+                    className="w-full bg-base border border-border-subtle rounded px-2.5 py-1.5 text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-border-active"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleTestDiscord}
+                    disabled={testingDiscord || !settings.discord_webhook_url}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded border border-border-subtle bg-surface-card hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary shrink-0 transition-colors cursor-pointer disabled:opacity-40"
+                  >
+                    {testingDiscord ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>TESTING...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3.5 w-3.5 text-accent-sapphire" />
+                        <span>TEST DISCORD</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                {discordTestResult && (
+                  <div className={`flex items-center gap-2 text-[11px] font-mono px-2.5 py-1 rounded border ${
+                    discordTestResult.success
+                      ? 'border-status-merged/40 bg-status-merged/10 text-status-merged'
+                      : 'border-status-closed/40 bg-status-closed/10 text-status-closed'
+                  }`}>
+                    {discordTestResult.success ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    ) : (
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    )}
+                    <span>
+                      {discordTestResult.success
+                        ? `Discord delivery verified (${discordTestResult.latencyMs}ms)`
+                        : (discordTestResult.error || 'Discord dispatch failed')}
+                    </span>
+                  </div>
+                )}
+                <p className="text-[10px] font-mono text-text-muted">
+                  Formats alerts into status-colored Discord embeds (Amber for replies, Green for merges).
+                </p>
+              </div>
+
+              {/* Custom Webhook URL Input */}
               <div className="space-y-1.5 mb-3">
-                <label className="text-[11px] font-mono text-text-muted uppercase">Target Webhook URL</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono text-text-muted uppercase">Custom Webhook Endpoint</label>
+                  <span className="text-[10px] font-mono text-text-whisper">GENERIC JSON</span>
+                </div>
                 <input
                   type="url"
                   value={settings.webhook_url}
                   onChange={(e) => setSettings(prev => ({ ...prev, webhook_url: e.target.value }))}
-                  placeholder="https://discord.com/api/webhooks/... or https://hooks.slack.com/..."
+                  placeholder="https://example.com/api/webhook-listener"
                   className="w-full bg-surface border border-border-subtle rounded-lg px-3 py-2 text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-border-active"
                 />
               </div>
