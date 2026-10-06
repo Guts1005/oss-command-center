@@ -34,11 +34,15 @@ export interface RepoEcosystemItem {
 interface RepositoriesViewProps {
   contributions: Contribution[];
   onSelectRepoFilter: (repo: string) => void;
+  isDemoMode?: boolean;
+  demoRepositories?: RepoEcosystemItem[];
 }
 
 export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
   contributions,
   onSelectRepoFilter,
+  isDemoMode,
+  demoRepositories,
 }) => {
   const [repos, setRepos] = React.useState<RepoEcosystemItem[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -50,6 +54,11 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
 
   // Fetch live aggregated repositories from API
   const fetchRepositories = React.useCallback(async () => {
+    if (isDemoMode && demoRepositories && demoRepositories.length > 0) {
+      setRepos(demoRepositories);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const res = await axios.get<RepoEcosystemItem[]>('/api/repositories');

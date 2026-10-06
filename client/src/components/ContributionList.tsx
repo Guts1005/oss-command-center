@@ -15,6 +15,7 @@ interface ContributionListProps {
   onResetFilters?: () => void;
   isAuthenticated?: boolean;
   onOpenAuthModal?: () => void;
+  onToggleDemoMode?: () => void;
 }
 
 export const ContributionList: React.FC<ContributionListProps> = ({
@@ -27,6 +28,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   onResetFilters,
   isAuthenticated = true,
   onOpenAuthModal,
+  onToggleDemoMode,
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -145,6 +147,14 @@ export const ContributionList: React.FC<ContributionListProps> = ({
                 className="w-full sm:w-auto flex items-center justify-center gap-2 border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all cursor-pointer shadow-sm font-sans"
               >
                 <span>Sign in or Register</span>
+              </button>
+            )}
+            {onToggleDemoMode && (
+              <button
+                onClick={onToggleDemoMode}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 px-4 py-2.5 rounded-lg text-sm font-semibold text-amber-300 transition-all cursor-pointer shadow-sm font-sans"
+              >
+                <span>Explore Demo Sandbox</span>
               </button>
             )}
           </div>

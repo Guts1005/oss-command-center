@@ -37,6 +37,8 @@ interface HeaderTelemetryProps {
   onOpenGuideModal?: () => void;
   onOpenAuthModal?: () => void;
   onOpenIntegrationsModal?: () => void;
+  isDemoMode?: boolean;
+  onToggleDemoMode?: () => void;
 }
 
 export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
@@ -51,6 +53,8 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   onOpenGuideModal,
   onOpenAuthModal,
   onOpenIntegrationsModal,
+  isDemoMode,
+  onToggleDemoMode,
 }) => {
   const { user, logout, integrations } = useAuth();
 
@@ -198,14 +202,31 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
         </button>
       </div>
     ) : (
-      <button
-        onClick={onOpenAuthModal}
-        className="flex items-center gap-1.5 h-9 border border-accent-sapphire bg-accent-sapphire/20 px-3.5 rounded-lg font-mono font-bold text-xs text-text-whisper hover:bg-accent-sapphire/35 transition-all cursor-pointer shadow-sm shrink-0"
-        title="Sign in or register"
-      >
-        <Lock className="h-3.5 w-3.5 text-accent-sapphire shrink-0" />
-        <span>Sign In</span>
-      </button>
+      <div className="flex items-center gap-2 shrink-0">
+        {onToggleDemoMode && (
+          <button
+            type="button"
+            onClick={onToggleDemoMode}
+            className={`flex items-center gap-1.5 h-9 px-3 rounded-lg font-mono font-bold text-xs border transition-all cursor-pointer shadow-sm shrink-0 ${
+              isDemoMode
+                ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
+                : 'bg-surface-elevated border-border-subtle text-text-muted hover:text-white hover:bg-surface-active'
+            }`}
+            title={isDemoMode ? 'Demo Sandbox active (click to exit)' : 'Enter Demo Sandbox'}
+          >
+            <span className={`h-2 w-2 rounded-full ${isDemoMode ? 'bg-amber-400 animate-pulse' : 'bg-text-muted'}`} />
+            <span>{isDemoMode ? 'DEMO SANDBOX' : 'ENABLE DEMO'}</span>
+          </button>
+        )}
+        <button
+          onClick={onOpenAuthModal}
+          className="flex items-center gap-1.5 h-9 border border-accent-sapphire bg-accent-sapphire/20 px-3.5 rounded-lg font-mono font-bold text-xs text-text-whisper hover:bg-accent-sapphire/35 transition-all cursor-pointer shadow-sm shrink-0"
+          title="Sign in or register"
+        >
+          <Lock className="h-3.5 w-3.5 text-accent-sapphire shrink-0" />
+          <span>Sign In</span>
+        </button>
+      </div>
     )
   );
 
@@ -278,14 +299,31 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               <span className="max-w-[70px] truncate text-[11px] font-bold">@{user.username}</span>
             </button>
           ) : (
-            <button
-              onClick={onOpenAuthModal}
-              className="flex items-center gap-1 h-7 px-2 rounded-lg border border-accent-sapphire bg-accent-sapphire/20 text-xs font-sans font-semibold text-text-whisper cursor-pointer"
-              title="Sign in"
-            >
-              <Lock className="h-3 w-3 text-accent-sapphire shrink-0" />
-              <span className="text-[11px]">Sign In</span>
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              {onToggleDemoMode && (
+                <button
+                  type="button"
+                  onClick={onToggleDemoMode}
+                  className={`flex items-center gap-1 h-7 px-1.5 rounded-lg border text-[10px] font-mono font-bold cursor-pointer ${
+                    isDemoMode
+                      ? 'border-amber-500/40 bg-amber-500/20 text-amber-300'
+                      : 'border-border-subtle bg-surface-card text-text-muted'
+                  }`}
+                  title="Toggle Demo Sandbox"
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${isDemoMode ? 'bg-amber-400' : 'bg-text-muted'}`} />
+                  <span>DEMO</span>
+                </button>
+              )}
+              <button
+                onClick={onOpenAuthModal}
+                className="flex items-center gap-1 h-7 px-2 rounded-lg border border-accent-sapphire bg-accent-sapphire/20 text-xs font-sans font-semibold text-text-whisper cursor-pointer"
+                title="Sign in"
+              >
+                <Lock className="h-3 w-3 text-accent-sapphire shrink-0" />
+                <span className="text-[11px]">Sign In</span>
+              </button>
+            </div>
           )}
         </div>
       </div>

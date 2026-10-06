@@ -8,9 +8,26 @@ interface SlideOverDetailProps {
   itemId: string | null;
   onClose: () => void;
   onItemUpdated: () => void;
+  isDemoMode?: boolean;
+  demoDataset?: {
+    contributions: Contribution[];
+    activityEvents: ActivityEvent[];
+  };
+  onDemoUpdateNotes?: (id: string, notes: string, actionNeeded: 'reply' | 'push-changes' | 'none') => void;
+  onDemoAddEvent?: (id: string, event: ActivityEvent) => void;
+  onDemoMarkRead?: (id: string) => void;
 }
 
-export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClose, onItemUpdated }) => {
+export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
+  itemId,
+  onClose,
+  onItemUpdated,
+  isDemoMode,
+  demoDataset,
+  onDemoUpdateNotes,
+  onDemoAddEvent,
+  onDemoMarkRead,
+}) => {
   const [data, setData] = useState<{ item: Contribution; events: ActivityEvent[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
@@ -38,6 +55,22 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
       return;
     }
 
+    if (isDemoMode && demoDataset) {
+      setLoading(true);
+      const foundItem = demoDataset.contributions.find((c) => c.id === itemId);
+      if (foundItem) {
+        const events = demoDataset.activityEvents.filter((e) => e.contribution_id === itemId);
+        setData({ item: foundItem, events });
+        setNotes(foundItem.notes || '');
+        setActionNeeded(foundItem.action_needed || 'none');
+        if (foundItem.unread) {
+          onDemoMarkRead?.(itemId);
+        }
+      }
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     axios
       .get(`/api/contributions/${encodeURIComponent(itemId)}`)
@@ -48,12 +81,30 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
       })
       .catch((err) => console.error('Failed to load detail:', err))
       .finally(() => setLoading(false));
-  }, [itemId]);
+  }, [itemId, isDemoMode, demoDataset, onDemoMarkRead]);
 
   const handleSaveNotes = async () => {
     if (!itemId) return;
     setSavingNotes(true);
     setSaveSuccess(false);
+
+    if (isDemoMode) {
+      setTimeout(() => {
+        onDemoUpdateNotes?.(itemId, notes, actionNeeded);
+        if (data) {
+          setData({
+            ...data,
+            item: { ...data.item, notes, action_needed: actionNeeded },
+          });
+        }
+        setSaveSuccess(true);
+        setSavingNotes(false);
+        setTimeout(() => setSaveSuccess(false), 2500);
+        onItemUpdated();
+      }, 120);
+      return;
+    }
+
     try {
       await axios.patch(`/api/contributions/${encodeURIComponent(itemId)}/notes`, {
         notes,
@@ -74,6 +125,38 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
     setPostingComment(true);
     setCommentError(null);
     setCommentSuccess(false);
+
+    if (isDemoMode) {
+      setTimeout(() => {
+        const simEvent: ActivityEvent = {
+          id: `demo_ev_${Date.now()}`,
+          contribution_id: itemId,
+          actor: 'you (contributor)',
+          type: 'comment',
+          review_state: null,
+          body_excerpt: commentText.trim(),
+          created_at: new Date().toISOString(),
+        };
+        onDemoAddEvent?.(itemId, simEvent);
+        onDemoUpdateNotes?.(itemId, notes, 'none');
+        if (data) {
+          setData({
+            ...data,
+            item: { ...data.item, action_needed: 'none' },
+            events: [...data.events, simEvent],
+          });
+        }
+        setCommentSuccess(true);
+        setCommentText('');
+        setIsCommentBoxOpen(false);
+        setActionNeeded('none');
+        setPostingComment(false);
+        onItemUpdated();
+        setTimeout(() => setCommentSuccess(false), 3000);
+      }, 180);
+      return;
+    }
+
     try {
       await axios.post(`/api/contributions/${encodeURIComponent(itemId)}/actions/comment`, {
         comment: commentText.trim(),
@@ -99,6 +182,36 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
     setRequestingReview(true);
     setReviewError(null);
     setReviewSuccess(false);
+
+    if (isDemoMode) {
+      setTimeout(() => {
+        const simEvent: ActivityEvent = {
+          id: `demo_rev_${Date.now()}`,
+          contribution_id: itemId,
+          actor: 'you (contributor)',
+          type: 'review',
+          review_state: 'COMMENTED',
+          body_excerpt: 'Re-requested maintainer review (Simulated).',
+          created_at: new Date().toISOString(),
+        };
+        onDemoAddEvent?.(itemId, simEvent);
+        onDemoUpdateNotes?.(itemId, notes, 'none');
+        if (data) {
+          setData({
+            ...data,
+            item: { ...data.item, action_needed: 'none' },
+            events: [...data.events, simEvent],
+          });
+        }
+        setReviewSuccess(true);
+        setActionNeeded('none');
+        setRequestingReview(false);
+        onItemUpdated();
+        setTimeout(() => setReviewSuccess(false), 3000);
+      }, 180);
+      return;
+    }
+
     try {
       await axios.post(`/api/contributions/${encodeURIComponent(itemId)}/actions/request-review`, {});
       setReviewSuccess(true);
@@ -119,6 +232,17 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
     if (!itemId) return;
     setSyncingItem(true);
     setSyncSuccess(false);
+
+    if (isDemoMode) {
+      setTimeout(() => {
+        setSyncSuccess(true);
+        setSyncingItem(false);
+        onItemUpdated();
+        setTimeout(() => setSyncSuccess(false), 2500);
+      }, 200);
+      return;
+    }
+
     try {
       await axios.post(`/api/contributions/${encodeURIComponent(itemId)}/actions/sync`, {});
       setSyncSuccess(true);
@@ -218,9 +342,14 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({ itemId, onClos
             >
               {/* Header Bar */}
               <div className="flex items-center justify-between border-b border-border-subtle bg-base px-4 py-3 sm:px-6 sm:py-4 gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
                   <span className="text-text-muted text-xs font-mono font-bold uppercase tracking-wider shrink-0">[INSPECTOR]:</span>
                   <span className="font-mono font-bold text-white text-sm sm:text-base truncate">{itemId}</span>
+                  {isDemoMode && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                      DEMO SANDBOX
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {data?.item?.url && (
