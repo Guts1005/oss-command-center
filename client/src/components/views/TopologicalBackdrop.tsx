@@ -185,7 +185,7 @@ function generateMountainTerrainContours(gridW = 120, gridH = 200, numLevels = 6
 
 export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({
   scrollContainerRef,
-  opacity = 0.22,
+  opacity = 0.36,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
