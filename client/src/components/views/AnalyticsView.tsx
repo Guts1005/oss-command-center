@@ -13,6 +13,8 @@ import {
   Calendar,
   AlertCircle
 } from 'lucide-react';
+import { ViewMode } from '../../types';
+import { Footer } from '../Footer';
 
 interface AnalyticsData {
   summary: {
@@ -55,12 +57,16 @@ interface AnalyticsViewProps {
   stats: any;
   isDemoMode?: boolean;
   demoAnalytics?: AnalyticsData | null;
+  onNavigateView?: (mode: ViewMode) => void;
+  onOpenCookiePreferences?: () => void;
 }
 
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   stats: initialStats,
   isDemoMode,
   demoAnalytics,
+  onNavigateView,
+  onOpenCookiePreferences,
 }) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -423,6 +429,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           )}
         </div>
       </div>
+
+      <Footer
+        variant="dashboard"
+        onNavigateView={onNavigateView}
+        onOpenCookiePreferences={onOpenCookiePreferences}
+      />
     </div>
   );
 };

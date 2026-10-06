@@ -29,9 +29,11 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { playNotificationSound } from '../../utils/notifications';
 import { ViewMode } from '../../types';
+import { Footer } from '../Footer';
 
 interface SettingsViewProps {
   onNavigateView?: (mode: ViewMode) => void;
+  onOpenCookiePreferences?: () => void;
 }
 
 interface UserSettingsState {
@@ -57,7 +59,7 @@ interface WebhookTestResult {
   error?: string;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOpenCookiePreferences }) => {
   const { user } = useAuth();
 
   const [settings, setSettings] = React.useState<UserSettingsState>({
@@ -1235,6 +1237,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView }) =>
             </div>
           </div>
         </div>
+
+        <Footer
+          variant="dashboard"
+          onNavigateView={onNavigateView}
+          onOpenCookiePreferences={onOpenCookiePreferences}
+        />
       </div>
 
       {/* Email Digest Preview Modal */}

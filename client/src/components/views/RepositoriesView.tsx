@@ -13,7 +13,8 @@ import {
   ArrowUpDown,
   Filter
 } from 'lucide-react';
-import { Contribution } from '../../types';
+import { Contribution, ViewMode } from '../../types';
+import { Footer } from '../Footer';
 
 export interface RepoEcosystemItem {
   repo: string;
@@ -36,6 +37,8 @@ interface RepositoriesViewProps {
   onSelectRepoFilter: (repo: string) => void;
   isDemoMode?: boolean;
   demoRepositories?: RepoEcosystemItem[];
+  onNavigateView?: (mode: ViewMode) => void;
+  onOpenCookiePreferences?: () => void;
 }
 
 export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
@@ -43,6 +46,8 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
   onSelectRepoFilter,
   isDemoMode,
   demoRepositories,
+  onNavigateView,
+  onOpenCookiePreferences,
 }) => {
   const [repos, setRepos] = React.useState<RepoEcosystemItem[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -515,6 +520,12 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
           )}
         </div>
       )}
+
+      <Footer
+        variant="dashboard"
+        onNavigateView={onNavigateView}
+        onOpenCookiePreferences={onOpenCookiePreferences}
+      />
     </div>
   );
 };

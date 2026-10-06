@@ -17,15 +17,23 @@ import {
   Info
 } from 'lucide-react';
 import { ViewMode } from '../../types';
+import { Footer } from '../Footer';
 
 interface SecurityPolicyViewProps {
   onBack: () => void;
   initialTab?: 'security' | 'terms' | 'privacy';
+  onNavigateView?: (mode: ViewMode) => void;
+  onOpenCookiePreferences?: () => void;
 }
 
 type PolicyTab = 'security' | 'terms' | 'privacy';
 
-export const SecurityPolicyView: React.FC<SecurityPolicyViewProps> = ({ onBack, initialTab = 'security' }) => {
+export const SecurityPolicyView: React.FC<SecurityPolicyViewProps> = ({
+  onBack,
+  initialTab = 'security',
+  onNavigateView,
+  onOpenCookiePreferences,
+}) => {
   const [activeTab, setActiveTab] = useState<PolicyTab>(initialTab);
 
   return (
@@ -398,6 +406,12 @@ export const SecurityPolicyView: React.FC<SecurityPolicyViewProps> = ({ onBack, 
           </div>
         </div>
       )}
+
+      <Footer
+        variant="dashboard"
+        onNavigateView={onNavigateView || (() => onBack())}
+        onOpenCookiePreferences={onOpenCookiePreferences}
+      />
     </div>
   );
 };

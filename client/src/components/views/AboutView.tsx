@@ -22,13 +22,15 @@ import {
 import { ViewMode } from '../../types';
 import { CookiePreferencesModal } from '../CookiePreferencesModal';
 import { TopologicalBackdrop } from './TopologicalBackdrop';
+import { Footer } from '../Footer';
 
 interface AboutViewProps {
   onBack: () => void;
   onNavigateView?: (mode: ViewMode) => void;
+  onOpenCookiePreferences?: () => void;
 }
 
-export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView }) => {
+export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView, onOpenCookiePreferences }) => {
   const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -365,80 +367,12 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView }) 
           </div>
         </section>
 
-        {/* Section 8: Signature Editorial Footer (Faithful to Maria João Abrantes) */}
-        <footer className="pt-10 pb-6 border-t border-border-subtle space-y-8 select-none">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-2">
-              <h2 className="text-3xl sm:text-5xl font-extrabold font-sans text-text-primary tracking-tight">
-                Sharvin
-              </h2>
-              <p className="text-xs sm:text-sm font-mono text-text-muted">
-                Systems & Full-Stack Infrastructure Engineer.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
-              <a
-                href="https://github.com/Guts1005"
-                target="_blank"
-                rel="noreferrer"
-                className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1 font-bold"
-              >
-                <span>GitHub</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-              <span className="text-border-bold">•</span>
-              <a
-                href="https://linkedin.com/in/"
-                target="_blank"
-                rel="noreferrer"
-                className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1 font-bold"
-              >
-                <span>LinkedIn</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-              <span className="text-border-bold">•</span>
-              <a
-                href="mailto:contact@sharvin.dev"
-                className="text-text-muted hover:text-text-primary transition-colors font-bold"
-              >
-                Email Contact
-              </a>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6 border-t border-border-subtle text-xs font-mono text-text-muted">
-            <div>
-              © 2026 Sharvin. All rights reserved.
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
-              <button
-                type="button"
-                onClick={() => onNavigateView?.('security')}
-                className="hover:text-text-primary transition-colors cursor-pointer"
-              >
-                Privacy Policy
-              </button>
-              <span className="text-border-bold">•</span>
-              <button
-                type="button"
-                onClick={() => setIsCookieModalOpen(true)}
-                className="hover:text-text-primary transition-colors cursor-pointer"
-              >
-                Cookie Preferences
-              </button>
-              <span className="text-border-bold">•</span>
-              <button
-                type="button"
-                onClick={() => onNavigateView?.('security')}
-                className="hover:text-text-primary transition-colors cursor-pointer"
-              >
-                Terms of Service
-              </button>
-            </div>
-          </div>
-        </footer>
+        {/* Section 8: Signature Editorial Footer */}
+        <Footer
+          variant="editorial"
+          onNavigateView={onNavigateView}
+          onOpenCookiePreferences={onOpenCookiePreferences || (() => setIsCookieModalOpen(true))}
+        />
       </div>
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface TopologicalBackdropProps {
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -493,12 +494,17 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({ scroll
     };
   }, [scrollContainerRef]);
 
-  return (
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(
     <div
       aria-hidden="true"
       className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
     >
       <canvas ref={canvasRef} className="block w-full h-full" />
-    </div>
+    </div>,
+    document.body
   );
 };

@@ -21,6 +21,7 @@ import { TrackContributionModal } from './components/TrackContributionModal';
 import { QuickGuideModal } from './components/QuickGuideModal';
 import { AuthModal } from './components/AuthModal';
 import { IntegrationsModal } from './components/IntegrationsModal';
+import { CookiePreferencesModal } from './components/CookiePreferencesModal';
 import { MobileBottomDock } from './components/MobileBottomDock';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useViewRouting } from './hooks/useViewRouting';
@@ -87,6 +88,7 @@ const AppContent: React.FC = () => {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState<boolean>(false);
+  const [isCookieModalOpen, setIsCookieModalOpen] = useState<boolean>(false);
 
   const prevItemsRef = React.useRef<Map<string, { status: string; action_needed: string }>>(new Map());
   const isInitialMount = React.useRef<boolean>(true);
@@ -561,7 +563,9 @@ const AppContent: React.FC = () => {
         e.preventDefault();
         setIsGuideModalOpen(true);
       } else if (e.key === 'Escape') {
-        if (isAuthModalOpen) {
+        if (isCookieModalOpen) {
+          setIsCookieModalOpen(false);
+        } else if (isAuthModalOpen) {
           setIsAuthModalOpen(false);
         } else if (isIntegrationsModalOpen) {
           setIsIntegrationsModalOpen(false);
@@ -587,6 +591,7 @@ const AppContent: React.FC = () => {
     isGuideModalOpen,
     isAuthModalOpen,
     isIntegrationsModalOpen,
+    isCookieModalOpen,
     selectedId,
     viewMode,
     setViewMode,
@@ -599,6 +604,7 @@ const AppContent: React.FC = () => {
   useModalHistory(isGuideModalOpen, () => setIsGuideModalOpen(false), 'guide');
   useModalHistory(isAuthModalOpen, () => setIsAuthModalOpen(false), 'auth');
   useModalHistory(isCommandPaletteOpen, () => setIsCommandPaletteOpen(false), 'command-palette');
+  useModalHistory(isCookieModalOpen, () => setIsCookieModalOpen(false), 'cookie-preferences');
 
   const handleSelectItem = (id: string) => {
     setSelectedId(id);
@@ -708,6 +714,8 @@ const AppContent: React.FC = () => {
                     isAuthenticated={Boolean(user) || isDemoMode}
                     onOpenAuthModal={() => setIsAuthModalOpen(true)}
                     onToggleDemoMode={handleToggleDemoMode}
+                    onNavigateView={setViewMode}
+                    onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                   />
                 </main>
               </>
@@ -719,6 +727,8 @@ const AppContent: React.FC = () => {
                   stats={activeStats}
                   isDemoMode={isDemoActive}
                   demoAnalytics={demoAnalytics}
+                  onNavigateView={setViewMode}
+                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                 />
               </main>
             )}
@@ -733,6 +743,8 @@ const AppContent: React.FC = () => {
                     setSearchQuery(repo);
                     setViewMode('stream');
                   }}
+                  onNavigateView={setViewMode}
+                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                 />
               </main>
             )}
@@ -741,6 +753,7 @@ const AppContent: React.FC = () => {
               <main className="flex-1 flex flex-col min-h-0 relative">
                 <SettingsView
                   onNavigateView={setViewMode}
+                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                 />
               </main>
             )}
@@ -749,6 +762,8 @@ const AppContent: React.FC = () => {
               <main className="flex-1 flex flex-col min-h-0 relative">
                 <SecurityPolicyView
                   onBack={() => setViewMode('stream')}
+                  onNavigateView={setViewMode}
+                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                 />
               </main>
             )}
@@ -758,6 +773,7 @@ const AppContent: React.FC = () => {
                 <AboutView
                   onBack={() => setViewMode('stream')}
                   onNavigateView={setViewMode}
+                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                 />
               </main>
             )}
@@ -835,6 +851,12 @@ const AppContent: React.FC = () => {
           fetchStats();
           fetchContributions();
         }}
+      />
+
+      {/* Cookie & Storage Preferences Modal */}
+      <CookiePreferencesModal
+        isOpen={isCookieModalOpen}
+        onClose={() => setIsCookieModalOpen(false)}
       />
 
       {/* Mobile Bottom Thumb Navigation Dock */}

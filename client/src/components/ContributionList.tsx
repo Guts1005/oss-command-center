@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Lenis from 'lenis';
-import { Contribution } from '../types';
+import { Contribution, ViewMode } from '../types';
 import { ContributionRow } from './ContributionRow';
 import { PlusCircle, Search, Terminal, Shield, Lock } from 'lucide-react';
+import { Footer } from './Footer';
 
 interface ContributionListProps {
   items: Contribution[];
@@ -16,6 +17,8 @@ interface ContributionListProps {
   isAuthenticated?: boolean;
   onOpenAuthModal?: () => void;
   onToggleDemoMode?: () => void;
+  onNavigateView?: (mode: ViewMode) => void;
+  onOpenCookiePreferences?: () => void;
 }
 
 export const ContributionList: React.FC<ContributionListProps> = ({
@@ -29,6 +32,8 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   isAuthenticated = true,
   onOpenAuthModal,
   onToggleDemoMode,
+  onNavigateView,
+  onOpenCookiePreferences,
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -163,13 +168,20 @@ export const ContributionList: React.FC<ContributionListProps> = ({
             <span>Encrypted</span>
           </div>
         </div>
+        <div className="w-full max-w-4xl mx-auto mt-6">
+          <Footer
+            variant="dashboard"
+            onNavigateView={onNavigateView}
+            onOpenCookiePreferences={onOpenCookiePreferences}
+          />
+        </div>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center p-2.5 sm:p-12 pb-28 sm:pb-8 bg-base text-center overflow-y-auto">
+      <div className="flex flex-1 flex-col items-center justify-between p-2.5 sm:p-12 pb-28 sm:pb-8 bg-base text-center overflow-y-auto">
         <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card my-auto">
           <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-3 text-sm">
             <span className="text-white font-bold text-xs sm:text-base font-sans">No contributions found</span>
@@ -196,6 +208,13 @@ export const ContributionList: React.FC<ContributionListProps> = ({
               </button>
             )}
           </div>
+        </div>
+        <div className="w-full max-w-4xl mx-auto mt-6">
+          <Footer
+            variant="dashboard"
+            onNavigateView={onNavigateView}
+            onOpenCookiePreferences={onOpenCookiePreferences}
+          />
         </div>
       </div>
     );
@@ -249,6 +268,12 @@ export const ContributionList: React.FC<ContributionListProps> = ({
             );
           })}
         </AnimatePresence>
+
+        <Footer
+          variant="dashboard"
+          onNavigateView={onNavigateView}
+          onOpenCookiePreferences={onOpenCookiePreferences}
+        />
       </div>
     </div>
   );
