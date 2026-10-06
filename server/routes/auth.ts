@@ -1,10 +1,10 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
 import crypto from 'crypto';
-import rateLimit from 'express-rate-limit';
 import { db } from '../db.js';
 import { hashPassword, verifyPassword, generateSessionToken } from '../security/crypto.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rate_limit.js';
 import {
   isGitHubOAuthConfigured,
   isGitLabOAuthConfigured,
@@ -21,15 +21,6 @@ import {
 } from '../auth/oauth.js';
 
 export const authRouter = Router();
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
-  message: { error: 'Too many authentication attempts. Please try again after 15 minutes.' }
-});
 
 const RegisterSchema = z.object({
   email: z.string().email('Invalid email address').toLowerCase().trim(),

@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import helmet from 'helmet';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
+import { globalApiLimiter } from './middleware/rate_limit.js';
 import { db, initDatabase } from './db.js';
 import { apiRouter } from './routes/index.js';
 import { startBackgroundSyncWorker, stopBackgroundSyncWorker, executeBackgroundSyncPass } from './sync/worker.js';
@@ -53,17 +53,8 @@ app.use(compression({
   },
 }));
 
-// 3. API Rate Limiting Protection
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1200,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
-  message: { error: 'API rate limit exceeded. Please throttle requests and try again later.' },
-});
-
-app.use('/api', apiLimiter);
+// 3. Enterprise Perimeter API Rate Limiting Protection (Health probes strictly immune)
+app.use('/api', globalApiLimiter);
 
 // 4. CORS, Raw Body Capture for HMAC, and Cookie Parser
 app.use(cors({

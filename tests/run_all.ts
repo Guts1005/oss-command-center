@@ -28,7 +28,8 @@ const testFiles = [
   'tests/notifications_and_cron.test.ts',
   'tests/oauth.test.ts',
   'tests/email_digest.test.ts',
-  'tests/demo_sandbox.test.ts'
+  'tests/demo_sandbox.test.ts',
+  'tests/security_hardening_ratelimit.test.ts'
 ];
 
 let failed = false;

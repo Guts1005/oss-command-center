@@ -3,8 +3,12 @@ import { db, ContributionRecord } from '../db.js';
 import { verifyWebhookSignature } from '../security/crypto.js';
 import { sseManager } from '../sse.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
+import { webhookLimiter } from '../middleware/rate_limit.js';
 
 export const inboundWebhooksRouter = express.Router();
+
+// Apply Tier 3 Inbound Webhook rate limiting against webhook flooding
+inboundWebhooksRouter.use(webhookLimiter);
 
 /**
  * Helper to resolve raw body buffer for signature validation.

@@ -12,6 +12,7 @@ import { syncRouter } from './sync.js';
 import { digestRouter } from './digest.js';
 import { demoRouter } from './demo.js';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import { actionLimiter } from '../middleware/rate_limit.js';
 import { z } from 'zod';
 
 export const apiRouter = express.Router();
@@ -554,8 +555,8 @@ apiRouter.patch('/contributions/:id/notes', (req: AuthenticatedRequest, res) => 
   }
 });
 
-// POST /api/sync - Manual trigger for current user
-apiRouter.post('/sync', async (req: AuthenticatedRequest, res) => {
+// POST /api/sync: Manual trigger for current user
+apiRouter.post('/sync', actionLimiter, async (req: AuthenticatedRequest, res) => {
   try {
     const userId = getEffectiveUserId(req);
     if (!userId) {
@@ -569,7 +570,7 @@ apiRouter.post('/sync', async (req: AuthenticatedRequest, res) => {
   }
 });
 
-// POST /api/ingest - Endpoint for /plan and triage pipeline to push newly found items
+// POST /api/ingest: Endpoint for /plan and triage pipeline to push newly found items
 const IngestSchema = z.object({
   platform: z.enum(['github', 'gitlab']),
   repo: z.string(),
@@ -585,7 +586,7 @@ const IngestSchema = z.object({
   notes: z.string().optional()
 });
 
-apiRouter.post('/ingest', (req: AuthenticatedRequest, res) => {
+apiRouter.post('/ingest', actionLimiter, (req: AuthenticatedRequest, res) => {
   try {
     const userId = getEffectiveUserId(req);
     if (!userId) {
@@ -629,8 +630,8 @@ apiRouter.post('/ingest', (req: AuthenticatedRequest, res) => {
   }
 });
 
-// POST /api/track-url - Ingest any GitHub/GitLab URL directly from UI
-apiRouter.post('/track-url', async (req: AuthenticatedRequest, res) => {
+// POST /api/track-url: Ingest any GitHub/GitLab URL directly from UI
+apiRouter.post('/track-url', actionLimiter, async (req: AuthenticatedRequest, res) => {
   const userId = getEffectiveUserId(req);
   if (!userId) {
     return res.status(401).json({ error: 'Authentication required. Please sign in.' });

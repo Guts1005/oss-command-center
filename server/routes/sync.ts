@@ -1,5 +1,6 @@
 import express from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import { actionLimiter } from '../middleware/rate_limit.js';
 import {
   getBackgroundWorkerStatus,
   executeBackgroundSyncPass,
@@ -23,7 +24,7 @@ syncRouter.get('/status', (req, res) => {
  * POST /api/sync/trigger
  * Triggers an immediate background synchronization pass across all active integrations.
  */
-syncRouter.post('/trigger', requireAuth, async (req: AuthenticatedRequest, res) => {
+syncRouter.post('/trigger', actionLimiter, requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const result = await executeBackgroundSyncPass();
     return res.json({

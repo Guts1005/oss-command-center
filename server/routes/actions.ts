@@ -3,9 +3,13 @@ import axios from 'axios';
 import { db, ContributionRecord, UserIntegrationRecord } from '../db.js';
 import { decryptSecret } from '../security/crypto.js';
 import { AuthenticatedRequest, requireAuth } from '../middleware/auth.js';
+import { actionLimiter } from '../middleware/rate_limit.js';
 import { sseManager } from '../sse.js';
 
 export const actionsRouter = express.Router();
+
+// Apply Tier 2 Action Mutation rate limiter to all upstream PR actions
+actionsRouter.use(actionLimiter);
 
 /**
  * Helper to fetch a contribution owned by the authenticated user.
