@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 
 interface TopologicalBackdropProps {
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  opacity?: number;
 }
 
 interface ContourPolyline {
@@ -182,7 +183,10 @@ function generateMountainTerrainContours(gridW = 120, gridH = 200, numLevels = 6
   return polylines;
 }
 
-export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({ scrollContainerRef }) => {
+export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({
+  scrollContainerRef,
+  opacity = 0.22,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -368,19 +372,19 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({ scroll
 
         // Visual hierarchy: major index contours vs intermediate contours with scan glow
         if (isLight) {
-          const baseAlpha = poly.isMajor ? 0.52 : (isStreaming ? 0.38 : 0.22);
-          const alpha = Math.min(1.0, baseAlpha + scanGlow * 0.45);
+          const baseAlpha = poly.isMajor ? 0.26 : (isStreaming ? 0.18 : 0.10);
+          const alpha = Math.min(0.48, baseAlpha + scanGlow * 0.22);
           ctx.strokeStyle = scanGlow > 0.4
             ? `rgba(26, 86, 219, ${alpha.toFixed(3)})`
-            : `rgba(43, 98, 165, ${alpha.toFixed(3)})`;
-          ctx.lineWidth = (poly.isMajor ? 1.4 : 0.85) + scanGlow * 1.1;
+            : `rgba(71, 85, 105, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = (poly.isMajor ? 1.1 : 0.75) + scanGlow * 0.7;
         } else {
-          const baseAlpha = poly.isMajor ? 0.76 : (isStreaming ? 0.48 : 0.32);
-          const alpha = Math.min(1.0, baseAlpha + scanGlow * 0.55);
+          const baseAlpha = poly.isMajor ? 0.35 : (isStreaming ? 0.22 : 0.14);
+          const alpha = Math.min(0.55, baseAlpha + scanGlow * 0.22);
           ctx.strokeStyle = scanGlow > 0.4
             ? `rgba(56, 189, 248, ${alpha.toFixed(3)})`
-            : `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
-          ctx.lineWidth = (poly.isMajor ? 1.4 : 0.85) + scanGlow * 1.2;
+            : `rgba(148, 163, 184, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = (poly.isMajor ? 1.1 : 0.75) + scanGlow * 0.7;
         }
 
         ctx.stroke();
@@ -415,10 +419,10 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({ scroll
         if (py >= -20 && py <= height + 20) {
           ctx.save();
           ctx.beginPath();
-          ctx.arc(px, py, isLight ? 2.5 : 3.0, 0, Math.PI * 2);
-          ctx.fillStyle = isLight ? 'rgba(37, 99, 235, 0.95)' : 'rgba(56, 189, 248, 0.95)';
-          ctx.shadowColor = isLight ? 'rgba(37, 99, 235, 0.8)' : 'rgba(56, 189, 248, 0.9)';
-          ctx.shadowBlur = 10;
+          ctx.arc(px, py, isLight ? 1.8 : 2.0, 0, Math.PI * 2);
+          ctx.fillStyle = isLight ? 'rgba(37, 99, 235, 0.45)' : 'rgba(56, 189, 248, 0.50)';
+          ctx.shadowColor = isLight ? 'rgba(37, 99, 235, 0.3)' : 'rgba(56, 189, 248, 0.4)';
+          ctx.shadowBlur = 6;
           ctx.fill();
           ctx.restore();
         }
@@ -429,10 +433,10 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({ scroll
         ctx.save();
         const mouseGrad = ctx.createRadialGradient(mouse.x, mouse.y, 10, mouse.x, mouse.y, 220);
         if (isLight) {
-          mouseGrad.addColorStop(0, 'rgba(37, 99, 235, 0.12)');
+          mouseGrad.addColorStop(0, 'rgba(37, 99, 235, 0.05)');
           mouseGrad.addColorStop(1, 'rgba(37, 99, 235, 0)');
         } else {
-          mouseGrad.addColorStop(0, 'rgba(56, 189, 248, 0.15)');
+          mouseGrad.addColorStop(0, 'rgba(56, 189, 248, 0.06)');
           mouseGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
         }
         ctx.fillStyle = mouseGrad;
@@ -454,22 +458,22 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({ scroll
           ctx.save();
 
           // Marker vertex dot
-          ctx.fillStyle = isLight ? 'rgba(43, 98, 165, 0.65)' : 'rgba(255, 255, 255, 0.75)';
+          ctx.fillStyle = isLight ? 'rgba(43, 98, 165, 0.35)' : 'rgba(148, 163, 184, 0.40)';
           ctx.beginPath();
-          ctx.arc(markerScreenX, markerScreenY, 2.2, 0, Math.PI * 2);
+          ctx.arc(markerScreenX, markerScreenY, 1.8, 0, Math.PI * 2);
           ctx.fill();
 
           // Subtle concentric radar ring
-          ctx.strokeStyle = isLight ? 'rgba(43, 98, 165, 0.30)' : 'rgba(255, 255, 255, 0.35)';
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = isLight ? 'rgba(43, 98, 165, 0.15)' : 'rgba(148, 163, 184, 0.18)';
+          ctx.lineWidth = 0.8;
           ctx.beginPath();
-          ctx.arc(markerScreenX, markerScreenY, 5, 0, Math.PI * 2);
+          ctx.arc(markerScreenX, markerScreenY, 4, 0, Math.PI * 2);
           ctx.stroke();
 
           // Technical label
           ctx.font = '10px "JetBrains Mono", monospace';
-          ctx.fillStyle = isLight ? 'rgba(30, 41, 59, 0.70)' : 'rgba(255, 255, 255, 0.65)';
-          ctx.fillText(marker.label, markerScreenX + 9, markerScreenY - 4);
+          ctx.fillStyle = isLight ? 'rgba(30, 41, 59, 0.45)' : 'rgba(148, 163, 184, 0.50)';
+          ctx.fillText(marker.label, markerScreenX + 8, markerScreenY - 4);
 
           ctx.restore();
         }
@@ -501,7 +505,8 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({ scroll
   return createPortal(
     <div
       aria-hidden="true"
-      className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
+      style={{ opacity }}
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none transition-opacity duration-300"
     >
       <canvas ref={canvasRef} className="block w-full h-full" />
     </div>,

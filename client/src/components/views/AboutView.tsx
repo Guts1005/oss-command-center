@@ -111,7 +111,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView, on
       className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar w-full relative"
     >
       {/* Animated Design Backdrop: Flowing Topological Elevation Mesh */}
-      <TopologicalBackdrop scrollContainerRef={containerRef} />
+      <TopologicalBackdrop scrollContainerRef={containerRef} opacity={0.22} />
 
       {/* Main Content Container wrapped for smooth momentum scrolling */}
       <div ref={contentRef} className="relative z-10 w-full flex flex-col min-h-full">

@@ -1237,13 +1237,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
             </div>
           </div>
         </div>
-
-        <Footer
-          variant="dashboard"
-          onNavigateView={onNavigateView}
-          onOpenCookiePreferences={onOpenCookiePreferences}
-        />
       </div>
+
+      <Footer
+        variant="dashboard"
+        onNavigateView={onNavigateView}
+        onOpenCookiePreferences={onOpenCookiePreferences}
+      />
 
       {/* Email Digest Preview Modal */}
       {previewModalOpen && (
