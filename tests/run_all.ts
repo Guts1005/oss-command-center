@@ -29,7 +29,8 @@ const testFiles = [
   'tests/oauth.test.ts',
   'tests/email_digest.test.ts',
   'tests/demo_sandbox.test.ts',
-  'tests/security_hardening_ratelimit.test.ts'
+  'tests/security_hardening_ratelimit.test.ts',
+  'tests/n8n_pipeline.test.ts'
 ];
 
 let failed = false;

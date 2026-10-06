@@ -24,6 +24,7 @@ import {
   Mail,
   Eye,
   ExternalLink,
+  Workflow,
   X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -45,6 +46,9 @@ interface UserSettingsState {
   webhook_events: string[];
   slack_webhook_url: string;
   discord_webhook_url: string;
+  n8n_webhook_url: string;
+  n8n_webhook_secret: string;
+  n8n_webhook_secret_set: boolean;
   background_sync_enabled: boolean;
   email_digest_enabled: boolean;
   email_digest_cadence: 'daily' | 'weekly';
@@ -71,6 +75,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
     webhook_events: ['action_needed', 'review', 'merged'],
     slack_webhook_url: '',
     discord_webhook_url: '',
+    n8n_webhook_url: '',
+    n8n_webhook_secret: '',
+    n8n_webhook_secret_set: false,
     background_sync_enabled: true,
     email_digest_enabled: false,
     email_digest_cadence: 'weekly',
@@ -106,6 +113,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
   const [slackTestResult, setSlackTestResult] = React.useState<WebhookTestResult | null>(null);
   const [testingDiscord, setTestingDiscord] = React.useState(false);
   const [discordTestResult, setDiscordTestResult] = React.useState<WebhookTestResult | null>(null);
+  const [testingN8n, setTestingN8n] = React.useState(false);
+  const [n8nTestResult, setN8nTestResult] = React.useState<WebhookTestResult | null>(null);
   const [triggeringSync, setTriggeringSync] = React.useState(false);
   const [syncTriggerMessage, setSyncTriggerMessage] = React.useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
@@ -141,6 +150,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
           webhook_events: res.data.settings.webhook_events || ['action_needed', 'review', 'merged'],
           slack_webhook_url: res.data.settings.slack_webhook_url || '',
           discord_webhook_url: res.data.settings.discord_webhook_url || '',
+          n8n_webhook_url: res.data.settings.n8n_webhook_url || '',
+          n8n_webhook_secret: '',
+          n8n_webhook_secret_set: Boolean(res.data.settings.n8n_webhook_secret_set),
           background_sync_enabled: Boolean(res.data.settings.background_sync_enabled ?? true),
           email_digest_enabled: Boolean(res.data.settings.email_digest_enabled),
           email_digest_cadence: res.data.settings.email_digest_cadence || 'weekly',
@@ -171,6 +183,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
         webhook_events: settings.webhook_events,
         slack_webhook_url: settings.slack_webhook_url.trim(),
         discord_webhook_url: settings.discord_webhook_url.trim(),
+        n8n_webhook_url: settings.n8n_webhook_url.trim(),
         background_sync_enabled: settings.background_sync_enabled,
         email_digest_enabled: settings.email_digest_enabled,
         email_digest_cadence: settings.email_digest_cadence,
@@ -181,6 +194,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
         payload.webhook_secret = settings.webhook_secret.trim();
       }
 
+      if (settings.n8n_webhook_secret) {
+        payload.n8n_webhook_secret = settings.n8n_webhook_secret.trim();
+      }
+
       const res = await axios.post('/api/settings', payload);
       if (res.data && res.data.success) {
         setSaveSuccess(true);
@@ -189,9 +206,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
         localStorage.setItem('oss_card_density', cardDensity);
         localStorage.setItem('oss_alert_threshold', alertThreshold);
 
-        if (payload.webhook_secret) {
-          setSettings(prev => ({ ...prev, webhook_secret_set: true, webhook_secret: '' }));
-        }
+        setSettings(prev => ({
+          ...prev,
+          webhook_secret_set: payload.webhook_secret ? true : prev.webhook_secret_set,
+          webhook_secret: '',
+          n8n_webhook_secret_set: payload.n8n_webhook_secret ? true : prev.n8n_webhook_secret_set,
+          n8n_webhook_secret: '',
+        }));
         setTimeout(() => setSaveSuccess(false), 3000);
       }
     } catch (err) {
@@ -302,6 +323,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
       });
     } finally {
       setTestingDiscord(false);
+    }
+  };
+
+  // Test n8n webhook pipeline handler
+  const handleTestN8n = async () => {
+    if (!settings.n8n_webhook_url) {
+      setN8nTestResult({
+        success: false,
+        error: 'Please enter an n8n webhook URL before testing.',
+      });
+      return;
+    }
+    try {
+      setTestingN8n(true);
+      setN8nTestResult(null);
+      const res = await axios.post('/api/settings/n8n-test', {
+        n8n_webhook_url: settings.n8n_webhook_url.trim(),
+        n8n_webhook_secret: settings.n8n_webhook_secret ? settings.n8n_webhook_secret.trim() : undefined,
+      });
+      setN8nTestResult({
+        success: res.data.success,
+        statusCode: res.data.statusCode,
+        latencyMs: res.data.latencyMs,
+        message: res.data.message,
+      });
+    } catch (err: any) {
+      setN8nTestResult({
+        success: false,
+        error: err.response?.data?.error || err.message,
+        statusCode: err.response?.status,
+        latencyMs: err.response?.data?.latencyMs,
+      });
+    } finally {
+      setTestingN8n(false);
     }
   };
 
@@ -1074,6 +1129,105 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onNavigateView, onOp
                 <p className="text-[10px] font-mono text-text-muted">
                   Formats alerts into status-colored Discord embeds (Amber for replies, Green for merges).
                 </p>
+              </div>
+
+              {/* n8n Workflow Automation (AI & Event Pipeline) */}
+              <div className="space-y-2 bg-surface p-3.5 rounded-lg border border-border-subtle mb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Workflow className="h-3.5 w-3.5 text-accent-sapphire" />
+                    <span className="text-[11px] font-mono font-bold text-text-primary uppercase">
+                      n8n Workflow Automation Pipeline
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-accent-sapphire px-1.5 py-0.5 rounded border border-accent-sapphire/30 bg-accent-sapphire/10">
+                    EVENT-DRIVEN AI
+                  </span>
+                </div>
+
+                <p className="text-[11px] font-sans text-text-muted">
+                  Emits signed JSON events to n8n Webhook triggers with cryptographic HMAC-SHA256 headers, delivery UUIDs, and automated workflow intent classification.
+                </p>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono text-text-muted uppercase">n8n Webhook Target URL</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={settings.n8n_webhook_url}
+                      onChange={(e) => setSettings(prev => ({ ...prev, n8n_webhook_url: e.target.value }))}
+                      placeholder="https://n8n.yourdomain.com/webhook/oss-events"
+                      className="w-full bg-base border border-border-subtle rounded px-2.5 py-1.5 text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-border-active"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTestN8n}
+                      disabled={testingN8n || !settings.n8n_webhook_url}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded border border-border-subtle bg-surface-card hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary shrink-0 transition-colors cursor-pointer disabled:opacity-40"
+                    >
+                      {testingN8n ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>TESTING...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-3.5 w-3.5 text-accent-sapphire" />
+                          <span>TEST N8N</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-mono text-text-muted uppercase">n8n HMAC Secret (Optional)</label>
+                    {settings.n8n_webhook_secret_set && (
+                      <span className="text-[10px] font-mono text-status-merged">SECRET CONFIGURED</span>
+                    )}
+                  </div>
+                  <input
+                    type="password"
+                    value={settings.n8n_webhook_secret}
+                    onChange={(e) => setSettings(prev => ({ ...prev, n8n_webhook_secret: e.target.value }))}
+                    placeholder={settings.n8n_webhook_secret_set ? '•••••••••••••••• (Leave blank to keep existing)' : 'Enter dedicated secret for X-OSS-Signature verification'}
+                    className="w-full bg-base border border-border-subtle rounded px-2.5 py-1.5 text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-border-active"
+                  />
+                </div>
+
+                {n8nTestResult && (
+                  <div className={`flex items-center gap-2 text-[11px] font-mono px-2.5 py-1 rounded border ${
+                    n8nTestResult.success
+                      ? 'border-status-merged/40 bg-status-merged/10 text-status-merged'
+                      : 'border-status-closed/40 bg-status-closed/10 text-status-closed'
+                  }`}>
+                    {n8nTestResult.success ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    ) : (
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    )}
+                    <span>
+                      {n8nTestResult.success
+                        ? `n8n delivery verified (${n8nTestResult.latencyMs}ms) : ${n8nTestResult.message || '200 OK'}`
+                        : (n8nTestResult.error || 'n8n dispatch failed')}
+                    </span>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-border-subtle flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-text-muted">
+                    Headers: X-OSS-Signature, X-OSS-Delivery, X-OSS-Event
+                  </span>
+                  <a
+                    href="/api/settings/n8n-template"
+                    download="oss-command-center-n8n-workflow.json"
+                    className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-accent-sapphire hover:underline cursor-pointer"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>DOWNLOAD N8N WORKFLOW (.JSON)</span>
+                  </a>
+                </div>
               </div>
 
               {/* Custom Webhook URL Input */}

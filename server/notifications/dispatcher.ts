@@ -5,6 +5,7 @@ import {
   NotificationPayloadOptions,
   buildDiscordPayload,
   buildSlackPayload,
+  buildN8nPayload,
 } from './formatters.js';
 
 export interface DispatchResult {
@@ -25,6 +26,13 @@ export function isDiscordWebhook(url: string): boolean {
  */
 export function isSlackWebhook(url: string): boolean {
   return /hooks\.slack\.com/i.test(url);
+}
+
+/**
+ * Checks whether a given webhook URL targets an n8n webhook instance.
+ */
+export function isN8nWebhook(url: string): boolean {
+  return /webhook(?:-test)?/i.test(url) || /n8n/i.test(url);
 }
 
 /**
@@ -109,11 +117,55 @@ export async function dispatchNotification(
       );
     }
 
-    // 3. Dispatch to Generic Webhook (with auto-detection for Discord and Slack URLs)
+    // 3. Dispatch to dedicated n8n Workflow Webhook
+    if (settings.n8n_webhook_url && settings.n8n_webhook_url.trim()) {
+      const url = settings.n8n_webhook_url.trim();
+      result.dispatched++;
+      dispatchPromises.push(
+        (async () => {
+          try {
+            const payload = buildN8nPayload(options);
+            const bodyStr = JSON.stringify(payload);
+            const secret = settings.n8n_webhook_secret || settings.webhook_secret;
+            const headers: Record<string, string> = {
+              'Content-Type': 'application/json',
+              'User-Agent': 'OSS-Command-Center-n8n-Pipeline/1.0',
+              'X-OSS-Delivery': payload.delivery_id,
+              'X-OSS-Event': payload.event,
+            };
+
+            if (secret) {
+              const signature = signPayload(bodyStr, secret);
+              headers['X-OSS-Signature'] = `sha256=${signature}`;
+            }
+
+            const res = await axios.post(url, payload, {
+              timeout: 5000,
+              headers,
+              validateStatus: () => true,
+            });
+
+            if (res.status >= 200 && res.status < 300) {
+              result.successes++;
+            } else {
+              result.errors.push(`n8n webhook responded with status ${res.status}`);
+            }
+          } catch (err: any) {
+            result.errors.push(`n8n webhook failed: ${err.message}`);
+          }
+        })()
+      );
+    }
+
+    // 4. Dispatch to Generic Webhook (with auto-detection for Discord and Slack URLs)
     if (settings.webhook_url && settings.webhook_url.trim()) {
       const url = settings.webhook_url.trim();
-      // Only dispatch if not identical to already configured Slack/Discord endpoints
-      if (url !== settings.slack_webhook_url && url !== settings.discord_webhook_url) {
+      // Only dispatch if not identical to already configured Slack, Discord, or n8n endpoints
+      if (
+        url !== settings.slack_webhook_url &&
+        url !== settings.discord_webhook_url &&
+        url !== settings.n8n_webhook_url
+      ) {
         result.dispatched++;
         dispatchPromises.push(
           (async () => {

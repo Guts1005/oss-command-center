@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { ContributionRecord } from '../db.js';
 
 export interface NotificationPayloadOptions {
@@ -6,6 +7,28 @@ export interface NotificationPayloadOptions {
   message?: string;
   actor?: string;
   reviewState?: string;
+}
+
+export interface N8nPayload {
+  event: string;
+  delivery_id: string;
+  timestamp: string;
+  source: string;
+  contribution?: {
+    id?: string;
+    platform?: string;
+    repo?: string;
+    number?: number;
+    title?: string;
+    url?: string;
+    author?: string;
+    status?: string;
+    action_needed?: string;
+  };
+  actor?: string;
+  message?: string;
+  review_state?: string;
+  workflow_intent: string;
 }
 
 export interface DiscordEmbed {
@@ -223,5 +246,48 @@ export function buildSlackPayload(options: NotificationPayloadOptions): SlackPay
         ],
       },
     ],
+  };
+}
+
+/**
+ * Builds formatted n8n Webhook payload designed for workflow automations and AI nodes.
+ * Includes delivery_id for idempotency and semantic workflow_intent for conditional routing.
+ */
+export function buildN8nPayload(options: NotificationPayloadOptions): N8nPayload {
+  const now = new Date().toISOString();
+  const deliveryId = crypto.randomUUID();
+  const { event, contribution, message, actor, reviewState } = options;
+
+  let workflowIntent = 'general_alert';
+  if (event === 'ping') {
+    workflowIntent = 'system_health_check';
+  } else if (contribution?.action_needed === 'push-changes') {
+    workflowIntent = 'ci_or_review_remediation';
+  } else if (contribution?.action_needed === 'reply') {
+    workflowIntent = 'maintainer_communication';
+  } else if (event === 'merged') {
+    workflowIntent = 'milestone_celebration_and_portfolio_sync';
+  }
+
+  return {
+    event: event === 'ping' ? 'ping' : `contribution.${event}`,
+    delivery_id: deliveryId,
+    timestamp: now,
+    source: 'OSS Command Center',
+    contribution: contribution ? {
+      id: contribution.id,
+      platform: contribution.platform || 'github',
+      repo: contribution.repo,
+      number: contribution.number,
+      title: contribution.title,
+      url: contribution.url,
+      author: contribution.author,
+      status: contribution.status,
+      action_needed: contribution.action_needed,
+    } : undefined,
+    actor,
+    message,
+    review_state: reviewState,
+    workflow_intent: workflowIntent,
   };
 }

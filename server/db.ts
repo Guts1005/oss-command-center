@@ -80,6 +80,8 @@ export function initDatabase() {
       webhook_events TEXT NOT NULL DEFAULT '["action_needed","review","merged"]',
       slack_webhook_url TEXT,
       discord_webhook_url TEXT,
+      n8n_webhook_url TEXT,
+      n8n_webhook_secret TEXT,
       background_sync_enabled INTEGER NOT NULL DEFAULT 1,
       email_digest_enabled INTEGER NOT NULL DEFAULT 0,
       email_digest_cadence TEXT NOT NULL DEFAULT 'weekly',
@@ -99,6 +101,12 @@ export function initDatabase() {
   }
   if (!existingSettingsCols.has('discord_webhook_url')) {
     db.exec("ALTER TABLE user_settings ADD COLUMN discord_webhook_url TEXT;");
+  }
+  if (!existingSettingsCols.has('n8n_webhook_url')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN n8n_webhook_url TEXT;");
+  }
+  if (!existingSettingsCols.has('n8n_webhook_secret')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN n8n_webhook_secret TEXT;");
   }
   if (!existingSettingsCols.has('background_sync_enabled')) {
     db.exec("ALTER TABLE user_settings ADD COLUMN background_sync_enabled INTEGER NOT NULL DEFAULT 1;");
@@ -276,6 +284,8 @@ export interface UserSettingsRecord {
   webhook_events: string;
   slack_webhook_url?: string | null;
   discord_webhook_url?: string | null;
+  n8n_webhook_url?: string | null;
+  n8n_webhook_secret?: string | null;
   background_sync_enabled: number;
   created_at: string;
   updated_at: string;

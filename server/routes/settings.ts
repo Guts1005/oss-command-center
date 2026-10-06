@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { db } from '../db.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { signPayload } from '../security/crypto.js';
-import { buildSlackPayload, buildDiscordPayload } from '../notifications/formatters.js';
+import { buildSlackPayload, buildDiscordPayload, buildN8nPayload } from '../notifications/formatters.js';
 
 export const settingsRouter = express.Router();
 
@@ -19,6 +19,8 @@ const settingsSchema = z.object({
   webhook_events: z.array(z.string()).optional(),
   slack_webhook_url: z.string().url().or(z.literal('')).nullable().optional(),
   discord_webhook_url: z.string().url().or(z.literal('')).nullable().optional(),
+  n8n_webhook_url: z.string().url().or(z.literal('')).nullable().optional(),
+  n8n_webhook_secret: z.string().nullable().optional(),
   background_sync_enabled: z.boolean().optional(),
   email_digest_enabled: z.boolean().optional(),
   email_digest_cadence: z.enum(['daily', 'weekly']).optional(),
@@ -67,6 +69,8 @@ settingsRouter.get('/', (req: AuthenticatedRequest, res) => {
         webhook_events: parsedEvents,
         slack_webhook_url: settings.slack_webhook_url || null,
         discord_webhook_url: settings.discord_webhook_url || null,
+        n8n_webhook_url: settings.n8n_webhook_url || null,
+        n8n_webhook_secret_set: Boolean(settings.n8n_webhook_secret && settings.n8n_webhook_secret.length > 0),
         background_sync_enabled: Boolean(settings.background_sync_enabled ?? 1),
         email_digest_enabled: Boolean(settings.email_digest_enabled ?? 0),
         email_digest_cadence: settings.email_digest_cadence || 'weekly',
@@ -112,6 +116,8 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
       webhook_events,
       slack_webhook_url,
       discord_webhook_url,
+      n8n_webhook_url,
+      n8n_webhook_secret,
       background_sync_enabled,
       email_digest_enabled,
       email_digest_cadence,
@@ -126,9 +132,10 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
         INSERT INTO user_settings (
           user_id, audio_chime_enabled, sync_cadence_minutes, webhook_url,
           webhook_secret, webhook_events, slack_webhook_url, discord_webhook_url,
+          n8n_webhook_url, n8n_webhook_secret,
           background_sync_enabled, email_digest_enabled, email_digest_cadence, email_digest_address,
           created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         userId,
         audio_chime_enabled !== undefined ? (audio_chime_enabled ? 1 : 0) : 1,
@@ -138,6 +145,8 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
         webhook_events ? JSON.stringify(webhook_events) : JSON.stringify(['action_needed', 'review', 'merged']),
         slack_webhook_url !== undefined ? slack_webhook_url : null,
         discord_webhook_url !== undefined ? discord_webhook_url : null,
+        n8n_webhook_url !== undefined ? n8n_webhook_url : null,
+        n8n_webhook_secret !== undefined ? n8n_webhook_secret : null,
         background_sync_enabled !== undefined ? (background_sync_enabled ? 1 : 0) : 1,
         email_digest_enabled !== undefined ? (email_digest_enabled ? 1 : 0) : 0,
         email_digest_cadence || 'weekly',
@@ -153,6 +162,8 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
       const newEvents = webhook_events ? JSON.stringify(webhook_events) : settings.webhook_events;
       const newSlack = slack_webhook_url !== undefined ? slack_webhook_url : settings.slack_webhook_url;
       const newDiscord = discord_webhook_url !== undefined ? discord_webhook_url : settings.discord_webhook_url;
+      const newN8nUrl = n8n_webhook_url !== undefined ? n8n_webhook_url : settings.n8n_webhook_url;
+      const newN8nSecret = n8n_webhook_secret !== undefined ? n8n_webhook_secret : settings.n8n_webhook_secret;
       const newBg = background_sync_enabled !== undefined ? (background_sync_enabled ? 1 : 0) : settings.background_sync_enabled;
       const newEmailDigest = email_digest_enabled !== undefined ? (email_digest_enabled ? 1 : 0) : settings.email_digest_enabled;
       const newEmailCadence = email_digest_cadence !== undefined ? email_digest_cadence : (settings.email_digest_cadence || 'weekly');
@@ -167,13 +178,31 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
             webhook_events = ?,
             slack_webhook_url = ?,
             discord_webhook_url = ?,
+            n8n_webhook_url = ?,
+            n8n_webhook_secret = ?,
             background_sync_enabled = ?,
             email_digest_enabled = ?,
             email_digest_cadence = ?,
             email_digest_address = ?,
             updated_at = ?
         WHERE user_id = ?
-      `).run(newAudio, newCadence, newUrl, newSecret, newEvents, newSlack, newDiscord, newBg, newEmailDigest, newEmailCadence, newEmailAddr, now, userId);
+      `).run(
+        newAudio,
+        newCadence,
+        newUrl,
+        newSecret,
+        newEvents,
+        newSlack,
+        newDiscord,
+        newN8nUrl,
+        newN8nSecret,
+        newBg,
+        newEmailDigest,
+        newEmailCadence,
+        newEmailAddr,
+        now,
+        userId
+      );
     }
 
     const updated = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
@@ -195,6 +224,8 @@ settingsRouter.post('/', (req: AuthenticatedRequest, res) => {
         webhook_events: parsedEvents,
         slack_webhook_url: updated.slack_webhook_url || null,
         discord_webhook_url: updated.discord_webhook_url || null,
+        n8n_webhook_url: updated.n8n_webhook_url || null,
+        n8n_webhook_secret_set: Boolean(updated.n8n_webhook_secret && updated.n8n_webhook_secret.length > 0),
         background_sync_enabled: Boolean(updated.background_sync_enabled ?? 1),
         email_digest_enabled: Boolean(updated.email_digest_enabled ?? 0),
         email_digest_cadence: updated.email_digest_cadence || 'weekly',
@@ -353,6 +384,168 @@ settingsRouter.post('/discord-test', async (req: AuthenticatedRequest, res) => {
       latencyMs,
     });
   }
+});
+
+// POST /api/settings/n8n-test: Test n8n workflow pipeline with signed payload
+settingsRouter.post('/n8n-test', async (req: AuthenticatedRequest, res) => {
+  const startTime = Date.now();
+  try {
+    const userId = req.user!.id;
+    const settings = db.prepare('SELECT * FROM user_settings WHERE user_id = ?').get(userId) as any;
+    const targetUrl = (req.body.n8n_webhook_url !== undefined
+      ? req.body.n8n_webhook_url
+      : (settings && settings.n8n_webhook_url) || '').trim();
+
+    if (!targetUrl) {
+      return res.status(400).json({
+        success: false,
+        error: 'No n8n webhook URL configured or provided for test',
+      });
+    }
+
+    const secret = req.body.n8n_webhook_secret !== undefined
+      ? req.body.n8n_webhook_secret
+      : (settings && (settings.n8n_webhook_secret || settings.webhook_secret));
+
+    const payload = buildN8nPayload({
+      event: 'ping',
+      message: 'n8n workflow pipeline webhook verified successfully from OSS Command Center.',
+    });
+
+    const bodyStr = JSON.stringify(payload);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'OSS-Command-Center-n8n-Pipeline/1.0',
+      'X-OSS-Delivery': payload.delivery_id,
+      'X-OSS-Event': payload.event,
+    };
+
+    if (secret) {
+      const signature = signPayload(bodyStr, secret);
+      headers['X-OSS-Signature'] = `sha256=${signature}`;
+    }
+
+    const outboundRes = await axios.post(targetUrl, payload, {
+      headers,
+      timeout: 5000,
+      validateStatus: () => true,
+    });
+
+    const latencyMs = Date.now() - startTime;
+    return res.json({
+      success: outboundRes.status >= 200 && outboundRes.status < 300,
+      statusCode: outboundRes.status,
+      latencyMs,
+      message: `n8n responded with HTTP status ${outboundRes.status}`,
+      deliveryId: payload.delivery_id,
+    });
+  } catch (err: any) {
+    const latencyMs = Date.now() - startTime;
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'n8n dispatch failed',
+      latencyMs,
+    });
+  }
+});
+
+// GET /api/settings/n8n-template: Download turnkey importable n8n workflow JSON
+settingsRouter.get('/n8n-template', (_req: AuthenticatedRequest, res) => {
+  const workflowTemplate = {
+    name: 'OSS Command Center - Contributor Event Pipeline & AI Triage',
+    nodes: [
+      {
+        parameters: {
+          httpMethod: 'POST',
+          path: 'oss-events',
+          responseMode: 'onReceived',
+          options: {},
+        },
+        name: 'Webhook Trigger (OSS Command Center)',
+        type: 'n8n-nodes-base.webhook',
+        typeVersion: 1,
+        position: [240, 300],
+      },
+      {
+        parameters: {
+          conditions: {
+            string: [
+              {
+                value1: '={{ $json.workflow_intent }}',
+                operation: 'equal',
+                value2: 'ci_or_review_remediation',
+              },
+            ],
+          },
+        },
+        name: 'Is Remediation Required?',
+        type: 'n8n-nodes-base.if',
+        typeVersion: 1,
+        position: [480, 300],
+      },
+      {
+        parameters: {
+          conditions: {
+            string: [
+              {
+                value1: '={{ $json.workflow_intent }}',
+                operation: 'equal',
+                value2: 'milestone_celebration_and_portfolio_sync',
+              },
+            ],
+          },
+        },
+        name: 'Is PR Merged?',
+        type: 'n8n-nodes-base.if',
+        typeVersion: 1,
+        position: [480, 500],
+      },
+      {
+        parameters: {
+          content: '## OSS Command Center Urgent Remediation\nRepository: {{$node["Webhook Trigger (OSS Command Center)"].json["contribution"]["repo"]}}\nPR: #{{$node["Webhook Trigger (OSS Command Center)"].json["contribution"]["number"]}}\nAction: {{$node["Webhook Trigger (OSS Command Center)"].json["contribution"]["action_needed"]}}\nURL: {{$node["Webhook Trigger (OSS Command Center)"].json["contribution"]["url"]}}',
+        },
+        name: 'Draft Urgent Alert',
+        type: 'n8n-nodes-base.markdown',
+        typeVersion: 1,
+        position: [740, 220],
+      },
+      {
+        parameters: {
+          content: '## Milestone Achieved: PR Merged!\nRepository: {{$node["Webhook Trigger (OSS Command Center)"].json["contribution"]["repo"]}}\nTitle: {{$node["Webhook Trigger (OSS Command Center)"].json["contribution"]["title"]}}\nReady to add to portfolio or changelog.',
+        },
+        name: 'Draft Merge Milestone',
+        type: 'n8n-nodes-base.markdown',
+        typeVersion: 1,
+        position: [740, 480],
+      },
+    ],
+    connections: {
+      'Webhook Trigger (OSS Command Center)': {
+        main: [
+          [
+            { node: 'Is Remediation Required?', type: 'main', index: 0 },
+            { node: 'Is PR Merged?', type: 'main', index: 0 },
+          ],
+        ],
+      },
+      'Is Remediation Required?': {
+        main: [
+          [{ node: 'Draft Urgent Alert', type: 'main', index: 0 }],
+        ],
+      },
+      'Is PR Merged?': {
+        main: [
+          [{ node: 'Draft Merge Milestone', type: 'main', index: 0 }],
+        ],
+      },
+    },
+    active: false,
+    settings: {},
+  };
+
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', 'attachment; filename="oss-command-center-n8n-workflow.json"');
+  return res.json(workflowTemplate);
 });
 
 // GET /api/settings/export: Export tenant contribution data and preferences
