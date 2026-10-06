@@ -56,9 +56,33 @@ app.use(compression({
 // 3. Enterprise Perimeter API Rate Limiting Protection (Health probes strictly immune)
 app.use('/api', globalApiLimiter);
 
-// 4. CORS, Raw Body Capture for HMAC, and Cookie Parser
+// Configure trusted proxy behavior
+if (process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
+
+// 4. Strict CORS Whitelisting, Raw Body Capture for HMAC, and Cookie Parser
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : [
+      'http://localhost:5173',
+      'http://localhost:3100',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3100',
+    ];
+
 app.use(cors({
-  origin: true,
+  origin: (origin, callback) => {
+    // Allow requests without Origin header (curl, mobile clients, background workers, tests)
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS policy violation: Access from origin ${origin} denied.`));
+  },
   credentials: true,
 }));
 

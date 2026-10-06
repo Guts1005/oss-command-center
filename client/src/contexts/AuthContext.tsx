@@ -51,14 +51,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setIntegrations([]);
         localStorage.removeItem('oss_user_cached');
-        localStorage.removeItem('oss_session_token');
       }
     } catch (err: any) {
       if (err.response?.status === 401) {
         setUser(null);
         setIntegrations([]);
         localStorage.removeItem('oss_user_cached');
-        localStorage.removeItem('oss_session_token');
       }
     } finally {
       setIsLoading(false);
@@ -88,7 +86,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handleUnauthorized = () => {
       setUser(null);
       setIntegrations([]);
-      localStorage.removeItem('oss_session_token');
       localStorage.removeItem('oss_user_cached');
     };
 
@@ -110,9 +107,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (usernameOrEmail: string, password: string) => {
     const res = await axios.post('/api/auth/login', { usernameOrEmail, password });
-    if (res.data.token) {
-      localStorage.setItem('oss_session_token', res.data.token);
-    }
     if (res.data.user) {
       localStorage.setItem('oss_user_cached', JSON.stringify(res.data.user));
       setUser(res.data.user);
@@ -123,9 +117,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (username: string, email: string, password: string) => {
     const res = await axios.post('/api/auth/register', { username, email, password });
-    if (res.data.token) {
-      localStorage.setItem('oss_session_token', res.data.token);
-    }
     if (res.data.user) {
       localStorage.setItem('oss_user_cached', JSON.stringify(res.data.user));
       setUser(res.data.user);
@@ -138,7 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await axios.post('/api/auth/logout');
     } catch {}
-    localStorage.removeItem('oss_session_token');
     localStorage.removeItem('oss_user_cached');
     setUser(null);
     setIntegrations([]);

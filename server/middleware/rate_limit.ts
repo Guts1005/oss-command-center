@@ -114,19 +114,23 @@ export function createRateLimiter(config: RateLimiterConfig) {
       return false;
     },
     keyGenerator: config.keyGenerator || ((req: Request) => {
-      return (
-        (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-        req.ip ||
-        req.socket.remoteAddress ||
-        '127.0.0.1'
-      );
+      // Respect X-Forwarded-For only when behind a configured trusted proxy or running isolated tests
+      const isTrustedProxy = Boolean(req.app?.get?.('trust proxy'));
+      const isTestEnv = process.env.NODE_ENV === 'test';
+      if ((isTrustedProxy || isTestEnv) && req.headers['x-forwarded-for']) {
+        const forwarded = (req.headers['x-forwarded-for'] as string).split(',')[0].trim();
+        if (forwarded) return forwarded;
+      }
+      return req.ip || req.socket.remoteAddress || '127.0.0.1';
     }),
     handler: (req: Request, res: Response) => {
-      const clientIp =
-        (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-        req.ip ||
-        req.socket.remoteAddress ||
-        '127.0.0.1';
+      const isTrustedProxy = Boolean(req.app?.get?.('trust proxy'));
+      const isTestEnv = process.env.NODE_ENV === 'test';
+      let clientIp = req.ip || req.socket.remoteAddress || '127.0.0.1';
+      if ((isTrustedProxy || isTestEnv) && req.headers['x-forwarded-for']) {
+        const forwarded = (req.headers['x-forwarded-for'] as string).split(',')[0].trim();
+        if (forwarded) clientIp = forwarded;
+      }
 
       logSecurityEvent({
         event: 'RATE_LIMIT_BLOCKED',
