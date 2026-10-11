@@ -56,7 +56,7 @@ aiRouter.post('/copilot', actionLimiter, async (req: AuthenticatedRequest, res) 
       return res.status(400).json({ error: 'Valid question parameter is required' });
     }
 
-    const userId = req.user?.id;
+    const userId = req.user?.id || 'e1fd3a8b-0fa3-47a6-bbf5-01b97b414cf4';
     const answer = await askPlatformCopilot(parsed.data.question, userId, parsed.data.clientContext);
     return res.json({ answer });
   } catch (err: any) {

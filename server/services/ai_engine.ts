@@ -1,4 +1,5 @@
 import { db } from '../db.js';
+import crypto from 'crypto';
 
 export function getOllamaHost(): string {
   let host = process.env.OLLAMA_HOST || 'http://127.0.0.1:11500';
@@ -167,6 +168,92 @@ Draft the exact technical reply to post back to the maintainer:`;
 }
 
 export async function askPlatformCopilot(userQuestion: string, userId?: string, clientContext?: any): Promise<string> {
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const yesterday = new Date(now.getTime() - 24 * 3600 * 1000);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const tomorrow = new Date(now.getTime() + 24 * 3600 * 1000);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
+
+  // 1. Automatic Developer Note Ingestion
+  let autoCreatedNote: any = null;
+  const addNoteRegex = /(?:add|create|make)\s+(?:a\s+)?note\s+(?:to|that|about)?\s*(.+)|(?:remind\s+me\s+to)\s*(.+)|^note:\s*(.+)/i;
+  const noteMatch = userQuestion.match(addNoteRegex);
+  if (noteMatch && userId) {
+    const rawContent = (noteMatch[1] || noteMatch[2] || noteMatch[3] || '').trim();
+    if (rawContent) {
+      let targetDate: string | null = null;
+      if (/\btomorrow\b/i.test(userQuestion)) {
+        targetDate = tomorrowStr;
+      } else if (/\btoday\b/i.test(userQuestion)) {
+        targetDate = todayStr;
+      }
+      const noteId = `note_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+      try {
+        db.prepare(`
+          INSERT INTO developer_notes (id, user_id, content, target_date, is_completed, created_at)
+          VALUES (?, ?, ?, ?, 0, ?)
+        `).run(noteId, userId, rawContent, targetDate, now.toISOString());
+        autoCreatedNote = { id: noteId, content: rawContent, target_date: targetDate };
+      } catch (e) {
+        console.error('[AI Engine] Note insert error:', e);
+      }
+    }
+  }
+
+  // Fast-path deterministic custom command handlers
+  if (autoCreatedNote) {
+    const targetLabel = autoCreatedNote.target_date ? ` scheduled for *${autoCreatedNote.target_date}*` : '';
+    return `Saved developer note: "**${autoCreatedNote.content}**"${targetLabel}.\n\n\`\`\`action\n{"type": "ADD_NOTE", "payload": {"content": "${autoCreatedNote.content}", "targetDate": "${autoCreatedNote.target_date || 'tomorrow'}"}}\n\`\`\``;
+  }
+
+  const showNotesRegex = /(?:show|view|list|get|what are)\s+(?:all\s+)?(?:the\s+)?(?:my\s+)?notes|show\s+notes/i;
+  if (showNotesRegex.test(userQuestion) && userId) {
+    const activeNotes = db.prepare(
+      "SELECT id, content, target_date, created_at FROM developer_notes WHERE user_id = ? AND is_completed = 0 ORDER BY created_at DESC LIMIT 10"
+    ).all(userId) as any[];
+
+    let noteText = '';
+    if (activeNotes.length === 0) {
+      noteText = 'You have no active developer notes or pending reminders.';
+    } else {
+      noteText = `Here are your active developer notes and scheduled reminders:\n\n` +
+        activeNotes.map((n) => `* **${n.content}**${n.target_date ? ` (*Due: ${n.target_date}*)` : ''}`).join('\n');
+    }
+    return `${noteText}\n\n\`\`\`action\n{"type": "SHOW_NOTES", "payload": true}\n\`\`\``;
+  }
+
+  const yesterdayQueryRegex = /(?:show|filter|display)\s+(?:me\s+)?(?:only\s+)?(?:prs|contributions|pull requests)\s+(?:i\s+)?(?:tackled|worked on|updated)?\s*yesterday/i;
+  if (yesterdayQueryRegex.test(userQuestion) && userId) {
+    const yesterdayItems = db.prepare(`
+      SELECT id, repo, number, title, action_needed, status, platform, last_activity_at
+      FROM contributions
+      WHERE user_id = ? AND (
+        date(last_activity_at) = date('now', '-1 day') 
+        OR (julianday('now') - julianday(last_activity_at)) BETWEEN 0.8 AND 2.0
+      )
+      ORDER BY last_activity_at DESC
+    `).all(userId) as any[];
+
+    let summary = '';
+    if (yesterdayItems.length === 0) {
+      summary = `Filtering your stream to activity recorded **yesterday** (*${yesterdayStr}*). No contributions had updates recorded on that date.`;
+    } else {
+      summary = `Filtering stream to **${yesterdayItems.length}** contributions tackled **yesterday** (*${yesterdayStr}*):\n\n` +
+        yesterdayItems.map((i) => `* **${i.repo} #${i.number}**: \`${i.title}\` (*Platform*: **${i.platform}**, *Status*: \`${i.status}\`)`).join('\n');
+    }
+    return `${summary}\n\n\`\`\`action\n{"type": "FILTER_TIMEFRAME", "payload": "yesterday"}\n\`\`\``;
+  }
+
+  const platformRegex = /(?:show|filter|display)\s+(?:me\s+)?(?:only\s+)?(?:the\s+)?(github|gitlab)\s+(?:prs|mrs|contributions|pull requests)/i;
+  const platformMatch = userQuestion.match(platformRegex);
+  if (platformMatch) {
+    const targetPlatform = platformMatch[1].toLowerCase();
+    return `Filtering contributions stream to show only **${targetPlatform === 'github' ? 'GitHub' : 'GitLab'}** contributions.\n\n\`\`\`action\n{"type": "FILTER_PLATFORM", "payload": "${targetPlatform}"}\n\`\`\``;
+  }
+
+  // 2. Fetch User Metrics, Notes, and Temporal Activity
   let statsContext = '';
   if (userId) {
     const total = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ?').get(userId) as any)?.count || 0;
@@ -174,24 +261,60 @@ export async function askPlatformCopilot(userQuestion: string, userId?: string, 
     const inReview = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'in_review'").get(userId) as any)?.count || 0;
     const awaitingMaintainer = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status IN ('open', 'opened', 'submitted', 'awaiting-reply') AND action_needed = 'none'").get(userId) as any)?.count || 0;
     const activeItems = db.prepare(
-      "SELECT id, repo, number, title, action_needed, status, platform FROM contributions WHERE user_id = ? ORDER BY last_activity_at DESC LIMIT 15"
+      "SELECT id, repo, number, title, action_needed, status, platform, last_activity_at FROM contributions WHERE user_id = ? ORDER BY last_activity_at DESC LIMIT 15"
     ).all(userId) as any[];
 
-    statsContext = `User Metrics:
+    const activeNotes = db.prepare(
+      "SELECT id, content, target_date, created_at FROM developer_notes WHERE user_id = ? AND is_completed = 0 ORDER BY created_at DESC LIMIT 10"
+    ).all(userId) as any[];
+
+    // Activity from yesterday or past 48h
+    const yesterdayItems = db.prepare(`
+      SELECT id, repo, number, title, action_needed, status, platform, last_activity_at
+      FROM contributions
+      WHERE user_id = ? AND (
+        date(last_activity_at) = date('now', '-1 day') 
+        OR (julianday('now') - julianday(last_activity_at)) BETWEEN 1.0 AND 2.0
+      )
+      ORDER BY last_activity_at DESC
+    `).all(userId) as any[];
+
+    statsContext = `Temporal Calendar Context:
+- Today: ${todayStr} (${dayOfWeek})
+- Yesterday: ${yesterdayStr}
+- Tomorrow: ${tomorrowStr}
+
+${autoCreatedNote ? `New Note Stored in Database:
+- Content: "${autoCreatedNote.content}"
+- Target Due Date: ${autoCreatedNote.target_date || 'Unspecified'}
+` : ''}
+Developer Notes & Reminders:
+${activeNotes.length > 0 ? activeNotes.map(n => `* [${n.id}] "${n.content}" (${n.target_date ? `Due: ${n.target_date}` : 'No due date'}, Created: ${n.created_at.split('T')[0]})`).join('\n') : '* No active notes stored.'}
+
+Contributions Tackled Yesterday (${yesterdayStr}):
+${yesterdayItems.length > 0 ? yesterdayItems.map(i => `* [${i.id}] ${i.repo} #${i.number}: "${i.title}" (Platform: ${i.platform}, Status: ${i.status})`).join('\n') : '* No contributions recorded specifically yesterday.'}
+
+User Metrics:
 - Total Tracked: ${total}
 - Action Needed Now: ${actionNeeded}
 - In Review: ${inReview}
 - Awaiting Maintainer: ${awaitingMaintainer}
+
 Tracked Contributions:
-${activeItems.map(i => `* [${i.id}] ${i.repo} #${i.number}: "${i.title}" (Status: ${i.status}, Action: ${i.action_needed})`).join('\n')}`;
+${activeItems.map(i => `* [${i.id}] ${i.repo} #${i.number}: "${i.title}" (Platform: ${i.platform}, Status: ${i.status}, Action: ${i.action_needed}, Last Active: ${i.last_activity_at?.split('T')[0] || 'recent'})`).join('\n')}`;
   } else if (clientContext?.activeItems && Array.isArray(clientContext.activeItems)) {
     const items = clientContext.activeItems;
-    statsContext = `Active Screen Context:
+    statsContext = `Temporal Calendar Context:
+- Today: ${todayStr} (${dayOfWeek})
+- Yesterday: ${yesterdayStr}
+- Tomorrow: ${tomorrowStr}
+
+Active Screen Context:
 - View Mode: ${clientContext.view || 'stream'}
 - Active Theme: ${clientContext.theme || 'dark'}
 - Visible Items Count: ${items.length}
 Items:
-${items.map((i: any) => `* [${i.id}] ${i.repo} #${i.number}: "${i.title}" (Status: ${i.status}, Action: ${i.action_needed})`).join('\n')}`;
+${items.map((i: any) => `* [${i.id}] ${i.repo} #${i.number}: "${i.title}" (Platform: ${i.platform}, Status: ${i.status}, Action: ${i.action_needed})`).join('\n')}`;
   }
 
   const system = `You are the intelligent OSS Command Center Query Solver and In-Page Automation Agent.
@@ -207,6 +330,7 @@ When the user's intent asks to control, filter, navigate, search, open, or modif
 Supported Action Types and Payloads:
 - FILTER_STATUS: 'all' | 'action_needed' | 'in_review' | 'merged' | 'closed' | 'stale'
 - FILTER_PLATFORM: 'all' | 'github' | 'gitlab'
+- FILTER_TIMEFRAME: 'all' | 'yesterday' | 'today' | 'week'
 - FILTER_ACTION: 'all' | 'reply' | 'push_changes' | 'none'
 - SET_SEARCH: string keyword
 - CLEAR_FILTERS: true
@@ -217,6 +341,41 @@ Supported Action Types and Payloads:
 - TRIGGER_SYNC: true
 - OPEN_TRACK_MODAL: true
 - OPEN_GUIDE_MODAL: true
+- ADD_NOTE: {"content": "...", "targetDate": "..."}
+- SHOW_NOTES: true
+
+### CUSTOM COMMAND RESOLUTION RULES
+1. "show me only PRs I tackled yesterday" (or similar temporal queries):
+   - Summarize the PRs tackled yesterday from the calendar context.
+   - Append action block:
+   \`\`\`action
+   {"type": "FILTER_TIMEFRAME", "payload": "yesterday"}
+   \`\`\`
+2. "show me only the Github PRs":
+   - Confirm filtering to GitHub.
+   - Append action block:
+   \`\`\`action
+   {"type": "FILTER_PLATFORM", "payload": "github"}
+   \`\`\`
+3. "show me only the Gitlab PRs" / "Gitlab MRs":
+   - Confirm filtering to GitLab.
+   - Append action block:
+   \`\`\`action
+   {"type": "FILTER_PLATFORM", "payload": "gitlab"}
+   \`\`\`
+4. "add a note to check Gitlab tomorrow" (or creating any reminder/note):
+   - Acknowledge that the note has been saved with its due date.
+   - Append action block:
+   \`\`\`action
+   {"type": "ADD_NOTE", "payload": {"content": "check Gitlab tomorrow", "targetDate": "tomorrow"}}
+   \`\`\`
+5. "show my notes" / "what are my notes" / "show notes tomorrow":
+   - Read from the Developer Notes & Reminders context.
+   - Present all matching notes in a clean bulleted list with their due dates and IDs.
+   - Append action block:
+   \`\`\`action
+   {"type": "SHOW_NOTES", "payload": true}
+   \`\`\`
 
 ### TEXT FORMATTING & MARKDOWN SPECIFICATION
 The frontend renders your responses using a custom high-fidelity Markdown engine. Structure your output using standard Markdown:

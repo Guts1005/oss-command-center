@@ -22,6 +22,7 @@ import { QuickGuideModal } from './components/QuickGuideModal';
 import { AuthModal } from './components/AuthModal';
 import { IntegrationsModal } from './components/IntegrationsModal';
 import { CookiePreferencesModal } from './components/CookiePreferencesModal';
+import { DeveloperNotesModal } from './components/DeveloperNotesModal';
 import { MobileBottomDock } from './components/MobileBottomDock';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useViewRouting } from './hooks/useViewRouting';
@@ -76,6 +77,7 @@ const AppContent: React.FC = () => {
   // Filters state
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
+  const [timeframeFilter, setTimeframeFilter] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [scopeFilter, setScopeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -90,6 +92,7 @@ const AppContent: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState<boolean>(false);
   const [isCookieModalOpen, setIsCookieModalOpen] = useState<boolean>(false);
+  const [isNotesModalOpen, setIsNotesModalOpen] = useState<boolean>(false);
 
   const prevItemsRef = React.useRef<Map<string, { status: string; action_needed: string }>>(new Map());
   const isInitialMount = React.useRef<boolean>(true);
@@ -252,14 +255,33 @@ const AppContent: React.FC = () => {
     return newItem;
   }, []);
 
-  // Compute reactive active contributions in demo mode or live mode
   const activeFilteredContributions = React.useMemo(() => {
-    if (user) return contributions;
-    if (!isDemoMode) return [];
+    const rawList = user ? contributions : (isDemoMode ? demoContributions : []);
+    if (!rawList.length) return [];
 
-    return demoContributions
+    return rawList
       .filter((c) => {
         if (platformFilter !== 'all' && c.platform !== platformFilter) return false;
+
+        if (timeframeFilter !== 'all') {
+          const nowTime = Date.now();
+          const todayDateStr = new Date(nowTime).toISOString().split('T')[0];
+          const yesterdayObj = new Date(nowTime - 24 * 3600 * 1000);
+          const yesterdayDateStr = yesterdayObj.toISOString().split('T')[0];
+          const itemDate = (c.last_activity_at || c.created_at || '').split('T')[0];
+          const diffHours = (nowTime - new Date(c.last_activity_at || c.created_at).getTime()) / (1000 * 3600);
+
+          if (timeframeFilter === 'yesterday') {
+            if (itemDate !== yesterdayDateStr && (diffHours < 12 || diffHours > 48)) {
+              return false;
+            }
+          } else if (timeframeFilter === 'today') {
+            if (itemDate !== todayDateStr) return false;
+          } else if (timeframeFilter === 'week') {
+            const diffDays = (nowTime - new Date(c.last_activity_at || c.created_at).getTime()) / (1000 * 3600 * 24);
+            if (diffDays > 7) return false;
+          }
+        }
 
         if (statusFilter !== 'all') {
           const cStatus = (c.status === 'opened' ? 'open' : c.status).toLowerCase();
@@ -309,7 +331,7 @@ const AppContent: React.FC = () => {
         }
         return new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime();
       });
-  }, [user, isDemoMode, contributions, demoContributions, platformFilter, statusFilter, actionFilter, debouncedSearch, sortBy]);
+  }, [user, isDemoMode, contributions, demoContributions, platformFilter, timeframeFilter, statusFilter, actionFilter, debouncedSearch, sortBy]);
 
   const activeStats = user ? stats : (isDemoMode ? demoStats : {
     total: 0,
@@ -352,6 +374,7 @@ const AppContent: React.FC = () => {
           params: {
             status: statusFilter,
             platform: platformFilter,
+            timeframe: timeframeFilter !== 'all' ? timeframeFilter : undefined,
             action: actionFilter,
             scope: scopeFilter !== 'all' ? scopeFilter : undefined,
             search: debouncedSearch || undefined,
@@ -369,7 +392,7 @@ const AppContent: React.FC = () => {
         }
       }
     },
-    [statusFilter, platformFilter, actionFilter, scopeFilter, debouncedSearch, sortBy]
+    [statusFilter, platformFilter, timeframeFilter, actionFilter, scopeFilter, debouncedSearch, sortBy]
   );
 
   // Initial load and filter change updates
@@ -515,6 +538,7 @@ const AppContent: React.FC = () => {
     setStatusFilter('all');
     setActionFilter('all');
     setPlatformFilter('all');
+    setTimeframeFilter('all');
     setScopeFilter('all');
     setSearchQuery('');
     setSortBy('recent');
@@ -570,7 +594,12 @@ const AppContent: React.FC = () => {
           break;
         case 'FILTER_PLATFORM':
           if (typeof action.payload === 'string') {
-            setPlatformFilter(action.payload);
+            setPlatformFilter(action.payload.toLowerCase());
+          }
+          break;
+        case 'FILTER_TIMEFRAME':
+          if (typeof action.payload === 'string') {
+            setTimeframeFilter(action.payload.toLowerCase());
           }
           break;
         case 'FILTER_ACTION':
@@ -624,6 +653,17 @@ const AppContent: React.FC = () => {
           break;
         case 'OPEN_GUIDE_MODAL':
           setIsGuideModalOpen(true);
+          break;
+        case 'ADD_NOTE':
+          if (action.payload) {
+            const content = typeof action.payload === 'object' ? action.payload.content : String(action.payload);
+            const targetDate = typeof action.payload === 'object' ? action.payload.targetDate : undefined;
+            axios.post('/api/notes', { content, targetDate })
+              .catch((err) => console.error('Failed to persist note from solver action:', err));
+          }
+          break;
+        case 'SHOW_NOTES':
+          setIsNotesModalOpen(true);
           break;
         default:
           console.warn('Unknown solver action:', action.type);
@@ -692,6 +732,7 @@ const AppContent: React.FC = () => {
   useModalHistory(isAuthModalOpen, () => setIsAuthModalOpen(false), 'auth');
   useModalHistory(isCommandPaletteOpen, () => setIsCommandPaletteOpen(false), 'command-palette');
   useModalHistory(isCookieModalOpen, () => setIsCookieModalOpen(false), 'cookie-preferences');
+  useModalHistory(isNotesModalOpen, () => setIsNotesModalOpen(false), 'notes');
 
   const handleSelectItem = (id: string) => {
     setSelectedId(id);
@@ -787,6 +828,22 @@ const AppContent: React.FC = () => {
                   onSortChange={setSortBy}
                   isMobileFiltersOpen={isMobileFiltersOpen}
                 />
+
+                {timeframeFilter !== 'all' && (
+                  <div className="flex items-center justify-between gap-2 px-3.5 py-2 mb-2 bg-accent-sapphire/15 border border-accent-sapphire/35 rounded-xl text-xs font-mono text-accent-sapphire shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-2 w-2 rounded-full bg-accent-sapphire animate-ping" />
+                      <span>Timeframe Filter Active: <strong>{timeframeFilter.toUpperCase()}</strong></span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTimeframeFilter('all')}
+                      className="px-2.5 py-1 rounded-md bg-surface-card hover:bg-surface-elevated border border-border-subtle text-[11px] text-text-primary hover:text-white cursor-pointer transition-colors"
+                    >
+                      Reset Timeframe
+                    </button>
+                  </div>
+                )}
 
                 {/* Main Scannable Contribution Stream */}
                 <main className="flex-1 flex flex-col min-h-0 relative">
@@ -944,6 +1001,12 @@ const AppContent: React.FC = () => {
       <CookiePreferencesModal
         isOpen={isCookieModalOpen}
         onClose={() => setIsCookieModalOpen(false)}
+      />
+
+      {/* Developer Notes & Tasks Ledger Modal */}
+      <DeveloperNotesModal
+        isOpen={isNotesModalOpen}
+        onClose={() => setIsNotesModalOpen(false)}
       />
 
       {/* Mobile Bottom Thumb Navigation Dock */}

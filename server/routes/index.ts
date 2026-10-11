@@ -12,13 +12,14 @@ import { syncRouter } from './sync.js';
 import { digestRouter } from './digest.js';
 import { demoRouter } from './demo.js';
 import { aiRouter } from './ai.js';
+import { notesRouter } from './notes.js';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { actionLimiter } from '../middleware/rate_limit.js';
 import { z } from 'zod';
 
 export const apiRouter = express.Router();
 
-// Mount Auth, Integrations, Settings, Webhooks, Events, Actions, Sync, Digest, Demo, and AI sub-routers
+// Mount Auth, Integrations, Settings, Webhooks, Events, Actions, Sync, Digest, Demo, AI, and Notes sub-routers
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/integrations', integrationsRouter);
 apiRouter.use('/settings', settingsRouter);
@@ -29,6 +30,7 @@ apiRouter.use('/sync', syncRouter);
 apiRouter.use('/digest', digestRouter);
 apiRouter.use('/demo', demoRouter);
 apiRouter.use('/ai', aiRouter);
+apiRouter.use('/notes', notesRouter);
 
 // Apply optionalAuth to all remaining contribution endpoints
 apiRouter.use(optionalAuth);
@@ -430,9 +432,20 @@ apiRouter.get('/contributions', (req: AuthenticatedRequest, res) => {
     const sort = typeof req.query.sort === 'string' ? req.query.sort : (Array.isArray(req.query.sort) ? String(req.query.sort[0]) : undefined);
     const rawAction = req.query.action_needed || req.query.action;
     const actionParam = typeof rawAction === 'string' ? rawAction : (Array.isArray(rawAction) ? String(rawAction[0]) : undefined);
+    const timeframe = typeof req.query.timeframe === 'string' ? req.query.timeframe : (Array.isArray(req.query.timeframe) ? String(req.query.timeframe[0]) : undefined);
 
     let query = 'SELECT * FROM contributions WHERE user_id = ?';
     const params: any[] = [userId];
+
+    if (timeframe && timeframe !== 'all') {
+      if (timeframe === 'yesterday') {
+        query += " AND (date(last_activity_at) = date('now', '-1 day') OR (julianday('now') - julianday(COALESCE(last_activity_at, created_at, 'now'))) BETWEEN 0.8 AND 2.0)";
+      } else if (timeframe === 'today') {
+        query += " AND date(last_activity_at) = date('now')";
+      } else if (timeframe === 'week') {
+        query += " AND (julianday('now') - julianday(COALESCE(last_activity_at, created_at, 'now'))) <= 7.0";
+      }
+    }
 
     if (platform && platform !== 'all') {
       query += ' AND platform = ?';

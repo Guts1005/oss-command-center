@@ -198,6 +198,17 @@ export function initDatabase() {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS developer_notes (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      content TEXT NOT NULL,
+      target_date TEXT,
+      is_completed INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_dev_notes_user ON developer_notes(user_id);
+    CREATE INDEX IF NOT EXISTS idx_dev_notes_date ON developer_notes(target_date);
   `);
 
   // Clean up any legacy default-local-user artifacts on startup to guarantee zero data leakage

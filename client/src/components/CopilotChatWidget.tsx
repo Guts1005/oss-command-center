@@ -30,6 +30,8 @@ function getActionDescription(action: QuerySolverAction): string {
       return `Filtered stream to **${String(action.payload).replace(/_/g, ' ')}** contributions.`;
     case 'FILTER_PLATFORM':
       return `Filtered stream to **${String(action.payload).toUpperCase()}** platform contributions.`;
+    case 'FILTER_TIMEFRAME':
+      return `Filtered stream to activity from **${String(action.payload).toUpperCase()}**.`;
     case 'FILTER_ACTION':
       return `Filtered stream to items requiring **${String(action.payload).replace(/_/g, ' ')}**.`;
     case 'SET_SEARCH':
@@ -50,6 +52,13 @@ function getActionDescription(action: QuerySolverAction): string {
       return 'Opened Track Contribution modal.';
     case 'OPEN_GUIDE_MODAL':
       return 'Opened Operational Shortcuts & Reference Guide.';
+    case 'ADD_NOTE': {
+      const content = typeof action.payload === 'object' && action.payload ? action.payload.content : action.payload;
+      const targetDate = typeof action.payload === 'object' && action.payload?.targetDate ? ` (scheduled for *${action.payload.targetDate}*)` : '';
+      return `Added developer note: "**${content}**"${targetDate}.`;
+    }
+    case 'SHOW_NOTES':
+      return 'Opened Developer Notes and scheduled tasks.';
     default:
       return `Executed page action: **${action.type.replace(/_/g, ' ')}**.`;
   }
@@ -204,12 +213,14 @@ export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
 
   const quickPrompts = [
     'Which PRs need action?',
+    'Show yesterday PRs',
+    'Show only Github PRs',
+    'Add note for Gitlab',
+    'Show my notes',
     'Filter to In Review',
     'Open PR #1478',
     'Show Analytics',
     'Switch Theme',
-    'Search for Soup',
-    'Summarize open reviews',
     'Clear all filters',
   ];
 
@@ -330,7 +341,9 @@ export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
                           {msg.executedAction.type.replace(/_/g, ' ')}
                           {msg.executedAction.payload && typeof msg.executedAction.payload === 'string'
                             ? `: ${msg.executedAction.payload}`
-                            : ''}
+                            : (typeof msg.executedAction.payload === 'object' && msg.executedAction.payload !== null
+                                ? `: ${msg.executedAction.payload.content || JSON.stringify(msg.executedAction.payload)}`
+                                : '')}
                         </span>
                       </div>
                     )}
