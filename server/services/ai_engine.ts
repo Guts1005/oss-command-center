@@ -166,31 +166,63 @@ Draft the exact technical reply to post back to the maintainer:`;
   return await queryOllama(prompt, system);
 }
 
-export async function askPlatformCopilot(userQuestion: string, userId?: string): Promise<string> {
+export async function askPlatformCopilot(userQuestion: string, userId?: string, clientContext?: any): Promise<string> {
   let statsContext = '';
   if (userId) {
     const total = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ?').get(userId) as any)?.count || 0;
     const actionNeeded = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND action_needed != 'none'").get(userId) as any)?.count || 0;
+    const inReview = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'in_review'").get(userId) as any)?.count || 0;
     const awaitingMaintainer = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status IN ('open', 'opened', 'submitted', 'awaiting-reply') AND action_needed = 'none'").get(userId) as any)?.count || 0;
     const activeItems = db.prepare(
-      "SELECT repo, number, title, action_needed, status FROM contributions WHERE user_id = ? AND action_needed != 'none' LIMIT 5"
+      "SELECT id, repo, number, title, action_needed, status, platform FROM contributions WHERE user_id = ? ORDER BY last_activity_at DESC LIMIT 15"
     ).all(userId) as any[];
 
     statsContext = `User Metrics:
-- Total Contributions Tracked: ${total}
+- Total Tracked: ${total}
 - Action Needed Now: ${actionNeeded}
+- In Review: ${inReview}
 - Awaiting Maintainer: ${awaitingMaintainer}
-Active PRs needing attention:
-${activeItems.map(i => `* ${i.repo} #${i.number}: ${i.title} (Action: ${i.action_needed})`).join('\n')}`;
+Tracked Contributions:
+${activeItems.map(i => `* [${i.id}] ${i.repo} #${i.number}: "${i.title}" (Status: ${i.status}, Action: ${i.action_needed})`).join('\n')}`;
+  } else if (clientContext?.activeItems && Array.isArray(clientContext.activeItems)) {
+    const items = clientContext.activeItems;
+    statsContext = `Active Screen Context:
+- View Mode: ${clientContext.view || 'stream'}
+- Active Theme: ${clientContext.theme || 'dark'}
+- Visible Items Count: ${items.length}
+Items:
+${items.map((i: any) => `* [${i.id}] ${i.repo} #${i.number}: "${i.title}" (Status: ${i.status}, Action: ${i.action_needed})`).join('\n')}`;
   }
 
-  const system = `You are the intelligent OSS Command Center Query Solver and Helper.
-You have complete knowledge of this platform's database tables (contributions, activity_events, user_settings), API endpoints (/api/stats, /api/contributions, /api/sync), and triage rules.
+  const system = `You are the intelligent OSS Command Center Query Solver and In-Page Automation Agent.
+You have complete knowledge of this platform's database tables, UI views, filtering capabilities, and triage workflows.
 You advise the user on their open-source contributions, which PRs need immediate attention, and how to resolve review questions and unblock pull requests.
+
+### IN-PAGE AUTOMATION ACTION PROTOCOL
+When the user's intent asks to control, filter, navigate, search, open, or modify the screen, you MUST append an executable action block in this exact markdown format:
+\`\`\`action
+{"type": "ACTION_TYPE", "payload": "VALUE"}
+\`\`\`
+
+Supported Action Types and Payloads:
+- FILTER_STATUS: 'all' | 'action_needed' | 'in_review' | 'merged' | 'closed' | 'stale'
+- FILTER_PLATFORM: 'all' | 'github' | 'gitlab'
+- FILTER_ACTION: 'all' | 'reply' | 'push_changes' | 'none'
+- SET_SEARCH: string keyword
+- CLEAR_FILTERS: true
+- NAVIGATE_VIEW: 'stream' | 'analytics' | 'repositories' | 'settings' | 'about'
+- OPEN_ITEM: number or contribution ID (e.g. '1478', 'gl:rtems/rtos#1478')
+- CLOSE_ITEM: true
+- TOGGLE_THEME: 'light' | 'dark'
+- TRIGGER_SYNC: true
+- OPEN_TRACK_MODAL: true
+- OPEN_GUIDE_MODAL: true
+
 Rules:
 1. Be direct, concise, and helpful.
 2. Use markdown formatting with bullet points.
-3. Strictly zero em-dashes anywhere in your response.`;
+3. If an action is requested, explain what you are doing and include the \`\`\`action block at the end.
+4. Strictly zero em-dashes anywhere in your response.`;
 
   const prompt = `Current System Context:
 ${statsContext || 'Global platform instance.'}

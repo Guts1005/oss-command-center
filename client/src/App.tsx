@@ -31,7 +31,7 @@ import { RepositoriesView } from './components/views/RepositoriesView';
 import { SettingsView } from './components/views/SettingsView';
 import { SecurityPolicyView } from './components/views/SecurityPolicyView';
 import { AboutView } from './components/views/AboutView';
-import { CopilotChatWidget } from './components/CopilotChatWidget';
+import { CopilotChatWidget, QuerySolverAction } from './components/CopilotChatWidget';
 
 import { sendDesktopNotification } from './utils/notifications';
 
@@ -547,6 +547,91 @@ const AppContent: React.FC = () => {
     }
   };
 
+  // Automated action dispatcher for Query Solver
+  const handleExecuteSolverAction = useCallback(
+    (action: QuerySolverAction) => {
+      switch (action.type) {
+        case 'NAVIGATE_VIEW':
+          if (typeof action.payload === 'string') {
+            setViewMode(action.payload as any);
+          }
+          break;
+        case 'FILTER_STATUS':
+          if (typeof action.payload === 'string') {
+            const val = action.payload.toLowerCase();
+            if (val === 'in_review' || val === 'in-review' || val === 'review') {
+              setStatusFilter('active');
+            } else if (val === 'action_needed' || val === 'action-needed' || val === 'action') {
+              setStatusFilter('action-needed');
+            } else {
+              setStatusFilter(val);
+            }
+          }
+          break;
+        case 'FILTER_PLATFORM':
+          if (typeof action.payload === 'string') {
+            setPlatformFilter(action.payload);
+          }
+          break;
+        case 'FILTER_ACTION':
+          if (typeof action.payload === 'string') {
+            setActionFilter(action.payload);
+          }
+          break;
+        case 'SET_SEARCH':
+          if (typeof action.payload === 'string') {
+            setSearchQuery(action.payload);
+            setDebouncedSearch(action.payload);
+          }
+          break;
+        case 'CLEAR_FILTERS':
+          handleResetFilters();
+          break;
+        case 'OPEN_ITEM':
+          if (action.payload) {
+            const query = String(action.payload).toLowerCase();
+            const target = activeFilteredContributions.find(
+              (c) =>
+                c.id.toLowerCase() === query ||
+                String(c.number) === query ||
+                c.repo.toLowerCase().includes(query) ||
+                c.title.toLowerCase().includes(query)
+            );
+            if (target) {
+              setSelectedId(target.id);
+            } else {
+              setSelectedId(String(action.payload));
+            }
+          }
+          break;
+        case 'CLOSE_ITEM':
+          setSelectedId(null);
+          break;
+        case 'TOGGLE_THEME':
+          if (action.payload === 'light') {
+            if (theme !== 'light') toggleTheme();
+          } else if (action.payload === 'dark') {
+            if (theme !== 'dark') toggleTheme();
+          } else {
+            toggleTheme();
+          }
+          break;
+        case 'TRIGGER_SYNC':
+          handleSync();
+          break;
+        case 'OPEN_TRACK_MODAL':
+          setIsTrackModalOpen(true);
+          break;
+        case 'OPEN_GUIDE_MODAL':
+          setIsGuideModalOpen(true);
+          break;
+        default:
+          console.warn('Unknown solver action:', action.type);
+      }
+    },
+    [setViewMode, handleResetFilters, activeFilteredContributions, theme, toggleTheme, handleSync]
+  );
+
   // Global keybindings
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -873,8 +958,13 @@ const AppContent: React.FC = () => {
         actionNeededCount={activeStats?.actionNeeded ?? 0}
       />
 
-      {/* Dedicated Floating OSS Copilot Chat Widget */}
-      <CopilotChatWidget />
+      {/* Dedicated Floating OSS Query Solver Widget */}
+      <CopilotChatWidget
+        contributions={activeFilteredContributions}
+        currentView={viewMode}
+        currentTheme={theme}
+        onExecuteAction={handleExecuteSolverAction}
+      />
     </div>
   );
 };

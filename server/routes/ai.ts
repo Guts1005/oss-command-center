@@ -46,6 +46,7 @@ aiRouter.post('/suggest-reply/:id', actionLimiter, async (req: AuthenticatedRequ
 
 const copilotSchema = z.object({
   question: z.string().min(1).max(2000),
+  clientContext: z.record(z.any()).optional(),
 });
 
 aiRouter.post('/copilot', actionLimiter, async (req: AuthenticatedRequest, res) => {
@@ -56,7 +57,7 @@ aiRouter.post('/copilot', actionLimiter, async (req: AuthenticatedRequest, res) 
     }
 
     const userId = req.user?.id;
-    const answer = await askPlatformCopilot(parsed.data.question, userId);
+    const answer = await askPlatformCopilot(parsed.data.question, userId, parsed.data.clientContext);
     return res.json({ answer });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

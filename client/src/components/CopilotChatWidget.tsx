@@ -1,16 +1,48 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { Sparkles, Send, X, Trash2, Bot, User as UserIcon, Loader2 } from 'lucide-react';
+import { Sparkles, Send, X, Trash2, Bot, User as UserIcon, Loader2, Zap } from 'lucide-react';
+
+export interface QuerySolverAction {
+  type: string;
+  payload?: any;
+}
 
 interface ChatMessage {
   id: string;
   sender: 'user' | 'copilot';
   text: string;
+  executedAction?: QuerySolverAction;
   timestamp: string;
 }
 
-export const CopilotChatWidget: React.FC = () => {
+export interface CopilotChatWidgetProps {
+  contributions?: any[];
+  currentView?: string;
+  currentTheme?: string;
+  onExecuteAction?: (action: QuerySolverAction) => void;
+}
+
+function extractAction(rawText: string): { cleanText: string; action?: QuerySolverAction } {
+  const match = rawText.match(/```action\s*([\s\S]*?)\s*```/);
+  if (!match) {
+    return { cleanText: rawText };
+  }
+  try {
+    const action = JSON.parse(match[1].trim());
+    const cleanText = rawText.replace(/```action[\s\S]*?```/, '').trim();
+    return { cleanText, action };
+  } catch {
+    return { cleanText: rawText };
+  }
+}
+
+export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
+  contributions,
+  currentView,
+  currentTheme,
+  onExecuteAction,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +57,7 @@ export const CopilotChatWidget: React.FC = () => {
       {
         id: 'welcome_1',
         sender: 'copilot',
-        text: 'I am your OSS Query Solver, trained to resolve pull request blockers, summarize maintainer feedback, and answer repository contribution questions. How can I assist you today?',
+        text: 'I am your OSS Query Solver. Ask me anything about pull requests, reviews, or unblocking contributions, or tell me to control the page (e.g. filter items, switch tabs, search, or toggle theme).',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ];
@@ -65,13 +97,41 @@ export const CopilotChatWidget: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post('/api/ai/copilot', { question: promptText }, { timeout: 120000 });
+      const payload: any = { question: promptText };
+      if (contributions && contributions.length > 0) {
+        payload.clientContext = {
+          view: currentView,
+          theme: currentTheme,
+          activeItems: contributions.slice(0, 15).map((c: any) => ({
+            id: c.id,
+            number: c.number,
+            repo: c.repo,
+            title: c.title,
+            status: c.status,
+            action_needed: c.action_needed,
+            platform: c.platform,
+            bounty: c.bounty,
+          })),
+        };
+      }
+
+      const res = await axios.post('/api/ai/copilot', payload, { timeout: 120000 });
       const answer = res.data?.answer || 'No response returned from the model.';
+
+      const { cleanText, action } = extractAction(answer);
+      if (action && onExecuteAction) {
+        try {
+          onExecuteAction(action);
+        } catch (e) {
+          console.error('Failed to execute page action:', e);
+        }
+      }
 
       const copilotMsg: ChatMessage = {
         id: `copilot_${Date.now()}`,
         sender: 'copilot',
-        text: answer,
+        text: cleanText || answer,
+        executedAction: action,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
@@ -102,7 +162,7 @@ export const CopilotChatWidget: React.FC = () => {
       {
         id: `welcome_${Date.now()}`,
         sender: 'copilot',
-        text: 'Chat history cleared. What would you like to examine next?',
+        text: 'Chat history cleared. What query would you like to solve or automate next?',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ];
@@ -111,8 +171,13 @@ export const CopilotChatWidget: React.FC = () => {
 
   const quickPrompts = [
     'Which PRs need action?',
+    'Filter to In Review',
+    'Open PR #1478',
+    'Show Analytics',
+    'Switch Theme',
+    'Search for Soup',
     'Summarize open reviews',
-    'How do I unblock #1478?',
+    'Clear all filters',
   ];
 
   return (
@@ -219,6 +284,20 @@ export const CopilotChatWidget: React.FC = () => {
                     }`}
                   >
                     <div className="whitespace-pre-wrap select-text">{msg.text}</div>
+                    {msg.executedAction && (
+                      <div className="mt-2 pt-2 border-t border-border-subtle/50 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-accent-sapphire/20 text-accent-sapphire border border-accent-sapphire/30">
+                          <Zap className="h-3 w-3" />
+                          <span>PAGE ACTION EXECUTED</span>
+                        </span>
+                        <span className="text-[10px] font-mono text-text-muted">
+                          {msg.executedAction.type.replace(/_/g, ' ')}
+                          {msg.executedAction.payload && typeof msg.executedAction.payload === 'string'
+                            ? `: ${msg.executedAction.payload}`
+                            : ''}
+                        </span>
+                      </div>
+                    )}
                     <div
                       className={`text-[9px] font-mono mt-1 ${
                         msg.sender === 'user' ? 'text-white/70 text-right' : 'text-text-muted text-left'
