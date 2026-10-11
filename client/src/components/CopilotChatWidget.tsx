@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { Sparkles, Send, X, Trash2, Bot, User as UserIcon, Loader2, Zap } from 'lucide-react';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 export interface QuerySolverAction {
   type: string;
@@ -23,6 +24,37 @@ export interface CopilotChatWidgetProps {
   onExecuteAction?: (action: QuerySolverAction) => void;
 }
 
+function getActionDescription(action: QuerySolverAction): string {
+  switch (action.type) {
+    case 'FILTER_STATUS':
+      return `Filtered stream to **${String(action.payload).replace(/_/g, ' ')}** contributions.`;
+    case 'FILTER_PLATFORM':
+      return `Filtered stream to **${String(action.payload).toUpperCase()}** platform contributions.`;
+    case 'FILTER_ACTION':
+      return `Filtered stream to items requiring **${String(action.payload).replace(/_/g, ' ')}**.`;
+    case 'SET_SEARCH':
+      return `Applied search filter for **"${action.payload}"**.`;
+    case 'CLEAR_FILTERS':
+      return 'Reset all active filters to default stream view.';
+    case 'NAVIGATE_VIEW':
+      return `Navigated to **${String(action.payload).toUpperCase()}** view.`;
+    case 'OPEN_ITEM':
+      return `Opened details inspector for contribution **#${action.payload}**.`;
+    case 'CLOSE_ITEM':
+      return 'Closed details inspector.';
+    case 'TOGGLE_THEME':
+      return `Switched display theme to **${action.payload || 'alternate'}** mode.`;
+    case 'TRIGGER_SYNC':
+      return 'Initiated live sync with upstream GitHub and GitLab APIs.';
+    case 'OPEN_TRACK_MODAL':
+      return 'Opened Track Contribution modal.';
+    case 'OPEN_GUIDE_MODAL':
+      return 'Opened Operational Shortcuts & Reference Guide.';
+    default:
+      return `Executed page action: **${action.type.replace(/_/g, ' ')}**.`;
+  }
+}
+
 function extractAction(rawText: string): { cleanText: string; action?: QuerySolverAction } {
   const match = rawText.match(/```action\s*([\s\S]*?)\s*```/);
   if (!match) {
@@ -30,7 +62,8 @@ function extractAction(rawText: string): { cleanText: string; action?: QuerySolv
   }
   try {
     const action = JSON.parse(match[1].trim());
-    const cleanText = rawText.replace(/```action[\s\S]*?```/, '').trim();
+    const remainingText = rawText.replace(/```action[\s\S]*?```/, '').trim();
+    const cleanText = remainingText || getActionDescription(action);
     return { cleanText, action };
   } catch {
     return { cleanText: rawText };
@@ -283,7 +316,10 @@ export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
                         : 'bg-surface-elevated text-text-primary border border-border-subtle rounded-bl-xs'
                     }`}
                   >
-                    <div className="whitespace-pre-wrap select-text">{msg.text}</div>
+                    <MarkdownRenderer
+                      content={msg.text}
+                      className={msg.sender === 'user' ? 'text-white' : 'text-text-primary'}
+                    />
                     {msg.executedAction && (
                       <div className="mt-2 pt-2 border-t border-border-subtle/50 flex flex-wrap items-center gap-1.5">
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-accent-sapphire/20 text-accent-sapphire border border-accent-sapphire/30">
