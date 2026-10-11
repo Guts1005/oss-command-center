@@ -89,7 +89,7 @@ export async function triageContribution(contributionId: string, userId?: string
     'SELECT actor, type, review_state, body_excerpt, created_at FROM activity_events WHERE contribution_id = ? ORDER BY created_at DESC LIMIT 10'
   ).all(contributionId) as any[];
 
-  const system = `You are the Staff Systems Engineer Copilot for the OSS Command Center.
+  const system = `You are the Staff Systems Engineer Query Solver for the OSS Command Center.
 Your purpose is to inspect maintainer reviews, extract exact technical action items, and draft concise, peer-to-peer replies.
 Rules:
 1. Ground all feedback in primary evidence (maintainer comments, review states).
@@ -184,9 +184,9 @@ Active PRs needing attention:
 ${activeItems.map(i => `* ${i.repo} #${i.number}: ${i.title} (Action: ${i.action_needed})`).join('\n')}`;
   }
 
-  const system = `You are the intelligent OSS Command Center AI Copilot.
+  const system = `You are the intelligent OSS Command Center Query Solver and Helper.
 You have complete knowledge of this platform's database tables (contributions, activity_events, user_settings), API endpoints (/api/stats, /api/contributions, /api/sync), and triage rules.
-You advise the user on their open-source contributions, which PRs need immediate attention, and how to unblock reviews.
+You advise the user on their open-source contributions, which PRs need immediate attention, and how to resolve review questions and unblock pull requests.
 Rules:
 1. Be direct, concise, and helpful.
 2. Use markdown formatting with bullet points.

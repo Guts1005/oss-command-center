@@ -16,7 +16,7 @@ export const CopilotChatWidget: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
-      const saved = localStorage.getItem('oss_copilot_chat');
+      const saved = localStorage.getItem('oss_query_solver_chat') || localStorage.getItem('oss_copilot_chat');
       if (saved) return JSON.parse(saved);
     } catch {
       // ignore parsing error
@@ -25,7 +25,7 @@ export const CopilotChatWidget: React.FC = () => {
       {
         id: 'welcome_1',
         sender: 'copilot',
-        text: 'I am your dedicated OSS Copilot trained on your contributions, pull requests, maintainer feedback, and triage rules. How can I assist you today?',
+        text: 'I am your OSS Query Solver, trained to resolve pull request blockers, summarize maintainer feedback, and answer repository contribution questions. How can I assist you today?',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ];
@@ -36,7 +36,7 @@ export const CopilotChatWidget: React.FC = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('oss_copilot_chat', JSON.stringify(messages));
+      localStorage.setItem('oss_query_solver_chat', JSON.stringify(messages));
     } catch {
       // ignore storage quota error
     }
@@ -77,11 +77,11 @@ export const CopilotChatWidget: React.FC = () => {
 
       setMessages((prev) => [...prev, copilotMsg]);
     } catch (err: any) {
-      const errMsg = err.response?.data?.error || err.message || 'Failed to reach local neural engine.';
+      const errMsg = err.response?.data?.error || err.message || 'Failed to reach neural query solver.';
       const errorMsg: ChatMessage = {
         id: `error_${Date.now()}`,
         sender: 'copilot',
-        text: `Error: ${errMsg}. Ensure the local AI engine is running on port 11500.`,
+        text: `Error: ${errMsg}. Ensure the neural query solver service is running.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -125,10 +125,10 @@ export const CopilotChatWidget: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen((prev) => !prev)}
           className="flex items-center gap-2 h-11 px-3.5 sm:px-4 rounded-full bg-accent-sapphire hover:bg-accent-sapphire/90 text-white font-mono font-bold text-xs shadow-lg shadow-accent-sapphire/25 border border-white/15 cursor-pointer backdrop-blur-md transition-all"
-          title="Open OSS Copilot Assistant"
+          title="Open OSS Query Solver"
         >
           <Sparkles className="h-4 w-4 shrink-0 text-white animate-pulse" />
-          <span className="tracking-wide">ASK COPILOT</span>
+          <span className="tracking-wide">QUERY SOLVER</span>
           <span className="flex h-2 w-2 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-merged opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-status-merged" />
@@ -154,12 +154,12 @@ export const CopilotChatWidget: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-text-primary tracking-tight">OSS Copilot</span>
+                    <span className="font-bold text-sm text-text-primary tracking-tight">Query Solver</span>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-status-merged/15 text-status-merged border border-status-merged/30">
-                      RTX 3060
+                      ONLINE
                     </span>
                   </div>
-                  <p className="text-[11px] font-mono text-text-muted">model: oss-copilot (1.5B Qwen)</p>
+                  <p className="text-[11px] font-mono text-text-muted">Automated open source query resolution</p>
                 </div>
               </div>
 
@@ -242,7 +242,7 @@ export const CopilotChatWidget: React.FC = () => {
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   </div>
                   <div className="bg-surface-elevated border border-border-subtle rounded-xl px-3 py-2 text-[11px] font-mono flex items-center gap-2">
-                    <span>Consulting local neural copilot...</span>
+                    <span>Resolving query with neural engine...</span>
                   </div>
                 </div>
               )}
@@ -259,7 +259,7 @@ export const CopilotChatWidget: React.FC = () => {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Ask about PRs, reviews, unblocking..."
+                  placeholder="Ask any query regarding PRs, reviews, unblocking..."
                   className="flex-1 bg-transparent border-0 outline-none resize-none text-xs text-text-primary placeholder:text-text-muted font-sans py-1 max-h-24"
                 />
                 <button
@@ -274,7 +274,7 @@ export const CopilotChatWidget: React.FC = () => {
               </div>
               <div className="flex items-center justify-between px-1 mt-1 text-[10px] font-mono text-text-dim">
                 <span>Shift+Enter for newline</span>
-                <span>Port 11500 (Ollama)</span>
+                <span>Query Engine Active</span>
               </div>
             </div>
           </motion.div>

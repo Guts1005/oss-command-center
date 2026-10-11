@@ -13,7 +13,7 @@ aiRouter.get('/status', async (_req, res) => {
     const isAvailable = await checkOllamaAvailable();
     return res.json({
       available: isAvailable,
-      engine: 'Ollama Local (RTX 3060)',
+      engine: 'OSS Neural Query Solver',
       model: process.env.OLLAMA_MODEL || 'oss-copilot',
       endpoint: getOllamaHost(),
     });
