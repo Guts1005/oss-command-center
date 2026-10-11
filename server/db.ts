@@ -1,0 +1,292 @@
+import Database from 'better-sqlite3';
+import path from 'path';
+
+const DB_PATH = process.env.DB_PATH
+  ? (process.env.DB_PATH === ':memory:' ? ':memory:' : path.resolve(process.cwd(), process.env.DB_PATH))
+  : path.resolve(process.cwd(), 'contributions.db');
+export const db = new Database(DB_PATH);
+
+// Enable WAL mode for high-concurrency read/write transactions
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+export function initDatabase() {
+  // 1. Users table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      display_name TEXT,
+      avatar_url TEXT,
+      github_id TEXT,
+      gitlab_id TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+
+  // 1b. OAuth states table (CSRF protection and redirect tracking)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS oauth_states (
+      state TEXT PRIMARY KEY,
+      provider TEXT NOT NULL,
+      redirect_url TEXT,
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_oauth_states_expires ON oauth_states(expires_at);
+  `);
+
+  // 2. User sessions table (HttpOnly cryptographically secure session store)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at TEXT NOT NULL,
+      ip_hash TEXT,
+      user_agent TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+  `);
+
+  // 3. User Integrations table (Encrypted at rest with AES-256-GCM)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_integrations (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      platform TEXT NOT NULL,
+      username TEXT NOT NULL,
+      host TEXT NOT NULL DEFAULT 'https://gitlab.com',
+      encrypted_token TEXT,
+      token_iv TEXT,
+      token_auth_tag TEXT,
+      last_synced_at TEXT,
+      sync_status TEXT DEFAULT 'idle',
+      sync_error TEXT,
+      created_at TEXT NOT NULL,
+      UNIQUE(user_id, platform, host)
+    );
+    CREATE INDEX IF NOT EXISTS idx_integrations_user ON user_integrations(user_id);
+
+    CREATE TABLE IF NOT EXISTS user_settings (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      audio_chime_enabled INTEGER NOT NULL DEFAULT 1,
+      sync_cadence_minutes INTEGER NOT NULL DEFAULT 30,
+      webhook_url TEXT,
+      webhook_secret TEXT,
+      webhook_events TEXT NOT NULL DEFAULT '["action_needed","review","merged"]',
+      slack_webhook_url TEXT,
+      discord_webhook_url TEXT,
+      n8n_webhook_url TEXT,
+      n8n_webhook_secret TEXT,
+      background_sync_enabled INTEGER NOT NULL DEFAULT 1,
+      email_digest_enabled INTEGER NOT NULL DEFAULT 0,
+      email_digest_cadence TEXT NOT NULL DEFAULT 'weekly',
+      email_digest_address TEXT,
+      last_email_digest_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+
+  // Migrate user_settings for existing databases
+  const settingsTableInfo = db.prepare("PRAGMA table_info(user_settings)").all() as any[];
+  const existingSettingsCols = new Set(settingsTableInfo.map(col => col.name));
+
+  if (!existingSettingsCols.has('slack_webhook_url')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN slack_webhook_url TEXT;");
+  }
+  if (!existingSettingsCols.has('discord_webhook_url')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN discord_webhook_url TEXT;");
+  }
+  if (!existingSettingsCols.has('n8n_webhook_url')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN n8n_webhook_url TEXT;");
+  }
+  if (!existingSettingsCols.has('n8n_webhook_secret')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN n8n_webhook_secret TEXT;");
+  }
+  if (!existingSettingsCols.has('background_sync_enabled')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN background_sync_enabled INTEGER NOT NULL DEFAULT 1;");
+  }
+  if (!existingSettingsCols.has('email_digest_enabled')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN email_digest_enabled INTEGER NOT NULL DEFAULT 0;");
+  }
+  if (!existingSettingsCols.has('email_digest_cadence')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN email_digest_cadence TEXT NOT NULL DEFAULT 'weekly';");
+  }
+  if (!existingSettingsCols.has('email_digest_address')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN email_digest_address TEXT;");
+  }
+  if (!existingSettingsCols.has('last_email_digest_at')) {
+    db.exec("ALTER TABLE user_settings ADD COLUMN last_email_digest_at TEXT;");
+  }
+
+  // Migrate users table for existing databases
+  const usersTableInfo = db.prepare("PRAGMA table_info(users)").all() as any[];
+  const existingUsersCols = new Set(usersTableInfo.map(col => col.name));
+
+  if (!existingUsersCols.has('github_id')) {
+    db.exec("ALTER TABLE users ADD COLUMN github_id TEXT;");
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_id ON users(github_id) WHERE github_id IS NOT NULL;");
+  }
+  if (!existingUsersCols.has('gitlab_id')) {
+    db.exec("ALTER TABLE users ADD COLUMN gitlab_id TEXT;");
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_gitlab_id ON users(gitlab_id) WHERE gitlab_id IS NOT NULL;");
+  }
+
+  // 4. Check if contributions table needs migration to multi-tenant
+  const contribTableInfo = db.prepare("PRAGMA table_info(contributions)").all() as any[];
+  const hasContribTable = contribTableInfo.length > 0;
+  const hasUserIdColumn = contribTableInfo.some(col => col.name === 'user_id');
+
+  if (hasContribTable && !hasUserIdColumn) {
+    console.log('[DB Migration] Migrating legacy schema to secure multi-tenant schema...');
+    db.exec(`
+      DROP TABLE IF EXISTS contributions;
+      DROP TABLE IF EXISTS activity_events;
+    `);
+  } else if (!hasContribTable) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS contributions (
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        id TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        repo TEXT NOT NULL,
+        number INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        type TEXT NOT NULL,
+        url TEXT NOT NULL,
+        author TEXT NOT NULL,
+        status TEXT NOT NULL,
+        action_needed TEXT NOT NULL DEFAULT 'none',
+        difficulty TEXT DEFAULT 'medium',
+        bounty_amount TEXT,
+        created_at TEXT NOT NULL,
+        last_activity_at TEXT NOT NULL,
+        last_viewed_at TEXT,
+        last_synced_at TEXT NOT NULL,
+        unread INTEGER NOT NULL DEFAULT 1,
+        notes TEXT,
+        PRIMARY KEY (user_id, id)
+      );
+
+      CREATE TABLE IF NOT EXISTS activity_events (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        contribution_id TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        actor_avatar TEXT,
+        type TEXT NOT NULL,
+        review_state TEXT,
+        body_excerpt TEXT,
+        created_at TEXT NOT NULL
+      );
+    `);
+  }
+
+  // Multi-tenant indexes
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_contrib_user_status ON contributions(user_id, status);
+    CREATE INDEX IF NOT EXISTS idx_contrib_user_action ON contributions(user_id, action_needed);
+    CREATE INDEX IF NOT EXISTS idx_contrib_user_activity ON contributions(user_id, last_activity_at);
+    CREATE INDEX IF NOT EXISTS idx_events_user_contrib ON activity_events(user_id, contribution_id);
+    
+    CREATE TABLE IF NOT EXISTS sync_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+  `);
+
+  // Clean up any legacy default-local-user artifacts on startup to guarantee zero data leakage
+  try {
+    db.prepare("DELETE FROM contributions WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM activity_events WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM user_integrations WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM user_settings WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM sessions WHERE user_id = 'default-local-user'").run();
+    db.prepare("DELETE FROM users WHERE id = 'default-local-user'").run();
+  } catch (err: any) {
+    // Ignore if tables don't exist yet
+  }
+
+  // Reset any orphaned 'syncing' status on startup to avoid permanent zombie states
+  db.prepare("UPDATE user_integrations SET sync_status = 'idle' WHERE sync_status = 'syncing'").run();
+}
+
+export interface UserRecord {
+  id: string;
+  email: string;
+  password_hash: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserIntegrationRecord {
+  id: string;
+  user_id: string;
+  platform: 'github' | 'gitlab';
+  username: string;
+  host: string;
+  encrypted_token?: string | null;
+  token_iv?: string | null;
+  token_auth_tag?: string | null;
+  last_synced_at?: string | null;
+  sync_status: 'idle' | 'syncing' | 'success' | 'failed';
+  sync_error?: string | null;
+  created_at: string;
+}
+
+export interface ContributionRecord {
+  user_id: string;
+  id: string;
+  platform: 'github' | 'gitlab';
+  repo: string;
+  number: number;
+  title: string;
+  type: 'pr' | 'issue';
+  url: string;
+  author: string;
+  status: string;
+  action_needed: 'reply' | 'push-changes' | 'none';
+  difficulty?: string;
+  bounty_amount?: string;
+  created_at: string;
+  last_activity_at: string;
+  last_viewed_at?: string | null;
+  last_synced_at: string;
+  unread: number;
+  notes?: string | null;
+}
+
+export interface ActivityEventRecord {
+  id: string;
+  user_id: string;
+  contribution_id: string;
+  actor: string;
+  actor_avatar?: string | null;
+  type: 'comment' | 'review' | 'commit' | 'status-change';
+  review_state?: string | null;
+  body_excerpt?: string | null;
+  created_at: string;
+}
+
+export interface UserSettingsRecord {
+  user_id: string;
+  audio_chime_enabled: number;
+  sync_cadence_minutes: number;
+  webhook_url?: string | null;
+  webhook_secret?: string | null;
+  webhook_events: string;
+  slack_webhook_url?: string | null;
+  discord_webhook_url?: string | null;
+  n8n_webhook_url?: string | null;
+  n8n_webhook_secret?: string | null;
+  background_sync_enabled: number;
+  created_at: string;
+  updated_at: string;
+}

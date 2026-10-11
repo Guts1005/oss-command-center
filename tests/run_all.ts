@@ -1,0 +1,63 @@
+import fs from 'fs';
+import path from 'path';
+import { spawnSync } from 'child_process';
+
+const testDb = path.resolve(process.cwd(), 'test_isolated.db');
+
+// Clean any leftover test db
+for (const f of [testDb, `${testDb}-wal`, `${testDb}-shm`]) {
+  if (fs.existsSync(f)) fs.unlinkSync(f);
+}
+
+const env = { ...process.env, DB_PATH: 'test_isolated.db' };
+
+const testFiles = [
+  'tests/routing.test.ts',
+  'tests/theme.test.ts',
+  'tests/analytics.test.ts',
+  'tests/repositories.test.ts',
+  'tests/webhooks.test.ts',
+  'tests/crypto.test.ts',
+  'tests/db.test.ts',
+  'tests/api_integration.test.ts',
+  'tests/multi_tenant.test.ts',
+  'tests/settings_export.test.ts',
+  'tests/inbound_webhooks.test.ts',
+  'tests/pr_actions.test.ts',
+  'tests/production_hardening.test.ts',
+  'tests/notifications_and_cron.test.ts',
+  'tests/oauth.test.ts',
+  'tests/email_digest.test.ts',
+  'tests/demo_sandbox.test.ts',
+  'tests/security_hardening_ratelimit.test.ts',
+  'tests/n8n_pipeline.test.ts'
+];
+
+let failed = false;
+
+for (const file of testFiles) {
+  console.log(`\n--- Running ${file} ---`);
+  const result = spawnSync('npx', ['tsx', file], {
+    env,
+    stdio: 'inherit',
+    shell: true
+  });
+  if (result.status !== 0) {
+    console.error(`❌ Test failed: ${file}`);
+    failed = true;
+    break;
+  }
+}
+
+// Clean up isolated test db
+for (const f of [testDb, `${testDb}-wal`, `${testDb}-shm`]) {
+  if (fs.existsSync(f)) {
+    try { fs.unlinkSync(f); } catch {}
+  }
+}
+
+if (failed) {
+  process.exit(1);
+} else {
+  console.log('\n🎉 ALL TEST SUITES PASSED CLEANLY IN ISOLATION!');
+}
