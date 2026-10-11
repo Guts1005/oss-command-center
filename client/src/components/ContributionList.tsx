@@ -121,7 +121,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
       <div className="flex flex-1 items-center justify-center p-16 bg-base">
         <div className="border border-border-subtle bg-surface p-6 rounded-lg font-mono text-sm text-text-whisper flex items-center gap-4 shadow-card">
           <span className="inline-block h-3 w-3 bg-accent-sapphire rounded-full animate-ping" />
-          <span className="text-white font-bold text-base">[SYNCING]</span>
+          <span className="text-white font-bold text-base">Syncing...</span>
           <span>LOADING CONTRIBUTIONS...</span>
         </div>
       </div>

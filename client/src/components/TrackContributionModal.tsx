@@ -126,7 +126,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                     Track Upstream Contribution
                   </h2>
                   <span className="hidden sm:inline-block border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
-                    [TRACK URL]
+                    Track URL
                   </span>
                 </div>
                 <p className="text-xs md:text-sm text-text-muted font-sans mt-0.5">

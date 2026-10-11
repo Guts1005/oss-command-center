@@ -77,7 +77,10 @@ app.use(cors({
     if (!origin) return callback(null, true);
     if (
       allowedOrigins.includes(origin) ||
-      (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
+      (process.env.NODE_ENV !== 'production' && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) ||
+      /\.trycloudflare\.com$/.test(origin) ||
+      /\.vercel\.app$/.test(origin) ||
+      /\.pages\.dev$/.test(origin)
     ) {
       return callback(null, true);
     }

@@ -209,7 +209,7 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({
 
     // Geological elevation markers along the primary ridge and saddle
     const markers: ElevationMarker[] = [
-      { u: 0.36, v: 0.08, label: 'SUMMIT +1,842M [RIDGE_NORTH]' },
+      { u: 0.36, v: 0.08, label: 'SUMMIT +1,842M (RIDGE_NORTH)' },
       { u: 0.44, v: 0.35, label: 'ARÊTE ESCARPMENT 68°' },
       { u: 0.34, v: 0.52, label: 'SADDLE PASS +1,120M' },
       { u: 0.68, v: 0.75, label: 'VALLEY DRAINAGE BASIN' },

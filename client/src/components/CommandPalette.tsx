@@ -78,7 +78,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
         <div className="max-h-[460px] overflow-y-auto p-3 space-y-1.5">
           {filtered.length === 0 ? (
             <div className="p-10 text-center text-sm font-mono text-text-muted">
-              [NO MATCHING RESULTS FOUND]
+              No matching results found
             </div>
           ) : (
             filtered.map((item, idx) => {
@@ -109,7 +109,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                           {item.repo}#{item.number}
                         </span>
                         <span className="text-xs uppercase font-mono font-bold px-2 py-0.5 rounded border border-border-bold bg-base text-text-muted">
-                          [{item.status}]
+                          {item.status}
                         </span>
                       </div>
                       <div className="text-sm md:text-base font-sans font-semibold text-white truncate mt-1">

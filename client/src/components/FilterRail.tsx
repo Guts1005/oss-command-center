@@ -90,7 +90,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
   ];
 
   return (
-    <div className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-3 py-2 md:px-4 md:py-2 w-full max-w-full overflow-hidden">
+    <div className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-3 py-2 md:px-4 md:py-2 w-full max-w-full relative z-20 overflow-visible">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 min-w-0 w-full flex-wrap">
         {/* Left: Terminal Query Search Input */}
         <div className="relative flex items-center w-full lg:w-[165px] xl:w-[200px] shrink-0">
@@ -250,7 +250,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
         </div>
 
         {/* Right: Auxiliary Filters on Desktop / Tablet (>= sm) */}
-        <div className="hidden sm:flex items-center gap-1.5 shrink-0 ml-auto lg:ml-0">
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0 ml-auto lg:ml-0 relative z-20">
           {/* Scope Split: All / External / Own Repo */}
           <div className="inline-flex items-center h-8 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono relative">
             {[
@@ -308,7 +308,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
             animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
             exit={{ opacity: 0, height: 0, marginTop: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="sm:hidden border-t border-border-subtle/70 pt-2 flex flex-col gap-2 overflow-hidden w-full"
+            className="sm:hidden border-t border-border-subtle/70 pt-2 flex flex-col gap-2 overflow-visible w-full"
           >
             {/* Row 1: Scope Split (Full Width Segmented Control) */}
             <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono w-full">
@@ -341,7 +341,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
             </div>
 
             {/* Row 2: Platform & Sort Controls in 2 Equal Columns */}
-            <div className="grid grid-cols-2 gap-2 w-full">
+            <div className="grid grid-cols-2 gap-2 w-full relative z-20">
               <CustomDropdown
                 label="PLATFORM:"
                 value={platformFilter}

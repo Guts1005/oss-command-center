@@ -6,6 +6,9 @@ import './styles/tokens.css';
 import 'lenis/dist/lenis.css';
 
 axios.defaults.withCredentials = true;
+if (import.meta.env.VITE_API_BASE_URL) {
+  axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+}
 
 // Intercept 401 Unauthorized responses to prevent stale zombie session states
 axios.interceptors.response.use(

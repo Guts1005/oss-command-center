@@ -18,32 +18,32 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
       case 'merged':
         return (
           <span className="border border-status-merged/80 bg-status-merged/20 text-status-merged px-2.5 py-0.5 rounded font-mono text-xs font-bold tracking-tight shadow-sm">
-            [MERGED]
+            Merged
           </span>
         );
       case 'open':
       case 'opened':
         return (
           <span className="border border-accent-sapphire bg-accent-sapphire/20 text-text-whisper px-2.5 py-0.5 rounded font-mono text-xs font-bold tracking-tight shadow-sm">
-            [IN REVIEW]
+            In Review
           </span>
         );
       case 'draft':
         return (
           <span className="border border-border-bold bg-surface-elevated text-text-muted px-2.5 py-0.5 rounded font-mono text-xs font-bold tracking-tight">
-            [DRAFT]
+            Draft
           </span>
         );
       case 'closed':
         return (
           <span className="border border-border-subtle bg-base text-text-muted px-2.5 py-0.5 rounded font-mono text-xs tracking-tight">
-            [CLOSED]
+            Closed
           </span>
         );
       default:
         return (
           <span className="border border-border-subtle bg-surface-elevated text-text-muted px-2.5 py-0.5 rounded font-mono text-xs uppercase tracking-tight">
-            [{status}]
+            {status}
           </span>
         );
     }
@@ -124,7 +124,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
     surfaceOpacity = 'opacity-60 hover:opacity-95';
   }
 
-  // Only show [NEW] if unread AND not merged/closed
+  // Only show NEW indicator if unread AND not merged/closed
   const showNewIndicator = item.unread === 1 && normalizedStatus !== 'merged' && normalizedStatus !== 'closed';
 
   return (
@@ -154,7 +154,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                   className="border border-amber-500/80 bg-amber-500/20 text-amber-300 font-sans text-[10px] font-bold px-1.5 py-0.2 rounded tracking-wider shadow-sm shrink-0 uppercase"
                   title="Telemetry update pending inspection"
                 >
-                  [NEW]
+                  NEW
                 </span>
               )}
               <span
@@ -191,13 +191,13 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
             {item.action_needed === 'reply' && (
               <span className="flex items-center gap-1 border border-status-awaiting-reply/80 bg-status-awaiting-reply/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-awaiting-reply shadow-sm">
                 <MessageSquare className="h-3 w-3" />
-                <span>[REPLY NEEDED]</span>
+                <span>Reply Needed</span>
               </span>
             )}
             {item.action_needed === 'push-changes' && (
               <span className="flex items-center gap-1 border border-status-action-needed/80 bg-status-action-needed/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-action-needed shadow-sm">
                 <AlertTriangle className="h-3 w-3" />
-                <span>[CHANGES REQUESTED]</span>
+                <span>Changes Requested</span>
               </span>
             )}
             {getStatusBadge(normalizedStatus)}
@@ -219,7 +219,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 className="border border-amber-500/80 bg-amber-500/20 text-amber-300 font-sans text-[10px] font-bold px-1.5 py-0.2 rounded tracking-wider shadow-sm shrink-0 uppercase"
                 title="Telemetry update pending inspection"
               >
-                [NEW]
+                NEW
               </span>
             )}
 
@@ -274,7 +274,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 title="Maintainer feedback requires developer reply"
               >
                 <MessageSquare className="h-3 w-3" />
-                <span>[ACTION: REPLY NEEDED]</span>
+                <span>Reply Needed</span>
               </span>
             )}
             {item.action_needed === 'push-changes' && (
@@ -283,7 +283,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 title="Maintainer requested code revisions"
               >
                 <AlertTriangle className="h-3 w-3" />
-                <span>[ACTION: CHANGES REQUESTED]</span>
+                <span>Changes Requested</span>
               </span>
             )}
 
@@ -305,7 +305,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
           <div className="flex items-center gap-2 flex-wrap">
             {item.bounty_amount && (
               <span className="border border-status-bounty/70 bg-status-bounty/15 px-2 py-0.2 rounded font-mono text-[11px] font-bold text-status-bounty">
-                [{item.bounty_amount}]
+                {item.bounty_amount}
               </span>
             )}
 
@@ -315,7 +315,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 title={`Zero maintainer activity for ${daysSinceActivity} days.`}
               >
                 <Clock className="h-3 w-3" />
-                <span>[DORMANT: {daysSinceActivity}d]</span>
+                <span>Dormant: {daysSinceActivity}d</span>
               </span>
             )}
             {isStale && (
@@ -324,7 +324,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
                 title={`Zero maintainer activity for ${daysSinceActivity} days.`}
               >
                 <Clock className="h-3 w-3" />
-                <span>[STALE: {daysSinceActivity}d]</span>
+                <span>Stale: {daysSinceActivity}d</span>
               </span>
             )}
 

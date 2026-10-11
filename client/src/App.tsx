@@ -477,7 +477,8 @@ const AppContent: React.FC = () => {
 
     const connectSSE = () => {
       try {
-        eventSource = new EventSource('/api/events');
+        const apiBase = (import.meta.env.VITE_API_BASE_URL || '') as string;
+        eventSource = new EventSource(`${apiBase}/api/events`, { withCredentials: true } as any);
 
         const handleLiveUpdate = () => {
           fetchStats();

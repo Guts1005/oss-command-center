@@ -130,22 +130,22 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                       <div className="border border-border-subtle/60 bg-base p-2.5 rounded">
                         <span className="block text-text-muted text-[10px] font-mono">STAGE 01</span>
-                        <span className="font-bold text-white block mt-0.5">[BRANCH & CODE]</span>
+                        <span className="font-bold text-white block mt-0.5">Branch & Code</span>
                         <span className="text-text-muted text-[11px] block mt-0.5">Commit edits</span>
                       </div>
                       <div className="border border-border-subtle/60 bg-base p-2.5 rounded">
                         <span className="block text-text-muted text-[10px] font-mono">STAGE 02</span>
-                        <span className="font-bold text-accent-sapphire block mt-0.5">[SUBMIT PR]</span>
+                        <span className="font-bold text-accent-sapphire block mt-0.5">Submit PR</span>
                         <span className="text-text-muted text-[11px] block mt-0.5">Open PR upstream</span>
                       </div>
                       <div className="border border-border-subtle/60 bg-base p-2.5 rounded">
                         <span className="block text-text-muted text-[10px] font-mono">STAGE 03</span>
-                        <span className="font-bold text-status-action-needed block mt-0.5">[TRIAGE & FIX]</span>
+                        <span className="font-bold text-status-action-needed block mt-0.5">Triage & Fix</span>
                         <span className="text-text-muted text-[11px] block mt-0.5">Review feedback</span>
                       </div>
                       <div className="border border-border-subtle/60 bg-base p-2.5 rounded">
                         <span className="block text-text-muted text-[10px] font-mono">STAGE 04</span>
-                        <span className="font-bold text-status-merged block mt-0.5">[ACCEPTED]</span>
+                        <span className="font-bold text-status-merged block mt-0.5">Accepted</span>
                         <span className="text-text-muted text-[11px] block mt-0.5">Merged into main</span>
                       </div>
                     </div>
@@ -159,7 +159,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="border border-status-merged bg-status-merged/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-merged">
-                            [MERGED]
+                            Merged
                           </span>
                           <span className="font-bold text-white text-xs sm:text-sm">ACCEPTED & SHIPPED</span>
                         </div>
@@ -175,7 +175,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="border border-status-action-needed bg-status-action-needed/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-action-needed">
-                            [CHANGES REQUESTED]
+                            Changes Requested
                           </span>
                           <span className="font-bold text-white text-xs sm:text-sm">DEVELOPER ACTION REQUIRED</span>
                         </div>
@@ -191,7 +191,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="border border-status-awaiting-reply bg-status-awaiting-reply/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-awaiting-reply">
-                            [REPLY NEEDED]
+                            Reply Needed
                           </span>
                           <span className="font-bold text-white text-xs sm:text-sm">RESPONSE REQUIRED</span>
                         </div>
@@ -207,9 +207,9 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="border border-accent-sapphire bg-accent-sapphire/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-text-whisper">
-                            [IN REVIEW]
+                            In Review
                           </span>
-                          <span className="font-bold text-white text-xs sm:text-sm">IN QUEUE // IDLE</span>
+                          <span className="font-bold text-white text-xs sm:text-sm">IN QUEUE · IDLE</span>
                         </div>
                         <p className="text-xs text-text-whisper mt-1">
                           Submitted cleanly. You spoke last in the discussion. Awaiting maintainer triage.
@@ -223,7 +223,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                         <FileCode className="h-4 w-4 text-text-muted shrink-0 mt-0.5" />
                         <div>
                           <span className="border border-border-bold bg-surface-elevated px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-text-muted">
-                            [DRAFT]
+                            Draft
                           </span>
                           <p className="text-xs text-text-whisper mt-1">
                             Work-in-progress contribution not yet ready for maintainer review.
@@ -235,7 +235,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                         <Archive className="h-4 w-4 text-text-muted shrink-0 mt-0.5" />
                         <div>
                           <span className="border border-border-subtle bg-base px-1.5 py-0.5 rounded text-[10px] font-mono text-text-muted">
-                            [CLOSED]
+                            Closed
                           </span>
                           <p className="text-xs text-text-whisper mt-1">
                             PR or issue closed without merging. Inspect activity ledger for details.
@@ -400,7 +400,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                 onClick={onClose}
                 className="w-full sm:w-auto border border-border-subtle bg-surface-elevated px-5 py-1.5 rounded-md text-xs font-mono font-bold text-white hover:border-accent-sapphire hover:bg-surface-active transition-colors cursor-pointer text-center"
               >
-                [DISMISS]
+                Dismiss
               </motion.button>
             </div>
           </motion.div>

@@ -42,7 +42,7 @@ export const OfflineBanner: React.FC = () => {
           className="fixed top-0 inset-x-0 z-50 bg-status-action-needed/95 text-white px-4 py-1.5 text-xs font-mono font-bold flex items-center justify-center gap-2 shadow-md pt-safe select-none"
         >
           <WifiOff className="h-3.5 w-3.5" />
-          <span>[OFFLINE] TELEMETRY SYNC PAUSED (SERVING CACHED RECORDS)</span>
+          <span>Offline: Telemetry sync paused (serving cached records)</span>
         </motion.aside>
       )}
 
@@ -56,7 +56,7 @@ export const OfflineBanner: React.FC = () => {
           className="fixed top-0 inset-x-0 z-50 bg-status-merged/95 text-white px-4 py-1.5 text-xs font-mono font-bold flex items-center justify-center gap-2 shadow-md pt-safe select-none"
         >
           <Wifi className="h-3.5 w-3.5" />
-          <span>[ONLINE] CONNECTION RESTORED (TELEMETRY RE-SYNCED)</span>
+          <span>Online: Connection restored (telemetry re-synced)</span>
         </motion.aside>
       )}
     </AnimatePresence>

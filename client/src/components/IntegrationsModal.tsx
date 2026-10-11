@@ -310,7 +310,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                                   disabled={isDeletingNow}
                                   className="border border-status-action-needed bg-status-action-needed/30 px-3 py-1.5 rounded text-xs font-bold uppercase text-status-action-needed hover:bg-status-action-needed/50 disabled:opacity-50 transition-colors cursor-pointer"
                                 >
-                                  {isDeletingNow ? '[PURGING...]' : '[CONFIRM DISCONNECT]'}
+                                  {isDeletingNow ? 'Purging...' : 'Confirm Disconnect'}
                                 </motion.button>
                                 <motion.button
                                   type="button"
@@ -321,7 +321,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                                   disabled={isDeletingNow}
                                   className="border border-border-subtle bg-base px-3 py-1.5 rounded text-xs font-bold uppercase text-text-whisper hover:text-white transition-colors cursor-pointer"
                                 >
-                                  [CANCEL]
+                                  Cancel
                                 </motion.button>
                               </div>
                             </motion.div>

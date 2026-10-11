@@ -177,17 +177,15 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   const renderUserBlock = () => (
     user ? (
       <div className="flex items-center h-9 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
-        <div className="flex items-center gap-1.5 h-full px-2.5 text-xs font-mono font-bold text-white bg-base/50">
+        <div className="flex items-center gap-1.5 h-full px-2.5 text-xs font-mono font-bold text-text-primary bg-surface-card">
           <UserIcon className="h-3.5 w-3.5 text-accent-sapphire shrink-0" />
           <span className="max-w-[100px] truncate">@{user.username}</span>
         </div>
         <motion.button
           type="button"
-          whileHover={{ backgroundColor: 'rgba(251, 191, 36, 0.22)', color: '#ffffff' }}
           whileTap={{ scale: 0.95 }}
-          transition={{ duration: 0.15 }}
           onClick={onOpenIntegrationsModal}
-          className="flex items-center gap-1.5 h-full bg-surface-elevated px-2.5 text-xs font-mono font-bold text-text-whisper hover:text-white transition-colors cursor-pointer group"
+          className="flex items-center gap-1.5 h-full bg-surface-elevated hover:bg-amber-500/15 px-2.5 text-xs font-mono font-bold text-text-primary hover:text-amber-500 dark:hover:text-amber-300 transition-colors cursor-pointer group"
           title="Manage linked GitHub and GitLab accounts"
         >
           <Key className="h-3 w-3 text-status-awaiting-reply shrink-0" />
@@ -292,7 +290,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
           {user ? (
             <button
               onClick={onOpenIntegrationsModal}
-              className="flex items-center gap-1 h-7 px-2 rounded-lg border border-border-subtle bg-surface-card text-xs font-mono text-white cursor-pointer"
+              className="flex items-center gap-1 h-7 px-2 rounded-lg border border-border-subtle bg-surface-card text-xs font-mono text-text-primary cursor-pointer"
               title={`@${user.username} - View Accounts`}
             >
               <UserIcon className="h-3 w-3 text-accent-sapphire shrink-0" />

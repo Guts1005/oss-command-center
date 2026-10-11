@@ -64,7 +64,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
   const heightClasses = size === 'sm' ? 'h-7 text-[11px] px-2' : 'h-8 text-xs px-2';
 
   return (
-    <div ref={containerRef} className={`relative inline-block select-none ${className}`}>
+    <div ref={containerRef} className={`relative inline-block select-none ${isOpen ? 'z-40' : 'z-10'} ${className}`}>
       {/* Trigger Button */}
       <button
         type="button"
