@@ -31,6 +31,7 @@ import { RepositoriesView } from './components/views/RepositoriesView';
 import { SettingsView } from './components/views/SettingsView';
 import { SecurityPolicyView } from './components/views/SecurityPolicyView';
 import { AboutView } from './components/views/AboutView';
+import { CopilotChatWidget } from './components/CopilotChatWidget';
 
 import { sendDesktopNotification } from './utils/notifications';
 
@@ -871,6 +872,9 @@ const AppContent: React.FC = () => {
         onOpenTrackModal={() => setIsTrackModalOpen(true)}
         actionNeededCount={activeStats?.actionNeeded ?? 0}
       />
+
+      {/* Dedicated Floating OSS Copilot Chat Widget */}
+      <CopilotChatWidget />
     </div>
   );
 };
