@@ -39,6 +39,11 @@ export async function syncUser(userId: string): Promise<{ status: string; synced
       }
     }
 
+    // Fallback to GITHUB_TOKEN if no integration token is set
+    if (!decryptedToken && integration.platform === 'github' && process.env.GITHUB_TOKEN) {
+      decryptedToken = process.env.GITHUB_TOKEN;
+    }
+
     try {
       if (integration.platform === 'github') {
         await syncGitHub(userId, decryptedToken, integration.username);
@@ -61,6 +66,9 @@ export async function syncUser(userId: string): Promise<{ status: string; synced
       `).run(errMsg, integration.id);
     }
   }
+
+  // Record completed sync in sync_meta table so telemetry reflects the latest manual sync
+  db.prepare("INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('last_synced_at', ?)").run(now);
 
   return {
     status: errors.length > 0 ? 'partial' : 'completed',
@@ -107,7 +115,13 @@ export function startPeriodicSync(intervalMinutes = 30) {
   syncIntervalTimer = setInterval(() => {
     syncAllUsers().catch(err => console.error('[Periodic Sync Error]:', err));
   }, ms);
-}export function getLastSyncTime(): string | null {
+}
+ 
+export function getLastSyncTime(userId?: string): string | null {
+  if (userId) {
+    const row = db.prepare("SELECT MAX(last_synced_at) as val FROM user_integrations WHERE user_id = ?").get(userId) as any;
+    if (row?.val) return row.val;
+  }
   const row = db.prepare("SELECT value FROM sync_meta WHERE key = 'last_synced_at'").get() as any;
   return row ? row.value : null;
 }

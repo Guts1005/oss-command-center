@@ -61,7 +61,7 @@ apiRouter.get('/stats', (req: AuthenticatedRequest, res) => {
     const merged = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'merged'").get(userId) as any)?.count || 0;
     const closed = (db.prepare("SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND status = 'closed'").get(userId) as any)?.count || 0;
     const unreadCount = (db.prepare('SELECT COUNT(*) as count FROM contributions WHERE user_id = ? AND unread = 1').get(userId) as any)?.count || 0;
-    const lastSync = getLastSyncTime();
+    const lastSync = getLastSyncTime(userId);
 
     return res.json({
       total,

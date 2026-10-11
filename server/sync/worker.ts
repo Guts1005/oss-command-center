@@ -228,8 +228,8 @@ export async function executeBackgroundSyncPass(): Promise<{ usersProcessed: num
 
     // Record telemetry in database
     db.prepare(`
-      INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('last_background_sync_at', ?)
-    `).run(lastRunAt);
+      INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('last_background_sync_at', ?), ('last_synced_at', ?)
+    `).run(lastRunAt, lastRunAt);
   } catch (err: any) {
     console.error('[Background Sync Worker] Fatal cycle error:', err);
     lastErrors.push(`Fatal worker error: ${err.message}`);

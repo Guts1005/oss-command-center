@@ -550,6 +550,10 @@ const AppContent: React.FC = () => {
       if (isDemoMode) {
         setIsSyncing(true);
         setTimeout(() => {
+          setDemoStats(prev => ({
+            ...prev,
+            lastSync: new Date().toISOString()
+          }));
           setIsSyncing(false);
         }, 400);
         return;
@@ -559,7 +563,10 @@ const AppContent: React.FC = () => {
     }
     try {
       setIsSyncing(true);
-      await axios.post('/api/sync');
+      const res = await axios.post('/api/sync');
+      if (res.data?.syncedAt) {
+        setStats(prev => prev ? { ...prev, lastSync: res.data.syncedAt } : null);
+      }
       await Promise.all([fetchStats(), fetchContributions()]);
     } catch (err: any) {
       console.error('Sync failed:', err);

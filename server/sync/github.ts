@@ -27,11 +27,13 @@ export async function syncGitHub(userId: string, token?: string, username?: stri
     return;
   }
 
+  const effectiveToken = token || process.env.GITHUB_TOKEN;
+
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
   };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+  if (effectiveToken) {
+    headers.Authorization = `Bearer ${effectiveToken}`;
   }
 
   console.log(`[GitHub Sync] Querying authored PRs and issues for user: ${username} (ID: ${userId})`);
