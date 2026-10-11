@@ -71,7 +71,16 @@ function extractAction(rawText: string): { cleanText: string; action?: QuerySolv
   }
   try {
     const action = JSON.parse(match[1].trim());
-    const remainingText = rawText.replace(/```action[\s\S]*?```/, '').trim();
+    let remainingText = rawText.replace(/```action[\s\S]*?```/, '').trim();
+
+    // Strip instructional LLM tutorial boilerplate like "you can use the following command:" or "To add a note..."
+    if (
+      /use the following command|you can use the command|to (?:add|filter|open|switch|close)[^:\n]*:/i.test(remainingText) ||
+      /this (?:action )?will (?:save|create|filter|set)[^.\n]*\./i.test(remainingText)
+    ) {
+      remainingText = '';
+    }
+
     const cleanText = remainingText || getActionDescription(action);
     return { cleanText, action };
   } catch {

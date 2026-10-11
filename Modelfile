@@ -166,6 +166,13 @@ Saved note: "**check Gitlab tomorrow**" scheduled for tomorrow.
 {"type": "ADD_NOTE", "payload": {"content": "check Gitlab tomorrow", "targetDate": "tomorrow"}}
 ```
 
+User: add in my notes to check reply from soup
+Assistant:
+Saved note: "**check reply from soup**".
+```action
+{"type": "ADD_NOTE", "payload": {"content": "check reply from soup", "targetDate": null}}
+```
+
 User: show notes the next day
 Assistant:
 Here are your active developer notes and scheduled tasks:

@@ -178,16 +178,18 @@ export async function askPlatformCopilot(userQuestion: string, userId?: string, 
 
   // 1. Automatic Developer Note Ingestion
   let autoCreatedNote: any = null;
-  const addNoteRegex = /(?:add|create|make)\s+(?:a\s+)?note\s+(?:to|that|about)?\s*(.+)|(?:remind\s+me\s+to)\s*(.+)|^note:\s*(.+)/i;
+  const addNoteRegex = /(?:add|put|save|create|make|write|record)\s+(?:(?:in|to|into)\s+)?(?:(?:a|my|the)\s+)?notes?\s+(?:to|that|about|for)?\s*(.+)|(?:remind\s+me\s+to)\s*(.+)|(?:note\s+down)\s*(.+)|^note:\s*(.+)/i;
   const noteMatch = userQuestion.match(addNoteRegex);
   if (noteMatch && userId) {
-    const rawContent = (noteMatch[1] || noteMatch[2] || noteMatch[3] || '').trim();
+    let rawContent = (noteMatch[1] || noteMatch[2] || noteMatch[3] || noteMatch[4] || '').trim();
     if (rawContent) {
       let targetDate: string | null = null;
       if (/\btomorrow\b/i.test(userQuestion)) {
         targetDate = tomorrowStr;
+        rawContent = rawContent.replace(/\s+tomorrow\b/i, '').trim();
       } else if (/\btoday\b/i.test(userQuestion)) {
         targetDate = todayStr;
+        rawContent = rawContent.replace(/\s+today\b/i, '').trim();
       }
       const noteId = `note_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
       try {
@@ -205,7 +207,7 @@ export async function askPlatformCopilot(userQuestion: string, userId?: string, 
   // Fast-path deterministic custom command handlers
   if (autoCreatedNote) {
     const targetLabel = autoCreatedNote.target_date ? ` scheduled for *${autoCreatedNote.target_date}*` : '';
-    return `Saved developer note: "**${autoCreatedNote.content}**"${targetLabel}.\n\n\`\`\`action\n{"type": "ADD_NOTE", "payload": {"content": "${autoCreatedNote.content}", "targetDate": "${autoCreatedNote.target_date || 'tomorrow'}"}}\n\`\`\``;
+    return `Saved developer note: "**${autoCreatedNote.content}**"${targetLabel}.\n\n\`\`\`action\n{"type": "ADD_NOTE", "payload": {"content": "${autoCreatedNote.content}", "targetDate": ${autoCreatedNote.target_date ? `"${autoCreatedNote.target_date}"` : "null"}}}\n\`\`\``;
   }
 
   const showNotesRegex = /(?:show|view|list|get|what are)\s+(?:all\s+)?(?:the\s+)?(?:my\s+)?notes|show\s+notes/i;
@@ -400,5 +402,31 @@ ${statsContext || 'Global platform instance.'}
 User Question:
 ${userQuestion}`;
 
-  return await queryOllama(prompt, system);
+  let answer = await queryOllama(prompt, system);
+
+  // Sanitize any model meta-tutorial phrasing when an action block is present
+  if (answer.includes('```action')) {
+    answer = answer.replace(/To\s+(?:add|filter|open|navigate|switch|toggle)[^:\n]*:\s*/gi, '');
+    answer = answer.replace(/(?:You can\s+)?(?:use|execute) the following command:?\s*/gi, '');
+    answer = answer.replace(/This (?:action )?will (?:save|create|filter|set)[^.\n]*\./gi, '');
+    answer = answer.trim();
+
+    if (answer.startsWith('```action')) {
+      const actionMatch = answer.match(/```action\s*([\s\S]*?)\s*```/);
+      if (actionMatch) {
+        try {
+          const act = JSON.parse(actionMatch[1].trim());
+          if (act.type === 'ADD_NOTE') {
+            const content = typeof act.payload === 'object' ? act.payload.content : act.payload;
+            const targetDate = typeof act.payload === 'object' && act.payload?.targetDate ? ` scheduled for *${act.payload.targetDate}*` : '';
+            answer = `Saved developer note: "**${content}**"${targetDate}.\n\n${answer}`;
+          }
+        } catch {
+          // ignore json parse error
+        }
+      }
+    }
+  }
+
+  return answer;
 }
