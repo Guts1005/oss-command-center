@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://continue-gardens-ste-lift.trycloudflare.com/api/:path*"
+      "destination": "https://housewives-porcelain-mysterious-portrait.trycloudflare.com/api/:path*"
     },
     {
       "source": "/(.*)",
