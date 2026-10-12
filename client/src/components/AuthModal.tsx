@@ -126,51 +126,45 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               </motion.button>
             </div>
 
-            {/* 1-Click Social Sign-In */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+            {/* 1-Click Social Sign-In (Primary) */}
+            <div className="space-y-2.5 mb-5">
               <button
                 type="button"
                 onClick={() => handleOAuthLogin('github')}
-                disabled={!providers.github || Boolean(oauthLoading)}
-                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border text-xs font-mono font-bold transition-all shadow-sm ${
-                  providers.github
-                    ? 'border-border-subtle bg-base hover:bg-surface-elevated text-white cursor-pointer group'
-                    : 'border-border-subtle bg-base/60 text-text-whisper opacity-50 cursor-not-allowed'
-                }`}
-                title={providers.github ? 'Sign in with GitHub' : 'GitHub OAuth is not configured on this server'}
+                disabled={Boolean(oauthLoading)}
+                className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-accent-sapphire text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
               >
                 {oauthLoading === 'github' ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin text-accent-sapphire" />
                 ) : (
-                  <GitHubLogo className="h-3.5 w-3.5 text-white group-hover:scale-110 transition-transform" />
+                  <GitHubLogo className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
                 )}
-                <span>{oauthLoading === 'github' ? 'CONNECTING...' : 'GITHUB'}</span>
+                <span>{oauthLoading === 'github' ? 'CONNECTING TO GITHUB...' : 'Continue with GitHub'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleOAuthLogin('gitlab')}
-                disabled={!providers.gitlab || Boolean(oauthLoading)}
-                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border text-xs font-mono font-bold transition-all shadow-sm ${
-                  providers.gitlab
-                    ? 'border-border-subtle bg-base hover:bg-surface-elevated text-white cursor-pointer group'
-                    : 'border-border-subtle bg-base/60 text-text-whisper opacity-50 cursor-not-allowed'
-                }`}
-                title={providers.gitlab ? 'Sign in with GitLab' : 'GitLab OAuth is not configured on this server'}
+                disabled={Boolean(oauthLoading)}
+                className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
               >
                 {oauthLoading === 'gitlab' ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin text-[#fc6d26]" />
                 ) : (
-                  <GitLabLogo className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                  <GitLabLogo className="h-4 w-4 group-hover:scale-110 transition-transform" />
                 )}
-                <span>{oauthLoading === 'gitlab' ? 'CONNECTING...' : 'GITLAB'}</span>
+                <span>{oauthLoading === 'gitlab' ? 'CONNECTING TO GITLAB...' : 'Continue with GitLab'}</span>
               </button>
+
+              <p className="text-[11px] text-text-muted text-center font-sans mt-1">
+                Authenticates via OAuth and automatically links your verified profile and tokens.
+              </p>
             </div>
 
             {/* Divider */}
-            <div className="relative flex items-center justify-center mb-4">
+            <div className="relative flex items-center justify-center mb-5">
               <div className="border-t border-border-subtle w-full" />
-              <span className="bg-surface px-2.5 text-[10px] font-mono uppercase tracking-wider text-text-muted shrink-0">
+              <span className="bg-surface px-3 text-[10px] font-mono uppercase tracking-wider text-text-muted shrink-0">
                 OR EMAIL &amp; PASSWORD
               </span>
               <div className="border-t border-border-subtle w-full" />

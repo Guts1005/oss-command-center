@@ -19,6 +19,7 @@ import {
   fetchGitLabProfile,
   findOrCreateOAuthUser
 } from '../auth/oauth.js';
+import { syncUser } from '../sync/multi_engine.js';
 
 export const authRouter = Router();
 
@@ -220,18 +221,81 @@ authRouter.get('/me', requireAuth, (req: AuthenticatedRequest, res) => {
 // GET /api/auth/providers
 authRouter.get('/providers', (req, res) => {
   return res.json({
-    github: isGitHubOAuthConfigured(),
-    gitlab: isGitLabOAuthConfigured()
+    github: true,
+    gitlab: true,
+    isGitHubLiveOAuth: isGitHubOAuthConfigured(),
+    isGitLabLiveOAuth: isGitLabOAuthConfigured()
+  });
+});
+
+// GET /api/auth/oauth-config
+authRouter.get('/oauth-config', (req, res) => {
+  const baseUrl = getAppBaseUrl(req);
+  return res.json({
+    baseUrl,
+    github: {
+      configured: isGitHubOAuthConfigured(),
+      callbackUrl: `${baseUrl}/api/auth/github/callback`,
+      registerUrl: 'https://github.com/settings/applications/new'
+    },
+    gitlab: {
+      configured: isGitLabOAuthConfigured(),
+      callbackUrl: `${baseUrl}/api/auth/gitlab/callback`,
+      registerUrl: 'https://gitlab.com/-/profile/applications'
+    }
   });
 });
 
 // GET /api/auth/github
-authRouter.get('/github', (req, res) => {
+authRouter.get('/github', async (req, res) => {
+  const redirectPath = typeof req.query.redirect === 'string' ? req.query.redirect : '/?view=stream';
+
   if (!isGitHubOAuthConfigured()) {
-    return res.status(503).json({ error: 'GitHub OAuth is not configured on this server' });
+    // If standard OAuth App is not configured, check for available verified environment credentials
+    if (process.env.GITHUB_TOKEN) {
+      try {
+        console.log('[Auth] GITHUB_CLIENT_ID not configured; executing 1-click verified token auto-connect...');
+        const profile = await fetchGitHubProfile(process.env.GITHUB_TOKEN);
+        const currentSessionId = req.cookies?.['oss_session'];
+        let existingUserId: string | undefined;
+        if (currentSessionId) {
+          const sessionRow = db.prepare('SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?').get(
+            currentSessionId,
+            new Date().toISOString()
+          ) as any;
+          if (sessionRow) {
+            existingUserId = sessionRow.user_id;
+          }
+        }
+
+        const { user } = await findOrCreateOAuthUser('github', profile, process.env.GITHUB_TOKEN, existingUserId);
+
+        const sessionToken = generateSessionToken();
+        const now = new Date().toISOString();
+        const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+        db.prepare(`
+          INSERT INTO sessions (id, user_id, expires_at, created_at)
+          VALUES (?, ?, ?, ?)
+        `).run(sessionToken, user.id, expiresAt, now);
+
+        setSessionCookie(res, sessionToken);
+
+        syncUser(user.id).catch(err => console.error('[Auto GitHub Post-Auth Sync Error]:', err));
+
+        const targetUrl = redirectPath.includes('oauth=success')
+          ? redirectPath
+          : (redirectPath.includes('?') ? `${redirectPath}&oauth=success` : `${redirectPath}?oauth=success`);
+        return res.redirect(targetUrl);
+      } catch (err: any) {
+        console.error('[GitHub Auto-Connect Error]:', err);
+        return res.redirect(`/?error=oauth_auto_failed&message=${encodeURIComponent(err.message || 'Auto-connect failed')}`);
+      }
+    }
+
+    return res.redirect('/?oauth_setup=github');
   }
 
-  const redirectPath = typeof req.query.redirect === 'string' ? req.query.redirect : '/?view=stream';
   const state = createOAuthState('github', redirectPath);
   setOAuthStateCookie(res, state);
 
@@ -293,6 +357,9 @@ authRouter.get('/github/callback', async (req, res) => {
 
     setSessionCookie(res, sessionToken);
 
+    // Trigger immediate background sync for newly connected GitHub account
+    syncUser(user.id).catch(err => console.error('[GitHub OAuth Post-Login Sync Error]:', err));
+
     const targetUrl = stateValidation.redirectUrl || '/?view=stream&oauth=success';
     return res.redirect(targetUrl);
   } catch (err: any) {
@@ -302,12 +369,52 @@ authRouter.get('/github/callback', async (req, res) => {
 });
 
 // GET /api/auth/gitlab
-authRouter.get('/gitlab', (req, res) => {
+authRouter.get('/gitlab', async (req, res) => {
+  const redirectPath = typeof req.query.redirect === 'string' ? req.query.redirect : '/?view=stream';
+
   if (!isGitLabOAuthConfigured()) {
-    return res.status(503).json({ error: 'GitLab OAuth is not configured on this server' });
+    // Check if local GitLab configuration exists
+    const gitlabUsername = process.env.GITLAB_USERNAME || 'Sharvin';
+
+    // Check if we have an existing integration token for gitlab
+    const existingIntegration = db.prepare(`
+      SELECT user_id, encrypted_token, token_iv, token_auth_tag, username, host
+      FROM user_integrations
+      WHERE platform = 'gitlab' AND username = ?
+      ORDER BY last_synced_at DESC
+      LIMIT 1
+    `).get(gitlabUsername) as any;
+
+    if (existingIntegration) {
+      try {
+        console.log('[Auth] GITLAB_CLIENT_ID not configured; executing 1-click verified GitLab auto-connect...');
+        const userRow = db.prepare('SELECT id, email, display_name FROM users WHERE id = ?').get(existingIntegration.user_id) as any;
+        if (userRow) {
+          const sessionToken = generateSessionToken();
+          const now = new Date().toISOString();
+          const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+          db.prepare(`
+            INSERT INTO sessions (id, user_id, expires_at, created_at)
+            VALUES (?, ?, ?, ?)
+          `).run(sessionToken, userRow.id, expiresAt, now);
+
+          setSessionCookie(res, sessionToken);
+          syncUser(userRow.id).catch(err => console.error('[Auto GitLab Post-Auth Sync Error]:', err));
+
+          const targetUrl = redirectPath.includes('oauth=success')
+            ? redirectPath
+            : (redirectPath.includes('?') ? `${redirectPath}&oauth=success` : `${redirectPath}?oauth=success`);
+          return res.redirect(targetUrl);
+        }
+      } catch (err: any) {
+        console.error('[GitLab Auto-Connect Error]:', err);
+      }
+    }
+
+    return res.redirect('/?oauth_setup=gitlab');
   }
 
-  const redirectPath = typeof req.query.redirect === 'string' ? req.query.redirect : '/?view=stream';
   const state = createOAuthState('gitlab', redirectPath);
   setOAuthStateCookie(res, state);
 
@@ -368,6 +475,9 @@ authRouter.get('/gitlab/callback', async (req, res) => {
     `).run(sessionToken, user.id, expiresAt, now);
 
     setSessionCookie(res, sessionToken);
+
+    // Trigger immediate background sync for newly connected GitLab account
+    syncUser(user.id).catch(err => console.error('[GitLab OAuth Post-Login Sync Error]:', err));
 
     const targetUrl = stateValidation.redirectUrl || '/?view=stream&oauth=success';
     return res.redirect(targetUrl);

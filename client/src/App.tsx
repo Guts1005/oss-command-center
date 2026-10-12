@@ -63,7 +63,7 @@ function useModalHistory(isOpen: boolean, onClose: () => void, modalKey: string)
 }
 
 const AppContent: React.FC = () => {
-  const { user, integrations } = useAuth();
+  const { user, integrations, refreshUser, refreshIntegrations } = useAuth();
   const { viewMode, setViewMode } = useViewRouting();
   const { theme, toggleTheme } = useTheme();
 
@@ -451,6 +451,31 @@ const AppContent: React.FC = () => {
     window.addEventListener('oss:auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('oss:auth:unauthorized', handleUnauthorized);
   }, []);
+
+  // Handle OAuth callback parameters in URL
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const oauthStatus = params.get('oauth');
+    const oauthSetup = params.get('oauth_setup');
+    const oauthError = params.get('error');
+
+    if (oauthStatus === 'success') {
+      params.delete('oauth');
+      const newQuery = params.toString();
+      const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '') + window.location.hash;
+      window.history.replaceState({}, document.title, newUrl);
+
+      refreshUser();
+      refreshIntegrations();
+      fetchStats();
+      fetchContributions();
+    } else if (oauthSetup) {
+      setIsIntegrationsModalOpen(true);
+    } else if (oauthError) {
+      console.warn('OAuth flow warning:', oauthError);
+    }
+  }, [refreshUser, refreshIntegrations, fetchStats, fetchContributions]);
 
   // Check for updates and notify desktop/audio
   useEffect(() => {

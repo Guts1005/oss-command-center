@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { Github, Gitlab, Key, CheckCircle, RefreshCw, Trash2, ExternalLink, X, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Github, Gitlab, Key, CheckCircle, RefreshCw, Trash2, ExternalLink, X, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { GitHubLogo, GitLabLogo } from './BrandLogos';
 
 interface IntegrationsModalProps {
@@ -28,6 +28,14 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [isDeletingNow, setIsDeletingNow] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [oauthConnecting, setOauthConnecting] = useState<string | null>(null);
+
+  const handleOAuthConnect = (targetPlatform: 'github' | 'gitlab') => {
+    setOauthConnecting(targetPlatform);
+    const returnUrl = window.location.pathname + window.location.search;
+    window.location.href = `/api/auth/${targetPlatform}?redirect=${encodeURIComponent(returnUrl)}`;
+  };
 
   const accountList = Array.isArray(integrations) ? integrations : [];
 
@@ -335,126 +343,180 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             </div>
 
             {/* Add Connection Form */}
+            {/* 1-Click Fast Connect */}
             <div className="border-t border-border-subtle/80 pt-4">
-              <h3 className="text-sm font-bold text-white mb-3 font-sans">
-                Connect Account
+              <h3 className="text-sm font-bold text-white mb-1 font-sans">
+                Link Platform Account
               </h3>
+              <p className="text-xs text-text-muted font-sans mb-3">
+                Connect your account in one click with verified credentials and automatic token synchronization.
+              </p>
 
-              <form onSubmit={handleConnect} className="space-y-4">
-                {/* Platform Selector */}
-                <div className="grid grid-cols-2 gap-2.5 font-sans">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-                    onClick={() => setPlatform('github')}
-                    className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-semibold transition-all cursor-pointer ${
-                      platform === 'github'
-                        ? 'border-accent-sapphire bg-accent-sapphire/20 text-white shadow-sm'
-                        : 'border-border-subtle bg-base text-text-muted hover:text-white'
-                    }`}
-                  >
-                    <GitHubLogo className="h-4 w-4 text-white" />
-                    <span>GitHub</span>
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-                    onClick={() => setPlatform('gitlab')}
-                    className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-semibold transition-all cursor-pointer ${
-                      platform === 'gitlab'
-                        ? 'border-[#fc6d26] bg-[#fc6d26]/20 text-[#fc6d26] shadow-sm'
-                        : 'border-border-subtle bg-base text-text-muted hover:text-white'
-                    }`}
-                  >
-                    <GitLabLogo className="h-4 w-4" />
-                    <span>GitLab</span>
-                  </motion.button>
-                </div>
+              <div className="space-y-2.5 mb-4">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.015 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  onClick={() => handleOAuthConnect('github')}
+                  disabled={Boolean(oauthConnecting)}
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-accent-sapphire text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                >
+                  {oauthConnecting === 'github' ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-accent-sapphire" />
+                  ) : (
+                    <GitHubLogo className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
+                  )}
+                  <span>{oauthConnecting === 'github' ? 'CONNECTING TO GITHUB...' : 'Connect with GitHub'}</span>
+                </motion.button>
 
-                {/* Username Input */}
-                <div>
-                  <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
-                    {platform === 'github' ? 'GitHub Username' : 'GitLab Username'}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder={platform === 'github' ? 'e.g. torvalds' : 'e.g. gitlab-user'}
-                    className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
-                  />
-                </div>
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.015 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  onClick={() => handleOAuthConnect('gitlab')}
+                  disabled={Boolean(oauthConnecting)}
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                >
+                  {oauthConnecting === 'gitlab' ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-[#fc6d26]" />
+                  ) : (
+                    <GitLabLogo className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                  )}
+                  <span>{oauthConnecting === 'gitlab' ? 'CONNECTING TO GITLAB...' : 'Connect with GitLab'}</span>
+                </motion.button>
+              </div>
 
-                {/* GitLab Host */}
-                {platform === 'gitlab' && (
-                  <div>
-                    <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
-                      GitLab Instance Host
-                    </label>
-                    <input
-                      type="text"
-                      value={gitlabHost}
-                      onChange={(e) => setGitlabHost(e.target.value)}
-                      placeholder="https://gitlab.com or https://gitlab.rtems.org"
-                      className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
-                    />
-                  </div>
+              {/* Manual PAT Fallback Toggle */}
+              <div className="pt-2 border-t border-border-subtle/50">
+                <button
+                  type="button"
+                  onClick={() => setShowManualForm(!showManualForm)}
+                  className="w-full flex items-center justify-between text-xs font-mono text-text-muted hover:text-accent-sapphire py-1.5 transition-colors cursor-pointer"
+                >
+                  <span>Manual Token Configuration (Advanced)</span>
+                  <span className="text-text-whisper">{showManualForm ? '▲ Hide' : '▼ Expand'}</span>
+                </button>
+
+                {showManualForm && (
+                  <form onSubmit={handleConnect} className="mt-3 space-y-4">
+                    {/* Platform Selector */}
+                    <div className="grid grid-cols-2 gap-2.5 font-sans">
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                        onClick={() => setPlatform('github')}
+                        className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-semibold transition-all cursor-pointer ${
+                          platform === 'github'
+                            ? 'border-accent-sapphire bg-accent-sapphire/20 text-white shadow-sm'
+                            : 'border-border-subtle bg-base text-text-muted hover:text-white'
+                        }`}
+                      >
+                        <GitHubLogo className="h-4 w-4 text-white" />
+                        <span>GitHub</span>
+                      </motion.button>
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                        onClick={() => setPlatform('gitlab')}
+                        className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-semibold transition-all cursor-pointer ${
+                          platform === 'gitlab'
+                            ? 'border-[#fc6d26] bg-[#fc6d26]/20 text-[#fc6d26] shadow-sm'
+                            : 'border-border-subtle bg-base text-text-muted hover:text-white'
+                        }`}
+                      >
+                        <GitLabLogo className="h-4 w-4" />
+                        <span>GitLab</span>
+                      </motion.button>
+                    </div>
+
+                    {/* Username Input */}
+                    <div>
+                      <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
+                        {platform === 'github' ? 'GitHub Username' : 'GitLab Username'}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder={platform === 'github' ? 'e.g. torvalds' : 'e.g. gitlab-user'}
+                        className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
+                      />
+                    </div>
+
+                    {/* GitLab Host */}
+                    {platform === 'gitlab' && (
+                      <div>
+                        <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-muted mb-2">
+                          GitLab Instance Host
+                        </label>
+                        <input
+                          type="text"
+                          value={gitlabHost}
+                          onChange={(e) => setGitlabHost(e.target.value)}
+                          placeholder="https://gitlab.com or https://gitlab.rtems.org"
+                          className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
+                        />
+                      </div>
+                    )}
+
+                    {/* Personal Access Token */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-muted">
+                          Personal Access Token (Optional)
+                        </label>
+                        <a
+                          href={
+                            platform === 'github'
+                              ? 'https://github.com/settings/tokens/new?scopes=repo,read:user'
+                              : 'https://gitlab.com/-/profile/personal_access_tokens?scopes=read_api'
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-xs font-sans text-accent-sapphire hover:underline font-semibold"
+                        >
+                          <span>Generate Token</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                      <input
+                        type="password"
+                        value={token}
+                        onChange={(e) => setToken(e.target.value)}
+                        placeholder={platform === 'github' ? 'ghp_...' : 'glpat-...'}
+                        className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
+                      />
+                      <p className="text-xs md:text-sm text-text-muted mt-1.5 font-sans">
+                        Tokens unlock 5,000 req/hr rate limits and private repository tracking.
+                      </p>
+                    </div>
+
+                    <div className="pt-1">
+                      <motion.button
+                        type="submit"
+                        whileHover={{ scale: 1.015, boxShadow: '0 0 16px rgba(116,157,208,0.35)' }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                        disabled={isSubmitting}
+                        className="w-full border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 py-3.5 rounded-md font-sans font-semibold text-white disabled:opacity-50 transition-colors text-sm md:text-base cursor-pointer shadow-sm"
+                      >
+                        {isSubmitting ? 'Connecting...' : `Save ${platform === 'github' ? 'GitHub' : 'GitLab'} Integration`}
+                      </motion.button>
+                      <div className="flex items-center justify-center gap-1.5 text-xs text-text-muted mt-3 font-mono">
+                        <ShieldCheck className="h-3.5 w-3.5 text-status-merged shrink-0" />
+                        <span>Encrypted</span>
+                      </div>
+                    </div>
+                  </form>
                 )}
-
-                {/* Personal Access Token */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-muted">
-                      Personal Access Token (Optional)
-                    </label>
-                    <a
-                      href={
-                        platform === 'github'
-                          ? 'https://github.com/settings/tokens/new?scopes=repo,read:user'
-                          : 'https://gitlab.com/-/profile/personal_access_tokens?scopes=read_api'
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs font-sans text-accent-sapphire hover:underline font-semibold"
-                    >
-                      <span>Generate Token</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <input
-                    type="password"
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                    placeholder={platform === 'github' ? 'ghp_...' : 'glpat-...'}
-                    className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
-                  />
-                  <p className="text-xs md:text-sm text-text-muted mt-1.5 font-sans">
-                    Tokens unlock 5,000 req/hr rate limits and private repository tracking.
-                  </p>
-                </div>
-
-                <div className="pt-1">
-                  <motion.button
-                    type="submit"
-                    whileHover={{ scale: 1.015, boxShadow: '0 0 16px rgba(116,157,208,0.35)' }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    disabled={isSubmitting}
-                    className="w-full border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 py-3.5 rounded-md font-sans font-semibold text-white disabled:opacity-50 transition-colors text-sm md:text-base cursor-pointer shadow-sm"
-                  >
-                    {isSubmitting ? 'Connecting...' : `Connect ${platform === 'github' ? 'GitHub' : 'GitLab'} Account`}
-                  </motion.button>
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-text-muted mt-3 font-mono">
-                    <ShieldCheck className="h-3.5 w-3.5 text-status-merged shrink-0" />
-                    <span>Encrypted</span>
-                  </div>
-                </div>
-              </form>
+              </div>
             </div>
           </motion.div>
         </div>
