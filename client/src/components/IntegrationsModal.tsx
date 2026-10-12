@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { Github, Gitlab, Key, CheckCircle, RefreshCw, Trash2, ExternalLink, X, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { GitHubLogo, GitLabLogo } from './BrandLogos';
@@ -30,8 +31,31 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
   const [oauthConnecting, setOauthConnecting] = useState<string | null>(null);
+  const [providers, setProviders] = useState<{ github: boolean; gitlab: boolean }>({ github: false, gitlab: false });
+
+  useEffect(() => {
+    let isMounted = true;
+    axios.get('/api/auth/providers').then((res) => {
+      if (isMounted && res.data) {
+        setProviders({
+          github: Boolean(res.data.github),
+          gitlab: Boolean(res.data.gitlab)
+        });
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
 
   const handleOAuthConnect = (targetPlatform: 'github' | 'gitlab') => {
+    if (!providers[targetPlatform]) {
+      setStatusMessage({
+        type: 'error',
+        text: `${targetPlatform === 'github' ? 'GitHub' : 'GitLab'} OAuth App is not configured on this server (requires ${targetPlatform === 'github' ? 'GITHUB_CLIENT_ID & GITHUB_CLIENT_SECRET' : 'GITLAB_CLIENT_ID & GITLAB_CLIENT_SECRET'}). Please configure manually below with your personal username and token.`
+      });
+      setPlatform(targetPlatform);
+      setShowManualForm(true);
+      return;
+    }
     setOauthConnecting(targetPlatform);
     const returnUrl = window.location.pathname + window.location.search;
     window.location.href = `/api/auth/${targetPlatform}?redirect=${encodeURIComponent(returnUrl)}`;
@@ -367,7 +391,13 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   ) : (
                     <GitHubLogo className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
                   )}
-                  <span>{oauthConnecting === 'github' ? 'CONNECTING TO GITHUB...' : 'Connect with GitHub'}</span>
+                  <span>
+                    {oauthConnecting === 'github'
+                      ? 'CONNECTING TO GITHUB...'
+                      : providers.github
+                      ? 'Connect with GitHub'
+                      : 'Connect with GitHub (OAuth App Setup Required)'}
+                  </span>
                 </motion.button>
 
                 <motion.button
@@ -384,7 +414,13 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   ) : (
                     <GitLabLogo className="h-4 w-4 group-hover:scale-110 transition-transform" />
                   )}
-                  <span>{oauthConnecting === 'gitlab' ? 'CONNECTING TO GITLAB...' : 'Connect with GitLab'}</span>
+                  <span>
+                    {oauthConnecting === 'gitlab'
+                      ? 'CONNECTING TO GITLAB...'
+                      : providers.gitlab
+                      ? 'Connect with GitLab'
+                      : 'Connect with GitLab (OAuth App Setup Required)'}
+                  </span>
                 </motion.button>
               </div>
 

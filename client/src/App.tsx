@@ -474,8 +474,17 @@ const AppContent: React.FC = () => {
       setIsIntegrationsModalOpen(true);
     } else if (oauthError) {
       console.warn('OAuth flow warning:', oauthError);
+      params.delete('error');
+      params.delete('provider');
+      params.delete('message');
+      const newQuery = params.toString();
+      const newUrl = window.location.pathname + (newQuery ? `?${newQuery}` : '') + window.location.hash;
+      window.history.replaceState({}, document.title, newUrl);
+      if (!user) {
+        setIsAuthModalOpen(true);
+      }
     }
-  }, [refreshUser, refreshIntegrations, fetchStats, fetchContributions]);
+  }, [refreshUser, refreshIntegrations, fetchStats, fetchContributions, user]);
 
   // Check for updates and notify desktop/audio
   useEffect(() => {

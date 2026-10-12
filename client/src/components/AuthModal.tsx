@@ -37,6 +37,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   }, []);
 
   const handleOAuthLogin = (provider: 'github' | 'gitlab') => {
+    if (!providers[provider]) {
+      setErrorMessage(
+        `${provider === 'github' ? 'GitHub' : 'GitLab'} OAuth App is not configured on this server (requires ${provider === 'github' ? 'GITHUB_CLIENT_ID & GITHUB_CLIENT_SECRET' : 'GITLAB_CLIENT_ID & GITLAB_CLIENT_SECRET'}). Sign in or register below using email and password.`
+      );
+      return;
+    }
     setOauthLoading(provider);
     window.location.href = `/api/auth/${provider}`;
   };
@@ -139,7 +145,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 ) : (
                   <GitHubLogo className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
                 )}
-                <span>{oauthLoading === 'github' ? 'CONNECTING TO GITHUB...' : 'Continue with GitHub'}</span>
+                <span>
+                  {oauthLoading === 'github'
+                    ? 'CONNECTING TO GITHUB...'
+                    : providers.github
+                    ? 'Continue with GitHub'
+                    : 'Continue with GitHub (OAuth App Setup Required)'}
+                </span>
               </button>
 
               <button
@@ -153,11 +165,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 ) : (
                   <GitLabLogo className="h-4 w-4 group-hover:scale-110 transition-transform" />
                 )}
-                <span>{oauthLoading === 'gitlab' ? 'CONNECTING TO GITLAB...' : 'Continue with GitLab'}</span>
+                <span>
+                  {oauthLoading === 'gitlab'
+                    ? 'CONNECTING TO GITLAB...'
+                    : providers.gitlab
+                    ? 'Continue with GitLab'
+                    : 'Continue with GitLab (OAuth App Setup Required)'}
+                </span>
               </button>
 
               <p className="text-[11px] text-text-muted text-center font-sans mt-1">
-                Authenticates via OAuth and automatically links your verified profile and tokens.
+                Authenticates via official OAuth 2.0 with your personal credentials.
               </p>
             </div>
 
