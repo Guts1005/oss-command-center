@@ -7,7 +7,7 @@
 [![Security Architecture](https://img.shields.io/badge/Security-AES--256--GCM%20%7C%20Rate--Limited-blueviolet?style=flat-square&logo=shield)](./server/security/crypto.ts)
 [![Architecture](https://img.shields.io/badge/Architecture-Local--First%20%7C%20SQLite%20WAL-informational?style=flat-square&logo=sqlite&logoColor=white)](./server/db.ts)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](./LICENSE)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-orange?style=flat-square)](https://oss-command-center.onrender.com/?demo=1)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-orange?style=flat-square)](https://ossbysharvin.vercel.app/?demo=1)
 
 ---
 
