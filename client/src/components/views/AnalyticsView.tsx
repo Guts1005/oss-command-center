@@ -55,16 +55,12 @@ interface AnalyticsData {
 
 interface AnalyticsViewProps {
   stats: any;
-  isDemoMode?: boolean;
-  demoAnalytics?: AnalyticsData | null;
   onNavigateView?: (mode: ViewMode) => void;
   onOpenCookiePreferences?: () => void;
 }
 
 export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   stats: initialStats,
-  isDemoMode,
-  demoAnalytics,
   onNavigateView,
   onOpenCookiePreferences,
 }) => {
@@ -74,12 +70,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const [hoveredDay, setHoveredDay] = useState<{ date: string; count: number } | null>(null);
 
   const fetchAnalytics = async (isInitial = false) => {
-    if (isDemoMode && demoAnalytics) {
-      setData(demoAnalytics);
-      setIsLoading(false);
-      setIsRefreshing(false);
-      return;
-    }
+    
     try {
       if (isInitial) setIsLoading(true);
       else setIsRefreshing(true);
@@ -94,13 +85,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   };
 
   useEffect(() => {
-    if (isDemoMode && demoAnalytics) {
-      setData(demoAnalytics);
-      setIsLoading(false);
-    } else {
-      fetchAnalytics(true);
-    }
-  }, [isDemoMode, demoAnalytics]);
+    fetchAnalytics(true);
+  }, []);
 
   const formatHours = (hours: number) => {
     if (!hours || hours <= 0) return '0h';

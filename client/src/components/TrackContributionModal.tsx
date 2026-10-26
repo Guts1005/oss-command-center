@@ -8,16 +8,12 @@ interface TrackContributionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (id: string) => void;
-  isDemoMode?: boolean;
-  onDemoTrackUrl?: (url: string) => { id: string } | null;
 }
 
 export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  isDemoMode,
-  onDemoTrackUrl,
 }) => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,26 +29,6 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
     setIsLoading(true);
     setError(null);
 
-    if (isDemoMode && onDemoTrackUrl) {
-      try {
-        const item = onDemoTrackUrl(url.trim());
-        if (item) {
-          setUrl('');
-          onSuccess(item.id);
-          onClose();
-          return;
-        } else {
-          setError('Unsupported link format for simulation. Please enter a valid GitHub or GitLab PR URL.');
-          return;
-        }
-      } catch (err: any) {
-        setError(err.message || 'Error simulating tracked contribution');
-        return;
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     try {
       const res = await axios.post('/api/track-url', { url: url.trim() });
       if (res.data?.success && res.data?.item) {
@@ -60,11 +36,10 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
         onSuccess(res.data.item.id);
         onClose();
       } else {
-        setError('Failed to ingest contribution. Please verify upstream URL.');
+        setError(res.data?.error || 'Failed to track contribution');
       }
     } catch (err: any) {
-      const msg = err.response?.data?.error || err.message || 'Error tracking contribution';
-      setError(msg);
+      setError(err.response?.data?.error || err.message || 'Failed to track contribution');
     } finally {
       setIsLoading(false);
     }

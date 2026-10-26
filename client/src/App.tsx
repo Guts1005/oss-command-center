@@ -2,15 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import axios from 'axios';
 import { Contribution, Stats, ActivityEvent } from './types';
-import {
-  FALLBACK_DEMO_CONTRIBUTIONS,
-  FALLBACK_DEMO_EVENTS,
-  FALLBACK_DEMO_STATS,
-  FALLBACK_DEMO_ANALYTICS,
-  FALLBACK_DEMO_REPOSITORIES,
-  DemoAnalyticsData,
-  DemoRepoItem,
-} from './data/demoDataset';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HeaderTelemetry } from './components/HeaderTelemetry';
 import { FilterRail } from './components/FilterRail';
@@ -97,166 +88,9 @@ const AppContent: React.FC = () => {
   const prevItemsRef = React.useRef<Map<string, { status: string; action_needed: string }>>(new Map());
   const isInitialMount = React.useRef<boolean>(true);
 
-  // Demo Sandbox State
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('demo') === 'true' || params.get('demo') === '1') return true;
-    if (params.get('demo') === 'false' || params.get('demo') === '0') return false;
-    const stored = localStorage.getItem('oss_demo_mode');
-    if (stored !== null) return stored === 'true';
-    return true; // Default to true for new visitors to explore immediately
-  });
-
-  const [demoContributions, setDemoContributions] = useState<Contribution[]>(FALLBACK_DEMO_CONTRIBUTIONS);
-  const [demoEvents, setDemoEvents] = useState<ActivityEvent[]>(FALLBACK_DEMO_EVENTS);
-  const [demoStats, setDemoStats] = useState<Stats>(FALLBACK_DEMO_STATS);
-  const [demoAnalytics, setDemoAnalytics] = useState<DemoAnalyticsData>(FALLBACK_DEMO_ANALYTICS);
-  const [demoRepositories, setDemoRepositories] = useState<DemoRepoItem[]>(FALLBACK_DEMO_REPOSITORIES);
-
-  const isDemoActive = !user && isDemoMode;
-
-  // Fetch curated demo dataset for unauthenticated sandbox exploration
-  useEffect(() => {
-    if (user) return;
-    axios.get('/api/demo/dataset')
-      .then(res => {
-        if (res.data) {
-          if (Array.isArray(res.data.contributions)) setDemoContributions(res.data.contributions);
-          if (Array.isArray(res.data.activityEvents)) setDemoEvents(res.data.activityEvents);
-          if (res.data.stats) setDemoStats(res.data.stats);
-          if (res.data.analytics) setDemoAnalytics(res.data.analytics);
-          if (Array.isArray(res.data.repositories)) setDemoRepositories(res.data.repositories);
-        }
-      })
-      .catch(err => {
-        console.warn('Using client-side fallback demo dataset:', err);
-      });
-  }, [user]);
-
-  const handleToggleDemoMode = useCallback(() => {
-    setIsDemoMode(prev => {
-      const next = !prev;
-      localStorage.setItem('oss_demo_mode', String(next));
-      return next;
-    });
-  }, []);
-
-  const handleDemoMarkRead = useCallback((id: string) => {
-    setDemoContributions(prev => prev.map(c => {
-      if (c.id === id && c.unread) {
-        return { ...c, unread: 0, last_viewed_at: new Date().toISOString() };
-      }
-      return c;
-    }));
-    setDemoStats(prev => ({
-      ...prev,
-      unreadCount: Math.max(0, prev.unreadCount - 1)
-    }));
-  }, []);
-
-  const handleDemoUpdateNotes = useCallback((id: string, notes: string, actionNeeded: 'reply' | 'push-changes' | 'none') => {
-    setDemoContributions(prev => {
-      const updated = prev.map(c => (c.id === id ? { ...c, notes, action_needed: actionNeeded } : c));
-      const actionCount = updated.filter(c => c.action_needed !== 'none').length;
-      setDemoStats(s => ({ ...s, actionNeeded: actionCount }));
-      return updated;
-    });
-  }, []);
-
-  const handleDemoAddEvent = useCallback((id: string, event: ActivityEvent) => {
-    setDemoEvents(prev => [event, ...prev]);
-    setDemoContributions(prev => prev.map(c => (c.id === id ? { ...c, last_activity_at: event.created_at } : c)));
-  }, []);
-
-  const handleDemoTrackUrl = useCallback((rawUrl: string) => {
-    const trimmed = rawUrl.trim();
-    const ghMatch = trimmed.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(pull|issues)\/(\d+)/i);
-    const glMatch = trimmed.match(/^https?:\/\/([^\/]+)\/(.+?)\/-\/(merge_requests|issues)\/(\d+)/i);
-
-    if (!ghMatch && !glMatch) return null;
-
-    const now = new Date().toISOString();
-    let newItem: Contribution;
-
-    if (ghMatch) {
-      const [, owner, repoName, rawType, rawNumber] = ghMatch;
-      const repo = `${owner}/${repoName}`;
-      const number = parseInt(rawNumber, 10);
-      const type: 'pr' | 'issue' = rawType.toLowerCase() === 'pull' ? 'pr' : 'issue';
-      const id = `gh:${repo}#${number}`;
-
-      newItem = {
-        id,
-        platform: 'github',
-        repo,
-        number,
-        title: `Simulated tracking: ${repo}#${number}`,
-        type,
-        url: trimmed,
-        author: 'demo_contributor',
-        status: 'open',
-        action_needed: 'none',
-        difficulty: 'medium',
-        bounty_amount: null,
-        created_at: now,
-        last_activity_at: now,
-        last_synced_at: now,
-        unread: 1,
-        notes: 'Tracked in interactive Demo Sandbox mode.'
-      };
-    } else {
-      const [, , projectPath, rawType, rawNumber] = glMatch!;
-      const number = parseInt(rawNumber, 10);
-      const type: 'pr' | 'issue' = rawType.toLowerCase() === 'merge_requests' ? 'pr' : 'issue';
-      const id = `gl:${projectPath}!${number}`;
-
-      newItem = {
-        id,
-        platform: 'gitlab',
-        repo: projectPath,
-        number,
-        title: `Simulated tracking: ${projectPath}!${number}`,
-        type,
-        url: trimmed,
-        author: 'demo_contributor',
-        status: 'open',
-        action_needed: 'none',
-        difficulty: 'medium',
-        bounty_amount: null,
-        created_at: now,
-        last_activity_at: now,
-        last_synced_at: now,
-        unread: 1,
-        notes: 'Tracked in interactive Demo Sandbox mode.'
-      };
-    }
-
-    setDemoContributions(prev => [newItem, ...prev]);
-    setDemoStats(prev => ({
-      ...prev,
-      total: prev.total + 1,
-      unreadCount: prev.unreadCount + 1,
-    }));
-
-    setDemoEvents(prev => [
-      {
-        id: `demo_init_${Date.now()}`,
-        contribution_id: newItem.id,
-        actor: 'demo_contributor',
-        type: 'status-change',
-        review_state: null,
-        body_excerpt: `Tracked contribution: ${newItem.title}`,
-        created_at: now
-      },
-      ...prev
-    ]);
-
-    return newItem;
-  }, []);
-
+  
   const activeFilteredContributions = React.useMemo(() => {
-    const rawList = user ? contributions : (isDemoMode ? demoContributions : []);
+    const rawList = user ? contributions : [];
     if (!rawList.length) return [];
 
     return rawList
@@ -331,9 +165,9 @@ const AppContent: React.FC = () => {
         }
         return new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime();
       });
-  }, [user, isDemoMode, contributions, demoContributions, platformFilter, timeframeFilter, statusFilter, actionFilter, debouncedSearch, sortBy]);
+  }, [user, contributions, platformFilter, timeframeFilter, statusFilter, actionFilter, debouncedSearch, sortBy]);
 
-  const activeStats = user ? stats : (isDemoMode ? demoStats : {
+  const activeStats = user ? stats : {
     total: 0,
     actionNeeded: 0,
     awaitingMaintainer: 0,
@@ -341,7 +175,7 @@ const AppContent: React.FC = () => {
     closed: 0,
     unreadCount: 0,
     lastSync: null
-  });
+  };
 
   // Debounce search query to prevent input jitter
   useEffect(() => {
@@ -581,17 +415,6 @@ const AppContent: React.FC = () => {
   // Trigger sync
   const handleSync = async () => {
     if (!user) {
-      if (isDemoMode) {
-        setIsSyncing(true);
-        setTimeout(() => {
-          setDemoStats(prev => ({
-            ...prev,
-            lastSync: new Date().toISOString()
-          }));
-          setIsSyncing(false);
-        }, 400);
-        return;
-      }
       setIsAuthModalOpen(true);
       return;
     }
@@ -784,8 +607,6 @@ const AppContent: React.FC = () => {
       setStats((prev) =>
         prev && prev.unreadCount > 0 ? { ...prev, unreadCount: prev.unreadCount - 1 } : prev
       );
-    } else if (isDemoMode) {
-      handleDemoMarkRead(id);
     }
   };
 
@@ -808,38 +629,11 @@ const AppContent: React.FC = () => {
           onOpenGuideModal={() => setIsGuideModalOpen(true)}
           onOpenAuthModal={() => setIsAuthModalOpen(true)}
           onOpenIntegrationsModal={() => setIsIntegrationsModalOpen(true)}
-          isDemoMode={isDemoMode}
-          onToggleDemoMode={handleToggleDemoMode}
+          
         />
 
         {/* Demo Mode Alert Banner */}
-        {isDemoActive && (
-          <div className="flex items-center justify-between gap-3 px-3.5 py-2 mb-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs font-mono text-text-primary shadow-sm">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="flex h-2 w-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
-              <span className="font-bold text-amber-300 shrink-0">DEMO SANDBOX ACTIVE:</span>
-              <span className="text-text-secondary truncate hidden sm:inline">
-                Exploring simulated open-source telemetry across React, Linux, Inkscape, Next.js, and Antigravity.
-              </span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsAuthModalOpen(true)}
-                className="px-2.5 py-1 bg-accent-sapphire hover:bg-accent-sapphire/90 text-white rounded-md font-bold text-[11px] transition-colors cursor-pointer"
-              >
-                CONNECT ACCOUNT
-              </button>
-              <button
-                type="button"
-                onClick={handleToggleDemoMode}
-                className="px-2 py-1 border border-border-subtle bg-surface-card hover:bg-surface-elevated text-text-muted hover:text-white rounded-md text-[11px] transition-colors cursor-pointer"
-              >
-                EXIT DEMO
-              </button>
-            </div>
-          </div>
-        )}
+        
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -896,9 +690,8 @@ const AppContent: React.FC = () => {
                     isRefreshing={isRefreshing}
                     onOpenTrackModal={() => setIsTrackModalOpen(true)}
                     onResetFilters={handleResetFilters}
-                    isAuthenticated={Boolean(user) || isDemoMode}
+                    isAuthenticated={Boolean(user)}
                     onOpenAuthModal={() => setIsAuthModalOpen(true)}
-                    onToggleDemoMode={handleToggleDemoMode}
                     onNavigateView={setViewMode}
                     onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                   />
@@ -910,8 +703,6 @@ const AppContent: React.FC = () => {
               <main className="flex-1 flex flex-col min-h-0 relative">
                 <AnalyticsView
                   stats={activeStats}
-                  isDemoMode={isDemoActive}
-                  demoAnalytics={demoAnalytics}
                   onNavigateView={setViewMode}
                   onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                 />
@@ -922,8 +713,6 @@ const AppContent: React.FC = () => {
               <main className="flex-1 flex flex-col min-h-0 relative">
                 <RepositoriesView
                   contributions={activeFilteredContributions}
-                  isDemoMode={isDemoActive}
-                  demoRepositories={demoRepositories}
                   onSelectRepoFilter={(repo) => {
                     setSearchQuery(repo);
                     setViewMode('stream');
@@ -971,19 +760,9 @@ const AppContent: React.FC = () => {
         itemId={selectedId}
         onClose={() => setSelectedId(null)}
         onItemUpdated={() => {
-          if (user) {
-            fetchStats();
-            fetchContributions(false);
-          }
+          fetchStats();
+          fetchContributions(false);
         }}
-        isDemoMode={isDemoActive}
-        demoDataset={{
-          contributions: demoContributions,
-          activityEvents: demoEvents,
-        }}
-        onDemoUpdateNotes={handleDemoUpdateNotes}
-        onDemoAddEvent={handleDemoAddEvent}
-        onDemoMarkRead={handleDemoMarkRead}
       />
 
       {/* Command Palette Modal (Ctrl+K) */}
@@ -1007,8 +786,7 @@ const AppContent: React.FC = () => {
             fetchContributions();
           }
         }}
-        isDemoMode={isDemoActive}
-        onDemoTrackUrl={handleDemoTrackUrl}
+        
       />
 
       {/* Operational Reference Guide Modal (?) */}
