@@ -48,12 +48,9 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
 
   const handleOAuthConnect = (targetPlatform: 'github' | 'gitlab') => {
     if (!providers[targetPlatform]) {
-      setStatusMessage({
-        type: 'error',
-        text: `${targetPlatform === 'github' ? 'GitHub' : 'GitLab'} OAuth App is not configured on this server (requires ${targetPlatform === 'github' ? 'GITHUB_CLIENT_ID & GITHUB_CLIENT_SECRET' : 'GITLAB_CLIENT_ID & GITLAB_CLIENT_SECRET'}). Please configure manually below with your personal username and token.`
-      });
       setPlatform(targetPlatform);
       setShowManualForm(true);
+      setStatusMessage(null);
       return;
     }
     setOauthConnecting(targetPlatform);
@@ -394,9 +391,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   <span>
                     {oauthConnecting === 'github'
                       ? 'CONNECTING TO GITHUB...'
-                      : providers.github
-                      ? 'Connect with GitHub'
-                      : 'Connect with GitHub (OAuth App Setup Required)'}
+                      : providers.github ? 'Connect with GitHub (1-Click OAuth)' : 'Connect GitHub (via Personal Access Token)'}
                   </span>
                 </motion.button>
 
@@ -417,9 +412,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   <span>
                     {oauthConnecting === 'gitlab'
                       ? 'CONNECTING TO GITLAB...'
-                      : providers.gitlab
-                      ? 'Connect with GitLab'
-                      : 'Connect with GitLab (OAuth App Setup Required)'}
+                      : providers.gitlab ? 'Connect with GitLab (1-Click OAuth)' : 'Connect GitLab (via Personal Access Token / RTEMS)'}
                   </span>
                 </motion.button>
               </div>

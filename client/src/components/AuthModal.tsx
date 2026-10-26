@@ -22,6 +22,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [providers, setProviders] = useState<{ github: boolean; gitlab: boolean }>({ github: false, gitlab: false });
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const hasAnyOAuth = Boolean(providers.github || providers.gitlab);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,9 +39,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
   const handleOAuthLogin = (provider: 'github' | 'gitlab') => {
     if (!providers[provider]) {
-      setErrorMessage(
-        `${provider === 'github' ? 'GitHub' : 'GitLab'} OAuth App is not configured on this server (requires ${provider === 'github' ? 'GITHUB_CLIENT_ID & GITHUB_CLIENT_SECRET' : 'GITLAB_CLIENT_ID & GITLAB_CLIENT_SECRET'}). Sign in or register below using email and password.`
-      );
       return;
     }
     setOauthLoading(provider);
@@ -132,61 +130,68 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               </motion.button>
             </div>
 
-            {/* 1-Click Social Sign-In (Primary) */}
-            <div className="space-y-2.5 mb-5">
-              <button
-                type="button"
-                onClick={() => handleOAuthLogin('github')}
-                disabled={Boolean(oauthLoading)}
-                className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-accent-sapphire text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
-              >
-                {oauthLoading === 'github' ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-accent-sapphire" />
-                ) : (
-                  <GitHubLogo className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
+            {/* 1-Click Social Sign-In (Configured Providers) */}
+            {hasAnyOAuth && (
+              <div className="space-y-2.5 mb-5">
+                {providers.github && (
+                  <button
+                    type="button"
+                    onClick={() => handleOAuthLogin('github')}
+                    disabled={Boolean(oauthLoading)}
+                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-accent-sapphire text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                  >
+                    {oauthLoading === 'github' ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-accent-sapphire" />
+                    ) : (
+                      <GitHubLogo className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
+                    )}
+                    <span>
+                      {oauthLoading === 'github' ? 'CONNECTING TO GITHUB...' : 'Continue with GitHub'}
+                    </span>
+                  </button>
                 )}
-                <span>
-                  {oauthLoading === 'github'
-                    ? 'CONNECTING TO GITHUB...'
-                    : providers.github
-                    ? 'Continue with GitHub'
-                    : 'Continue with GitHub (OAuth App Setup Required)'}
-                </span>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => handleOAuthLogin('gitlab')}
-                disabled={Boolean(oauthLoading)}
-                className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
-              >
-                {oauthLoading === 'gitlab' ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-[#fc6d26]" />
-                ) : (
-                  <GitLabLogo className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                {providers.gitlab && (
+                  <button
+                    type="button"
+                    onClick={() => handleOAuthLogin('gitlab')}
+                    disabled={Boolean(oauthLoading)}
+                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                  >
+                    {oauthLoading === 'gitlab' ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-[#fc6d26]" />
+                    ) : (
+                      <GitLabLogo className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                    )}
+                    <span>
+                      {oauthLoading === 'gitlab' ? 'CONNECTING TO GITLAB...' : 'Continue with GitLab'}
+                    </span>
+                  </button>
                 )}
-                <span>
-                  {oauthLoading === 'gitlab'
-                    ? 'CONNECTING TO GITLAB...'
-                    : providers.gitlab
-                    ? 'Continue with GitLab'
-                    : 'Continue with GitLab (OAuth App Setup Required)'}
-                </span>
-              </button>
 
-              <p className="text-[11px] text-text-muted text-center font-sans mt-1">
-                Authenticates via official OAuth 2.0 with your personal credentials.
-              </p>
-            </div>
+                <div className="flex flex-col items-center gap-1 mt-1 text-center font-sans">
+                  <p className="text-[11px] text-text-muted">
+                    Authenticates via official OAuth 2.0 with your personal credentials.
+                  </p>
+                  {!providers.gitlab && (
+                    <p className="text-[11px] text-text-whisper">
+                      GitLab instances (e.g. RTEMS) connect via Personal Access Token in Settings after signing in.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Divider */}
-            <div className="relative flex items-center justify-center mb-5">
-              <div className="border-t border-border-subtle w-full" />
-              <span className="bg-surface px-3 text-[10px] font-mono uppercase tracking-wider text-text-muted shrink-0">
-                OR EMAIL &amp; PASSWORD
-              </span>
-              <div className="border-t border-border-subtle w-full" />
-            </div>
+            {hasAnyOAuth && (
+              <div className="relative flex items-center justify-center mb-5">
+                <div className="border-t border-border-subtle w-full" />
+                <span className="bg-surface px-3 text-[10px] font-mono uppercase tracking-wider text-text-muted shrink-0">
+                  OR EMAIL &amp; PASSWORD
+                </span>
+                <div className="border-t border-border-subtle w-full" />
+              </div>
+            )}
 
             {/* Mode Switch */}
             <div className="grid grid-cols-2 gap-2 border border-border-subtle bg-base p-1 rounded-lg mb-4 sm:mb-5 text-xs sm:text-sm font-semibold font-sans">
