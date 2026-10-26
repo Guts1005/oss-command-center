@@ -169,15 +169,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   </button>
                 )}
 
-                <div className="flex flex-col items-center gap-1 mt-1 text-center font-sans">
-                  <p className="text-[11px] text-text-muted">
-                    Authenticates via official OAuth 2.0 with your personal credentials.
+                <div className="flex flex-col items-center gap-0.5 mt-1.5 text-center font-sans">
+                  <span className="text-[11px] font-mono text-text-muted">
+                    OAuth 2.0
+                  </span>
+                  <p className="text-[11px] text-text-whisper">
+                    For other instances, connect via PAT in settings once signed in.
                   </p>
-                  {!providers.gitlab && (
-                    <p className="text-[11px] text-text-whisper">
-                      GitLab instances (e.g. RTEMS) connect via Personal Access Token in Settings after signing in.
-                    </p>
-                  )}
                 </div>
               </div>
             )}
