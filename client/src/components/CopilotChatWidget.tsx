@@ -170,7 +170,11 @@ export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
       const answer = res.data?.answer || 'No response returned from the model.';
 
       const { cleanText, action } = extractAction(answer);
-      if (action && onExecuteAction) {
+      const isConversational = /^(?:hi|hello|hey|heya|howdy|sup|yo|greetings|good\s+(?:morning|afternoon|evening)|who are you|what can you do|help)\b[?!.]*$/i.test(promptText);
+      const hasActionIntent = /(?:show|filter|display|switch|navigate|open|close|clear|toggle|add\s+note|set|sync|track|guide|reset|find|search)/i.test(promptText);
+
+      const shouldExecute = Boolean(action && onExecuteAction && !isConversational && hasActionIntent);
+      if (shouldExecute && action && onExecuteAction) {
         try {
           onExecuteAction(action);
         } catch (e) {
@@ -182,7 +186,7 @@ export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
         id: `copilot_${Date.now()}`,
         sender: 'copilot',
         text: cleanText || answer,
-        executedAction: action,
+        executedAction: shouldExecute ? action : undefined,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 

@@ -79,7 +79,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
           <span className="text-text-muted text-[10px] font-bold tracking-wider uppercase font-sans">
             {label}
           </span>
-          <span className="font-bold text-white tracking-wide truncate">
+          <span className="font-bold text-text-primary tracking-wide truncate">
             {selectedOption?.label}
           </span>
         </div>
@@ -116,7 +116,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                   className={`flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-xs font-sans font-semibold transition-colors cursor-pointer text-left ${
                     isSelected
                       ? 'bg-accent-sapphire/20 text-accent-sapphire font-bold border border-accent-sapphire/30'
-                      : 'text-text-whisper hover:bg-surface-card hover:text-white border border-transparent'
+                      : 'text-text-whisper hover:bg-surface-card hover:text-text-primary border border-transparent'
                   }`}
                   role="option"
                   aria-selected={isSelected}

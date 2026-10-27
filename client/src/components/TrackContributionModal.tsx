@@ -97,7 +97,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-base md:text-lg font-bold text-white tracking-wide font-sans leading-snug">
+                  <h2 className="text-base md:text-lg font-bold text-text-primary tracking-wide font-sans leading-snug">
                     Track Upstream Contribution
                   </h2>
                   <span className="hidden sm:inline-block border border-border-bold bg-base px-2 py-0.5 rounded text-xs font-mono font-bold text-text-whisper">
@@ -130,7 +130,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                       setUrl(e.target.value);
                       if (error) setError(null);
                     }}
-                    className="w-full border border-border-subtle bg-base py-3 pl-9 pr-4 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
+                    className="w-full border border-border-subtle bg-base py-3 pl-9 pr-4 rounded-md text-base text-text-primary placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
                   />
                 </div>
               </div>
@@ -161,7 +161,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                     onClick={() => handleExampleClick('https://github.com/astral-sh/ruff/pull/28429')}
                     className="flex items-center gap-1.5 border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-medium text-text-whisper hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer shadow-sm"
                   >
-                    <GitHubLogo className="h-3 w-3 text-white shrink-0" />
+                    <GitHubLogo className="h-3 w-3 text-text-primary shrink-0" />
                     <span>astral-sh/ruff#28429</span>
                   </motion.button>
                   <motion.button
@@ -187,7 +187,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   onClick={onClose}
                   disabled={isLoading}
-                  className="border border-border-subtle bg-base px-4 py-2.5 rounded-md text-xs md:text-sm font-sans font-medium text-text-muted hover:border-border-bold hover:text-white transition-colors cursor-pointer"
+                  className="border border-border-subtle bg-base px-4 py-2.5 rounded-md text-xs md:text-sm font-sans font-medium text-text-muted hover:border-border-bold hover:text-text-primary transition-colors cursor-pointer"
                 >
                   Cancel
                 </motion.button>

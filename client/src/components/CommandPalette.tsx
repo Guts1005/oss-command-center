@@ -67,7 +67,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a repo, title, PR #, or keyword to jump..."
-            className="w-full bg-transparent text-base md:text-lg font-medium text-white placeholder:text-text-muted focus:outline-none"
+            className="w-full bg-transparent text-base md:text-lg font-medium text-text-primary placeholder:text-text-muted focus:outline-none"
           />
           <kbd className="border border-border-bold bg-surface-card px-2.5 py-1 rounded text-xs font-mono font-bold text-text-whisper shadow-sm">
             ESC
@@ -112,7 +112,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                           {item.status}
                         </span>
                       </div>
-                      <div className="text-sm md:text-base font-sans font-semibold text-white truncate mt-1">
+                      <div className="text-sm md:text-base font-sans font-semibold text-text-primary truncate mt-1">
                         {item.title}
                       </div>
                     </div>

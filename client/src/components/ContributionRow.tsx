@@ -95,11 +95,11 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
       let chipColor = 'bg-accent-sapphire/15 border-accent-sapphire/40 text-accent-sapphire';
       if (type === 'fix') chipColor = 'bg-status-action-needed/15 border-status-action-needed/40 text-status-action-needed';
       if (type === 'feat') chipColor = 'bg-status-merged/15 border-status-merged/40 text-status-merged';
-      if (type === 'perf') chipColor = 'bg-amber-500/15 border-amber-500/40 text-amber-300';
-      if (type === 'test') chipColor = 'bg-purple-500/15 border-purple-500/40 text-purple-300';
-      if (type === 'ci') chipColor = 'bg-sky-500/15 border-sky-500/40 text-sky-300';
-      if (type === 'refactor') chipColor = 'bg-teal-500/15 border-teal-500/40 text-teal-300';
-      if (type === 'docs') chipColor = 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300';
+      if (type === 'perf') chipColor = 'bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300';
+      if (type === 'test') chipColor = 'bg-purple-500/15 border-purple-500/40 text-purple-700 dark:text-purple-300';
+      if (type === 'ci') chipColor = 'bg-sky-500/15 border-sky-500/40 text-sky-700 dark:text-sky-300';
+      if (type === 'refactor') chipColor = 'bg-teal-500/15 border-teal-500/40 text-teal-700 dark:text-teal-300';
+      if (type === 'docs') chipColor = 'bg-indigo-500/15 border-indigo-500/40 text-indigo-700 dark:text-indigo-300';
 
       return (
         <span className="inline-flex items-baseline gap-2 flex-wrap">
@@ -181,7 +181,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
               }`}
             >
               {item.platform === 'github' ? (
-                <GitHubLogo className="h-3 w-3 text-white shrink-0" />
+                <GitHubLogo className="h-3 w-3 text-text-primary shrink-0" />
               ) : (
                 <GitLabLogo className="h-3 w-3 shrink-0" />
               )}
@@ -200,9 +200,9 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
             )}
 
             {/* Formatted Repo Identifier (Dim owner, brighten repo) */}
-            <span className="font-mono text-sm sm:text-base font-bold shrink-0 tracking-tight group-hover:text-white transition-colors">
+            <span className="font-mono text-sm sm:text-base font-bold shrink-0 tracking-tight group-hover:text-accent-sapphire transition-colors">
               {repoOwner && <span className="text-text-muted/80 font-normal">{repoOwner}/</span>}
-              <span className="text-white">{repoName}</span>
+              <span className="text-text-primary">{repoName}</span>
               <span className="text-accent-glacial ml-1">#{item.number}</span>
             </span>
 

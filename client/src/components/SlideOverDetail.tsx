@@ -18,7 +18,7 @@ function renderFormattedInline(content: string): React.ReactNode {
         parts.push(<span key={key++}>{boldMatch[1]}</span>);
       }
       parts.push(
-        <strong key={key++} className="font-semibold text-white">
+        <strong key={key++} className="font-semibold text-text-primary">
           {boldMatch[2]}
         </strong>
       );
@@ -53,21 +53,21 @@ const FormattedReview: React.FC<{ text: string }> = ({ text }) => {
         }
         if (trimmed.startsWith('### ')) {
           return (
-            <h4 key={idx} className="text-xs md:text-sm font-bold text-white tracking-wide mt-3 mb-1 font-sans">
+            <h4 key={idx} className="text-xs md:text-sm font-bold text-text-primary tracking-wide mt-3 mb-1 font-sans">
               {renderFormattedInline(trimmed.replace(/^###\s+/, ''))}
             </h4>
           );
         }
         if (trimmed.startsWith('## ')) {
           return (
-            <h3 key={idx} className="text-sm md:text-base font-bold text-white tracking-wide mt-3.5 mb-1.5 font-sans">
+            <h3 key={idx} className="text-sm md:text-base font-bold text-text-primary tracking-wide mt-3.5 mb-1.5 font-sans">
               {renderFormattedInline(trimmed.replace(/^##\s+/, ''))}
             </h3>
           );
         }
         if (trimmed.startsWith('# ')) {
           return (
-            <h2 key={idx} className="text-base md:text-lg font-bold text-white tracking-wide mt-4 mb-2 font-sans">
+            <h2 key={idx} className="text-base md:text-lg font-bold text-text-primary tracking-wide mt-4 mb-2 font-sans">
               {renderFormattedInline(trimmed.replace(/^#\s+/, ''))}
             </h2>
           );
@@ -373,7 +373,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
               <div className="flex items-center justify-between border-b border-border-subtle bg-base px-4 py-3 sm:px-6 sm:py-4 gap-2">
                 <div className="flex items-center gap-2 min-w-0 flex-wrap">
                   <span className="text-text-muted text-xs font-mono font-bold uppercase tracking-wider shrink-0">Details:</span>
-                  <span className="font-mono font-bold text-white text-sm sm:text-base truncate">{itemId}</span>
+                  <span className="font-mono font-bold text-text-primary text-sm sm:text-base truncate">{itemId}</span>
                   
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -412,7 +412,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Spec-Sheet Header & Metadata Grid */}
           <div className="border border-border-subtle bg-surface-card p-5 rounded-lg shadow-card">
-            <h2 className="text-lg md:text-xl font-bold text-white leading-snug font-sans mb-4">
+            <h2 className="text-lg md:text-xl font-bold text-text-primary leading-snug font-sans mb-4">
               {data.item.title}
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs border-t border-border-subtle/60 pt-4">
@@ -422,7 +422,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
               </div>
               <div className="bg-base p-2.5 rounded border border-border-subtle/50">
                 <span className="text-text-muted text-xs block uppercase font-mono font-bold">AUTHOR</span>
-                <span className="font-mono font-bold text-white text-sm block mt-0.5">@{data.item.author}</span>
+                <span className="font-mono font-bold text-text-primary text-sm block mt-0.5">@{data.item.author}</span>
               </div>
               <div className="bg-base p-2.5 rounded border border-border-subtle/50">
                 <span className="text-text-muted text-xs block uppercase font-mono font-bold">PLATFORM</span>
@@ -430,7 +430,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
               </div>
               <div className="bg-base p-2.5 rounded border border-border-subtle/50">
                 <span className="text-text-muted text-xs block uppercase font-mono font-bold">STATUS</span>
-                <span className="font-mono font-bold text-white text-sm block uppercase mt-0.5">{data.item.status}</span>
+                <span className="font-mono font-bold text-text-primary text-sm block uppercase mt-0.5">{data.item.status}</span>
               </div>
             </div>
             {data.item.bounty_amount && (
@@ -460,7 +460,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
                     <span className="text-xs font-mono font-bold tracking-wider uppercase text-text-muted block">
                       {guidance.badge}
                     </span>
-                    <h3 className="text-sm md:text-base font-bold text-white mt-1">
+                    <h3 className="text-sm md:text-base font-bold text-text-primary mt-1">
                       {guidance.heading}
                     </h3>
                     <p className="text-sm text-text-whisper mt-1.5 font-sans leading-relaxed">

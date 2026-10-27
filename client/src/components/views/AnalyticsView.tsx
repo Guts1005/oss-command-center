@@ -249,7 +249,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           </div>
           <div className="text-xs font-mono text-text-muted">
             {hoveredDay ? (
-              <span className="text-white font-semibold">
+              <span className="text-text-primary font-semibold">
                 {hoveredDay.count} events on {hoveredDay.date}
               </span>
             ) : (
@@ -305,7 +305,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             <div className="mb-4">
               <div className="flex items-center justify-between text-xs font-mono text-text-muted mb-1.5">
                 <span>External Organizations</span>
-                <span className="text-white font-bold">{scope.external} PRs</span>
+                <span className="text-text-primary font-bold">{scope.external} PRs</span>
               </div>
               <div className="w-full h-2 rounded-full bg-surface-elevated overflow-hidden flex">
                 <div
@@ -325,7 +325,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
             <div>
               <div className="flex items-center justify-between text-xs font-mono text-text-muted mb-1.5">
                 <span>Platform Distribution</span>
-                <span className="text-white font-bold">{summary.total} PRs</span>
+                <span className="text-text-primary font-bold">{summary.total} PRs</span>
               </div>
               <div className="w-full h-2 rounded-full bg-surface-elevated overflow-hidden flex">
                 <div
@@ -387,7 +387,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                     >
                       {repo.platform === 'gitlab' ? 'GL' : 'GH'}
                     </span>
-                    <span className="text-xs font-mono font-bold text-white truncate">
+                    <span className="text-xs font-mono font-bold text-text-primary truncate">
                       {repo.repo}
                     </span>
                   </div>

@@ -109,7 +109,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-bold text-white font-sans tracking-wide">
+                  <h2 className="text-base sm:text-lg font-bold text-text-primary font-sans tracking-wide">
                     {isRegister ? 'Register User' : 'Sign In'}
                   </h2>
                   <p className="text-xs sm:text-sm text-text-muted font-sans mt-0.5">
@@ -123,7 +123,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 whileTap={{ scale: 0.9 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 onClick={onClose}
-                className="absolute top-4 right-4 sm:static flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
+                className="absolute top-4 right-4 sm:static flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-text-primary transition-colors cursor-pointer"
                 title="Dismiss (Esc)"
               >
                 <X className="h-4 w-4" />
@@ -138,12 +138,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     type="button"
                     onClick={() => handleOAuthLogin('github')}
                     disabled={Boolean(oauthLoading)}
-                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-accent-sapphire text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-accent-sapphire text-text-primary text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
                   >
                     {oauthLoading === 'github' ? (
                       <Loader2 className="h-4 w-4 animate-spin text-accent-sapphire" />
                     ) : (
-                      <GitHubLogo className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
+                      <GitHubLogo className="h-4 w-4 text-text-primary group-hover:scale-110 transition-transform" />
                     )}
                     <span>
                       {oauthLoading === 'github' ? 'CONNECTING TO GITHUB...' : 'Continue with GitHub'}
@@ -156,7 +156,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     type="button"
                     onClick={() => handleOAuthLogin('gitlab')}
                     disabled={Boolean(oauthLoading)}
-                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-text-primary text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
                   >
                     {oauthLoading === 'gitlab' ? (
                       <Loader2 className="h-4 w-4 animate-spin text-[#fc6d26]" />
@@ -201,8 +201,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 }}
                 className={`py-2 rounded text-center transition-all cursor-pointer ${
                   !isRegister
-                    ? 'bg-surface-elevated text-white border border-accent-sapphire shadow-sm'
-                    : 'text-text-muted hover:text-white'
+                    ? 'bg-surface-elevated text-text-primary border border-accent-sapphire shadow-sm'
+                    : 'text-text-muted hover:text-text-primary'
                 }`}
               >
                 Sign In
@@ -215,8 +215,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 }}
                 className={`py-2 rounded text-center transition-all cursor-pointer ${
                   isRegister
-                    ? 'bg-surface-elevated text-white border border-accent-sapphire shadow-sm'
-                    : 'text-text-muted hover:text-white'
+                    ? 'bg-surface-elevated text-text-primary border border-accent-sapphire shadow-sm'
+                    : 'text-text-muted hover:text-text-primary'
                 }`}
               >
                 Register
@@ -247,7 +247,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder={isRegister ? 'developer' : 'developer or user@example.com'}
-                className="w-full bg-transparent px-3.5 py-3 text-base text-white placeholder:text-text-muted focus:outline-none font-medium"
+                className="w-full bg-transparent px-3.5 py-3 text-base text-text-primary placeholder:text-text-muted focus:outline-none font-medium"
               />
             </div>
           </div>
@@ -267,7 +267,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="developer@domain.com"
-                  className="w-full bg-transparent px-3.5 py-3 text-base text-white placeholder:text-text-muted focus:outline-none font-medium"
+                  className="w-full bg-transparent px-3.5 py-3 text-base text-text-primary placeholder:text-text-muted focus:outline-none font-medium"
                 />
               </div>
             </div>
@@ -287,12 +287,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full bg-transparent px-3.5 py-3 text-base text-white placeholder:text-text-muted focus:outline-none font-medium"
+                className="w-full bg-transparent px-3.5 py-3 text-base text-text-primary placeholder:text-text-muted focus:outline-none font-medium"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="pr-3.5 text-text-muted hover:text-white cursor-pointer"
+                className="pr-3.5 text-text-muted hover:text-text-primary cursor-pointer"
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>

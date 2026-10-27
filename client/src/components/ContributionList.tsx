@@ -119,7 +119,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
       <div className="flex flex-1 items-center justify-center p-16 bg-base">
         <div className="border border-border-subtle bg-surface p-6 rounded-lg font-mono text-sm text-text-whisper flex items-center gap-4 shadow-card">
           <span className="inline-block h-3 w-3 bg-accent-sapphire rounded-full animate-ping" />
-          <span className="text-white font-bold text-base">Syncing...</span>
+          <span className="text-text-primary font-bold text-base">Syncing...</span>
           <span>LOADING CONTRIBUTIONS...</span>
         </div>
       </div>
@@ -136,7 +136,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
                 <Lock className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white font-sans">
+                <h2 className="text-base sm:text-lg font-bold text-text-primary font-sans">
                   Login or Register to start working
                 </h2>
                 <p className="text-xs sm:text-sm text-text-whisper mt-1 font-sans">
@@ -175,7 +175,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
         <div className="flex-1 flex items-center justify-center p-4 sm:p-8 w-full my-auto">
           <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card">
             <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-3 text-sm">
-              <span className="text-white font-bold text-xs sm:text-base font-sans">No contributions found</span>
+              <span className="text-text-primary font-bold text-xs sm:text-base font-sans">No contributions found</span>
               <span className="text-text-muted text-[11px] sm:text-xs font-mono">0 items</span>
             </div>
             <p className="text-xs sm:text-sm text-text-whisper mb-4 font-sans leading-relaxed">

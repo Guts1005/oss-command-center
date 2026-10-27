@@ -470,7 +470,7 @@ apiRouter.get('/contributions', (req: AuthenticatedRequest, res) => {
 
     if (status && status !== 'all') {
       if (status === 'active' || status === 'in_review' || status === 'in-review') {
-        query += " AND status IN ('open', 'opened', 'submitted', 'in_review', 'awaiting-reply') AND (julianday('now') - julianday(COALESCE(last_activity_at, created_at, 'now'))) < 30";
+        query += " AND status IN ('open', 'opened', 'submitted', 'in_review', 'awaiting-reply')";
       } else if (status === 'action-needed' || status === 'action_needed') {
         query += " AND action_needed != 'none'";
       } else if (status === 'stale') {

@@ -115,7 +115,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               onClick={() => onViewModeChange(tab.id)}
               className={`relative z-10 flex items-center gap-1 rounded-md font-mono font-semibold transition-colors duration-150 cursor-pointer select-none border border-transparent px-2 py-1 text-xs ${
                 isActive
-                  ? 'text-white'
+                  ? 'text-text-primary'
                   : 'text-text-muted hover:text-text-primary'
               }`}
             >
@@ -158,11 +158,11 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
         whileTap={{ scale: 0.94 }}
         transition={{ type: 'spring', stiffness: 450, damping: 25 }}
         onClick={onOpenTrackModal}
-        className="flex items-center gap-1.5 h-8 bg-accent-sapphire hover:bg-accent-sapphire/90 text-white px-2.5 rounded-lg font-mono font-bold text-xs shadow-sm cursor-pointer shrink-0"
+        className="flex items-center gap-1.5 h-8 bg-accent-sapphire hover:bg-accent-sapphire/90 !text-white px-2.5 rounded-lg font-mono font-bold text-xs shadow-sm cursor-pointer shrink-0"
         title="Track new contribution URL"
       >
         <PlusCircle className="h-3.5 w-3.5 shrink-0" />
-        <span>TRACK PR</span>
+        <span className="hidden sm:inline">TRACK PR</span>
       </motion.button>
     ) : null
   );
@@ -173,17 +173,18 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
       <div className="flex items-center h-8 border border-border-subtle bg-surface-card rounded-lg overflow-hidden divide-x divide-border-subtle shadow-sm shrink-0">
         <div className="flex items-center gap-1.5 h-full px-2 text-xs font-mono font-bold text-text-primary bg-surface-card">
           <UserIcon className="h-3.5 w-3.5 text-accent-sapphire shrink-0" />
-          <span className="max-w-[85px] truncate">@{user.username}</span>
+          <span className="max-w-[75px] sm:max-w-[85px] truncate">@{user.username}</span>
         </div>
         <motion.button
           type="button"
           whileTap={{ scale: 0.95 }}
           onClick={onOpenIntegrationsModal}
-          className="flex items-center gap-1.5 h-full bg-surface-elevated hover:bg-amber-500/15 px-2 text-xs font-mono font-bold text-text-primary hover:text-amber-500 dark:hover:text-amber-300 transition-colors cursor-pointer group"
+          className="flex items-center gap-1 h-full bg-surface-elevated hover:bg-amber-500/15 px-2 text-xs font-mono font-bold text-text-primary hover:text-amber-500 dark:hover:text-amber-300 transition-colors cursor-pointer group"
           title="Manage linked GitHub and GitLab accounts"
         >
           <Key className="h-3 w-3 text-status-awaiting-reply shrink-0" />
-          <span>ACCOUNTS ({integrations.length})</span>
+          <span className="hidden xl:inline">ACCOUNTS</span>
+          <span>({integrations.length})</span>
         </motion.button>
         <button
           onClick={() => logout()}
@@ -208,23 +209,23 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
   );
 
   return (
-    <header className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-2.5 py-1.5 w-full max-w-full overflow-hidden">
-      {/* Streamlined Single Horizontal Console Bar */}
-      <div className="flex items-center justify-between gap-2 xl:gap-3 w-full">
+    <header className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-2.5 py-1.5 w-full max-w-full">
+      {/* Streamlined Horizontal Console Bar with Responsive Flow */}
+      <div className="flex items-center justify-between gap-1.5 sm:gap-2 xl:gap-3 w-full">
         {/* Left: Brand Identity & Static Creator Credit */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base shadow-inner">
             <OSSBrandLogo className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-1.5">
-            <h1 className="text-sm font-extrabold tracking-tight text-text-primary uppercase font-sans whitespace-nowrap">
+            <h1 className="text-xs sm:text-sm font-extrabold tracking-tight text-text-primary uppercase font-sans whitespace-nowrap">
               OSS COMMAND CENTER
             </h1>
             <span className="border border-border-subtle bg-surface-elevated px-1.5 py-0.5 rounded text-[10px] font-mono text-text-muted">
               v1.0
             </span>
             <span
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-border-subtle/80 bg-surface-card/60 text-[10px] font-mono text-text-muted select-none cursor-default ml-0.5"
+              className="hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-border-subtle/80 bg-surface-card/60 text-[10px] font-mono text-text-muted select-none cursor-default ml-0.5"
               title="Created by Sharvin"
             >
               <span className="text-[9px] uppercase font-bold text-text-muted/70">by</span>
@@ -237,7 +238,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
         {renderNavTabs(false)}
 
         {/* Right: Track PR + Clustered Utilities + User Capsule */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
           {/* Primary Action Button */}
           {renderTrackButton()}
 
@@ -247,18 +248,18 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
             <button
               onClick={onSync}
               disabled={isSyncing}
-              className="flex items-center gap-1 h-full px-2 text-xs font-mono text-text-muted hover:text-white hover:bg-surface-elevated transition-colors disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-1 h-full px-2 text-xs font-mono text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors disabled:opacity-50 cursor-pointer"
               title="Poll upstream GitHub and GitLab APIs"
             >
               <RefreshCw className={`h-3 w-3 text-accent-glacial ${isSyncing ? 'animate-spin text-accent-sapphire' : ''}`} />
-              <span className="font-medium">{isSyncing ? 'SYNCING...' : `SYNC: ${formatTime(stats?.lastSync)}`}</span>
+              <span className="font-medium hidden xl:inline">{isSyncing ? 'SYNCING...' : `SYNC: ${formatTime(stats?.lastSync)}`}</span>
             </button>
 
             {/* Guide */}
             {onOpenGuideModal && (
               <button
                 onClick={onOpenGuideModal}
-                className="h-full px-1.5 text-xs font-mono text-text-muted hover:text-white hover:bg-surface-elevated transition-colors cursor-pointer flex items-center justify-center"
+                className="h-full px-1.5 text-xs font-mono text-text-muted hover:text-text-primary hover:bg-surface-elevated transition-colors cursor-pointer flex items-center justify-center"
                 title="Operational reference guide (?)"
               >
                 <HelpCircle className="h-3.5 w-3.5" />
@@ -271,13 +272,13 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               onClick={() => onViewModeChange('about')}
               className={`flex items-center gap-1 h-full px-2 text-xs font-mono transition-colors cursor-pointer ${
                 viewMode === 'about'
-                  ? 'text-white bg-accent-sapphire/20 font-bold'
-                  : 'text-text-muted hover:text-white hover:bg-surface-elevated'
+                  ? 'text-text-primary bg-accent-sapphire/20 font-bold'
+                  : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
               }`}
               title="About the Creator & System Architecture"
             >
               <UserIcon className="h-3 w-3 text-accent-sapphire" />
-              <span className="font-medium">ABOUT</span>
+              <span className="font-medium hidden xl:inline">ABOUT</span>
             </button>
 
             {/* Notifications */}
@@ -285,8 +286,8 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               onClick={handleToggleNotifications}
               className={`h-full px-1.5 transition-colors cursor-pointer flex items-center justify-center ${
                 notifPermission === 'granted'
-                  ? 'text-accent-sapphire hover:text-white bg-accent-sapphire/10'
-                  : 'text-text-muted hover:text-white hover:bg-surface-elevated'
+                  ? 'text-accent-sapphire hover:text-text-primary bg-accent-sapphire/10'
+                  : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
               }`}
               title={notifPermission === 'granted' ? 'Desktop alerts active' : 'Enable desktop notifications'}
             >
@@ -297,7 +298,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
             <button
               onClick={handleToggleSound}
               className={`h-full px-1.5 transition-colors cursor-pointer flex items-center justify-center ${
-                soundEnabled ? 'text-status-merged hover:text-white bg-status-merged/10' : 'text-text-muted hover:text-white hover:bg-surface-elevated'
+                soundEnabled ? 'text-status-merged hover:text-text-primary bg-status-merged/10' : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated'
               }`}
               title={soundEnabled ? 'Chime active' : 'Chime muted'}
             >
@@ -309,7 +310,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               <button
                 type="button"
                 onClick={onToggleTheme}
-                className="h-full px-1.5 transition-colors cursor-pointer flex items-center justify-center text-text-muted hover:text-white hover:bg-surface-elevated"
+                className="h-full px-1.5 transition-colors cursor-pointer flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-surface-elevated"
                 title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
                 {theme === 'dark' ? (

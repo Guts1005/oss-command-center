@@ -68,7 +68,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                     <Terminal className="h-4 w-4" />
                   </div>
                   <div>
-                    <h2 className="text-sm sm:text-base font-bold text-white tracking-wide uppercase font-sans">
+                    <h2 className="text-sm sm:text-base font-bold text-text-primary tracking-wide uppercase font-sans">
                       OPERATIONAL REFERENCE MANUAL
                     </h2>
                     <p className="text-xs text-text-muted font-sans mt-0.5">
@@ -130,7 +130,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                       <div className="border border-border-subtle/60 bg-base p-2.5 rounded">
                         <span className="block text-text-muted text-[10px] font-mono">STAGE 01</span>
-                        <span className="font-bold text-white block mt-0.5">Branch & Code</span>
+                        <span className="font-bold text-text-primary block mt-0.5">Branch & Code</span>
                         <span className="text-text-muted text-[11px] block mt-0.5">Commit edits</span>
                       </div>
                       <div className="border border-border-subtle/60 bg-base p-2.5 rounded">
@@ -161,7 +161,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                           <span className="border border-status-merged bg-status-merged/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-merged">
                             Merged
                           </span>
-                          <span className="font-bold text-white text-xs sm:text-sm">ACCEPTED & SHIPPED</span>
+                          <span className="font-bold text-text-primary text-xs sm:text-sm">ACCEPTED & SHIPPED</span>
                         </div>
                         <p className="text-xs text-text-whisper mt-1">
                           Code successfully merged into upstream main branch. Local branch can safely be retired.
@@ -177,7 +177,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                           <span className="border border-status-action-needed bg-status-action-needed/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-action-needed">
                             Changes Requested
                           </span>
-                          <span className="font-bold text-white text-xs sm:text-sm">DEVELOPER ACTION REQUIRED</span>
+                          <span className="font-bold text-text-primary text-xs sm:text-sm">DEVELOPER ACTION REQUIRED</span>
                         </div>
                         <p className="text-xs text-text-whisper mt-1">
                           Maintainer reviewed code and requested updates. Check activity ledger, push new commits, and comment.
@@ -193,7 +193,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                           <span className="border border-status-awaiting-reply bg-status-awaiting-reply/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-status-awaiting-reply">
                             Reply Needed
                           </span>
-                          <span className="font-bold text-white text-xs sm:text-sm">RESPONSE REQUIRED</span>
+                          <span className="font-bold text-text-primary text-xs sm:text-sm">RESPONSE REQUIRED</span>
                         </div>
                         <p className="text-xs text-text-whisper mt-1">
                           Maintainer posted a question or clarification request. Open the thread and post your technical response.
@@ -209,7 +209,7 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                           <span className="border border-accent-sapphire bg-accent-sapphire/20 px-2 py-0.5 rounded text-[11px] font-mono font-bold text-text-whisper">
                             In Review
                           </span>
-                          <span className="font-bold text-white text-xs sm:text-sm">IN QUEUE · IDLE</span>
+                          <span className="font-bold text-text-primary text-xs sm:text-sm">IN QUEUE · IDLE</span>
                         </div>
                         <p className="text-xs text-text-whisper mt-1">
                           Submitted cleanly. You spoke last in the discussion. Awaiting maintainer triage.
@@ -258,27 +258,27 @@ export const QuickGuideModal: React.FC<QuickGuideModalProps> = ({ isOpen, onClos
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
                       <div className="flex items-center justify-between border border-border-subtle/50 bg-base p-2.5 rounded">
                         <span className="text-text-muted">Navigate Down</span>
-                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-white font-bold">j</kbd>
+                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-text-primary font-bold">j</kbd>
                       </div>
                       <div className="flex items-center justify-between border border-border-subtle/50 bg-base p-2.5 rounded">
                         <span className="text-text-muted">Navigate Up</span>
-                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-white font-bold">k</kbd>
+                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-text-primary font-bold">k</kbd>
                       </div>
                       <div className="flex items-center justify-between border border-border-subtle/50 bg-base p-2.5 rounded">
                         <span className="text-text-muted">Inspect Selected Row</span>
-                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-white font-bold">Enter</kbd>
+                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-text-primary font-bold">Enter</kbd>
                       </div>
                       <div className="flex items-center justify-between border border-border-subtle/50 bg-base p-2.5 rounded">
                         <span className="text-text-muted">Command Palette</span>
-                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-white font-bold">Ctrl+K</kbd>
+                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-text-primary font-bold">Ctrl+K</kbd>
                       </div>
                       <div className="flex items-center justify-between border border-border-subtle/50 bg-base p-2.5 rounded">
                         <span className="text-text-muted">Close Modal / Drawer</span>
-                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-white font-bold">Esc</kbd>
+                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-text-primary font-bold">Esc</kbd>
                       </div>
                       <div className="flex items-center justify-between border border-border-subtle/50 bg-base p-2.5 rounded">
                         <span className="text-text-muted">Operational Manual</span>
-                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-white font-bold">?</kbd>
+                        <kbd className="border border-border-bold bg-surface-elevated px-2 py-0.5 rounded text-text-primary font-bold">?</kbd>
                       </div>
                     </div>
                   </div>

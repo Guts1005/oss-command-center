@@ -6,6 +6,7 @@ import './styles/tokens.css';
 import 'lenis/dist/lenis.css';
 
 axios.defaults.withCredentials = true;
+axios.defaults.timeout = 15000;
 if (import.meta.env.VITE_API_BASE_URL) {
   axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 }

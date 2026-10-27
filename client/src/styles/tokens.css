@@ -12,6 +12,7 @@
 
 :root {
   /* Substrates & Structural Machine Panels */
+  --color-brand-path: #E8F1F5;
   --color-bg-base: #17181C;              /* Deep Warm Charcoal Substrate (was #28292f) */
   --color-bg-surface: #1E1F25;           /* Primary Surface / Nav & Toolbar HUD (was #33343B) */
   --color-bg-surface-card: #24252C;      /* Independent Contribution Card Surface (was #3a3b44) */
@@ -75,38 +76,39 @@
    ========================================================================== */
 :root[data-theme="light"],
 [data-theme="light"] {
-  /* Substrates & Structural Machine Panels */
-  --color-bg-base: #F7F7F8;              /* Warm Matte Paper Substrate (gentle on eyes) */
-  --color-bg-surface: #FFFFFF;           /* Crisp White Header & Primary HUD */
-  --color-bg-surface-card: #FFFFFF;      /* Independent Contribution Card Surface */
-  --color-bg-surface-elevated: #ECEEF2;  /* Filter Rail & Nested Input Surfaces */
-  --color-bg-surface-active: #E4E7EC;    /* Selected / Focused Item Surface */
+  --color-brand-path: #1E293B;
+  /* Frost White Substrates & Structural Machine Panels */
+  --color-bg-base: #EDF2F7;              /* Crystalline Frost White Substrate */
+  --color-bg-surface: #F8FAFC;           /* Frosted Glass Header & Primary HUD */
+  --color-bg-surface-card: #FFFFFF;      /* Crisp Pure Card Surface */
+  --color-bg-surface-elevated: #E2E8F0;  /* Frost Ice Input & Filter Surfaces */
+  --color-bg-surface-active: #CBD5E1;    /* Selected Active Focus Surface */
 
-  /* Structural Sapphire & Slate Framing (Crisp 1px borders) */
-  --color-border-subtle: #D8DCE3;        /* Warm Crisp Slate Border */
-  --color-border-bold: #B4BDCC;          /* Pronounced Boundary Rule */
-  --color-border-active: #2563EB;        /* Active Focus Sapphire */
+  /* Structural Frost Framing */
+  --color-border-subtle: #CBD5E1;        /* Crisp Slate Frost Border */
+  --color-border-bold: #94A3B8;          /* Defined Boundary Rule */
+  --color-border-active: #2563EB;        /* Glacial Sapphire Focus */
 
-  /* High-Contrast Readability Typography (Eye-Comfort AAA Contrast) */
-  --color-text-primary: #1A1D23;         /* Deep Charcoal Primary (14.5:1 AAA Contrast) */
-  --color-text-whisper: #1E293B;         /* Slate Whisper Subtitle */
-  --color-text-secondary: #334155;       /* Deep Slate Subtitles & Repo Names (8.5:1 AAA) */
-  --color-text-muted: #5C667A;           /* Calibrated Slate Grey (>5.5:1 AA Contrast) */
-  --color-text-dim: #8490A5;             /* Inactive Guide Mark */
+  /* High-Contrast Readability Typography (AAA Midnight Slate) */
+  --color-text-primary: #0F172A;         /* Deep Midnight Slate (16.5:1 AAA Contrast) */
+  --color-text-whisper: #334155;         /* Cold Slate Whisper Subtitle */
+  --color-text-secondary: #334155;       /* Primary Data & Repo Names */
+  --color-text-muted: #64748B;           /* Cool Slate Grey (>5.5:1 AA Contrast) */
+  --color-text-dim: #94A3B8;             /* Inactive Guide Mark */
 
-  /* Semantic Telemetry Signals (Rich, Tinted & High-Legibility) */
-  --color-accent-sapphire: #1D4ED8;      /* Deep Sapphire Blue Accent */
-  --color-accent-glacial: #2563EB;       /* Glacial Blue Accent */
-  --color-status-merged: #15803D;        /* Crisp Emerald Success */
-  --color-status-in-review: #1D4ED8;     /* In-Review Sapphire */
-  --color-status-awaiting-reply: #B45309;/* Warm Signal Amber */
-  --color-status-action-needed: #B91C1C; /* High-Urgency Crimson Alert */
-  --color-status-draft: #5C667A;         /* Neutral Slate Grey */
-  --color-status-open: #1D4ED8;          /* Pending Review Sapphire */
-  --color-status-bounty: #B45309;        /* Rewarded Bounty Amber */
+  /* Semantic Telemetry Signals */
+  --color-accent-sapphire: #2563EB;      /* Glacial Sapphire Blue */
+  --color-accent-glacial: #3B82F6;       /* Bright Cyan-Glacial */
+  --color-status-merged: #16A34A;        /* Crisp Emerald Success */
+  --color-status-in-review: #2563EB;     /* In-Review Sapphire */
+  --color-status-awaiting-reply: #D97706;/* Warm Signal Amber */
+  --color-status-action-needed: #DC2626; /* High-Urgency Crimson Alert */
+  --color-status-draft: #64748B;         /* Neutral Slate */
+  --color-status-open: #2563EB;          /* Open Glacial Sapphire */
+  --color-status-bounty: #D97706;        /* Rewarded Bounty Amber */
 
   /* Platform Tokens */
-  --color-platform-github: #181717;
+  --color-platform-github: #0F172A;
   --color-platform-gitlab: #E24329;
 
   /* Specular Elevation & Depth Shadows (Soft Ambient Light Theme) */
@@ -271,8 +273,4 @@ button, a, input, select {
 
 
 
-/* Minimum viewport boundary constraints (1280x720 floor) */
-html, body, #root {
-  min-width: 1280px;
-  min-height: 720px;
-}
+

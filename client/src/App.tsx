@@ -611,7 +611,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen min-h-[100dvh] flex-col bg-base diffused-bg text-text-primary selection:bg-accent-sapphire selection:text-white antialiased min-w-[1280px] min-h-[720px]">
+    <div className="flex min-h-screen min-h-[100dvh] w-full flex-col bg-base diffused-bg text-text-primary selection:bg-accent-sapphire selection:text-white antialiased">
       {/* Offline Status / Reconnection Resilience Banner */}
       <OfflineBanner />
 

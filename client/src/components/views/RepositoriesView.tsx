@@ -107,7 +107,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [contributions]);
+  }, []);
 
   React.useEffect(() => {
     fetchRepositories();
@@ -204,13 +204,13 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search tracked repositories..."
-            className="w-full bg-surface-card border border-border-subtle rounded-lg pl-8 pr-3 py-1.5 text-xs font-mono text-white placeholder-text-muted focus:outline-none focus:border-border-active"
+            className="w-full bg-surface-card border border-border-subtle rounded-lg pl-8 pr-3 py-1.5 text-xs font-mono text-text-primary placeholder-text-muted focus:outline-none focus:border-border-active"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-text-muted hover:text-white"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-text-muted hover:text-text-primary"
             >
               CLEAR
             </button>
@@ -225,7 +225,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
             <span className="text-[10px] font-mono uppercase tracking-wider text-text-muted">Tracked Repos</span>
             <FolderGit2 className="h-3.5 w-3.5 text-accent-sapphire" />
           </div>
-          <div className="text-xl font-bold font-mono text-white mt-1">{summary.totalRepos}</div>
+          <div className="text-xl font-bold font-mono text-text-primary mt-1">{summary.totalRepos}</div>
           <div className="text-[10px] font-mono text-text-muted mt-0.5">Upstream targets</div>
         </div>
 
@@ -252,7 +252,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
             <span className="text-[10px] font-mono uppercase tracking-wider text-text-muted">Mean Acceptance</span>
             <CheckCircle2 className="h-3.5 w-3.5 text-accent-sapphire" />
           </div>
-          <div className="text-xl font-bold font-mono text-white mt-1">{summary.avgAcceptance}%</div>
+          <div className="text-xl font-bold font-mono text-text-primary mt-1">{summary.avgAcceptance}%</div>
           <div className="text-[10px] font-mono text-text-muted mt-0.5">Across all repositories</div>
         </div>
       </div>
@@ -267,8 +267,8 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
               onClick={() => setPlatformFilter('all')}
               className={`px-2 py-1 rounded transition-colors ${
                 platformFilter === 'all'
-                  ? 'bg-surface-active text-white font-bold'
-                  : 'text-text-muted hover:text-white'
+                  ? 'bg-surface-active text-text-primary font-bold'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               ALL
@@ -278,8 +278,8 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
               onClick={() => setPlatformFilter('github')}
               className={`px-2 py-1 rounded transition-colors ${
                 platformFilter === 'github'
-                  ? 'bg-surface-active text-white font-bold'
-                  : 'text-text-muted hover:text-white'
+                  ? 'bg-surface-active text-text-primary font-bold'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               GITHUB
@@ -290,7 +290,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
               className={`px-2 py-1 rounded transition-colors ${
                 platformFilter === 'gitlab'
                   ? 'bg-surface-active text-platform-gitlab font-bold'
-                  : 'text-text-muted hover:text-white'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               GITLAB
@@ -304,8 +304,8 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
               onClick={() => setResponsivenessFilter('all')}
               className={`px-2 py-1 rounded transition-colors ${
                 responsivenessFilter === 'all'
-                  ? 'bg-surface-active text-white font-bold'
-                  : 'text-text-muted hover:text-white'
+                  ? 'bg-surface-active text-text-primary font-bold'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               ALL SPEEDS
@@ -316,7 +316,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
               className={`px-2 py-1 rounded transition-colors ${
                 responsivenessFilter === 'Fast'
                   ? 'bg-surface-active text-status-merged font-bold'
-                  : 'text-text-muted hover:text-white'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               FAST (&lt;12H)
@@ -327,7 +327,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
               className={`px-2 py-1 rounded transition-colors ${
                 responsivenessFilter === 'Moderate'
                   ? 'bg-surface-active text-amber-400 font-bold'
-                  : 'text-text-muted hover:text-white'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               MODERATE
@@ -338,7 +338,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
               className={`px-2 py-1 rounded transition-colors ${
                 responsivenessFilter === 'Slow'
                   ? 'bg-surface-active text-status-closed font-bold'
-                  : 'text-text-muted hover:text-white'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
             >
               SLOW
@@ -416,7 +416,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-text-muted hover:text-white transition-colors p-1 rounded hover:bg-surface-elevated"
+                      className="text-text-muted hover:text-text-primary transition-colors p-1 rounded hover:bg-surface-elevated"
                       title="Open repository in browser"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />

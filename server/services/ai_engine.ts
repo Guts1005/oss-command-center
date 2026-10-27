@@ -168,6 +168,18 @@ Draft the exact technical reply to post back to the maintainer:`;
 }
 
 export async function askPlatformCopilot(userQuestion: string, userId?: string, clientContext?: any): Promise<string> {
+  // 0. Conversational greetings and identity inquiries (Never return an action block)
+  const trimmed = userQuestion.trim();
+  const greetingRegex = /^(?:hi|hello|hey|heya|howdy|sup|yo|greetings|good\s+(?:morning|afternoon|evening))\b[!.]*$/i;
+  if (greetingRegex.test(trimmed)) {
+    return 'Hello! I am your OSS Query Solver. I can help you analyze maintainer reviews, draft responses to unblock pull requests, summarize activity, manage notes, or control page filters and views. What would you like to work on?';
+  }
+
+  const identityRegex = /^(?:who are you|what can you do|what are your capabilities|help)\b[?!.]*$/i;
+  if (identityRegex.test(trimmed)) {
+    return 'I am your Staff Systems Engineer Query Solver for OSS Command Center. You can ask me to:\n\n* **Analyze Reviews**: Inspect maintainer feedback on any pull request and extract actionable fixes.\n* **Draft Responses**: Compose peer-to-peer maintainer replies citing code changes and tests.\n* **Filter & Navigate**: Ask me to filter by status, platform (GitHub/GitLab), or timeframe (e.g. "show yesterday PRs").\n* **Developer Notes**: Remind me to check on a repository or PR (e.g. "add a note to check Gitlab tomorrow").\n* **Toggle Views & Theme**: Switch between Stream, Analytics, Repositories, and Settings, or toggle theme mode.';
+  }
+
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
   const yesterday = new Date(now.getTime() - 24 * 3600 * 1000);
@@ -324,7 +336,8 @@ You have complete knowledge of this platform's database tables, UI views, filter
 You advise the user on their open-source contributions, which PRs need immediate attention, and how to resolve review questions and unblock pull requests.
 
 ### IN-PAGE AUTOMATION ACTION PROTOCOL
-When the user's intent asks to control, filter, navigate, search, open, or modify the screen, you MUST append an executable action block in this exact markdown format:
+CRITICAL RULE: NEVER output an action block for conversational queries, greetings, questions about capabilities, or open discussions.
+ONLY append an executable action block when the user explicitly asks to control, filter, navigate, search, open, or modify the screen, in this exact markdown format:
 \`\`\`action
 {"type": "ACTION_TYPE", "payload": "VALUE"}
 \`\`\`

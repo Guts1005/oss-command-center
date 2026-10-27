@@ -32,7 +32,7 @@ export const OSSBrandLogo: React.FC<{ className?: string }> = ({ className = 'h-
     {/* Converging branch network */}
     <path
       d="M7 6v12M7 12h3c2.2 0 4-1.8 4-4v0c0-1.1.9-2 2-2h1M10 12c2.2 0 4 1.8 4 4v0c0 1.1.9 2 2 2h1"
-      stroke="#E8F1F5"
+      stroke="var(--color-brand-path, #E8F1F5)"
       strokeWidth="1.75"
       strokeLinecap="round"
       strokeLinejoin="round"

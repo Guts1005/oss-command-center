@@ -167,7 +167,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   <Key className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-base md:text-lg font-bold text-white font-sans tracking-wide leading-snug">
+                  <h2 className="text-base md:text-lg font-bold text-text-primary font-sans tracking-wide leading-snug">
                     Linked Accounts
                   </h2>
                   <p className="text-xs md:text-sm text-text-muted font-sans mt-0.5">
@@ -270,14 +270,14 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-text-primary">
                               {acc.platform === 'github' ? (
-                                <GitHubLogo className="h-5 w-5 text-white" />
+                                <GitHubLogo className="h-5 w-5 text-text-primary" />
                               ) : (
                                 <GitLabLogo className="h-5 w-5" />
                               )}
                             </div>
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5">
-                                <span className="font-mono text-sm sm:text-base font-bold text-white truncate">{acc.username}</span>
+                                <span className="font-mono text-sm sm:text-base font-bold text-text-primary truncate">{acc.username}</span>
                                 <span className="border border-border-subtle bg-base px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-mono uppercase font-bold text-text-muted">
                                   {acc.platform}
                                 </span>
@@ -366,7 +366,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
             {/* Add Connection Form */}
             {/* 1-Click Fast Connect */}
             <div className="border-t border-border-subtle/80 pt-4">
-              <h3 className="text-sm font-bold text-white mb-1 font-sans">
+              <h3 className="text-sm font-bold text-text-primary mb-1 font-sans">
                 Link Platform Account
               </h3>
               <p className="text-xs text-text-muted font-sans mb-3">
@@ -381,12 +381,12 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   onClick={() => handleOAuthConnect('github')}
                   disabled={Boolean(oauthConnecting)}
-                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-accent-sapphire text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-accent-sapphire text-text-primary text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
                 >
                   {oauthConnecting === 'github' ? (
                     <Loader2 className="h-4 w-4 animate-spin text-accent-sapphire" />
                   ) : (
-                    <GitHubLogo className="h-4 w-4 text-white group-hover:scale-110 transition-transform" />
+                    <GitHubLogo className="h-4 w-4 text-text-primary group-hover:scale-110 transition-transform" />
                   )}
                   <span>
                     {oauthConnecting === 'github'
@@ -402,7 +402,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   onClick={() => handleOAuthConnect('gitlab')}
                   disabled={Boolean(oauthConnecting)}
-                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-white text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-text-primary text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
                 >
                   {oauthConnecting === 'gitlab' ? (
                     <Loader2 className="h-4 w-4 animate-spin text-[#fc6d26]" />

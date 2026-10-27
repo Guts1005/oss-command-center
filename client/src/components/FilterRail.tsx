@@ -129,6 +129,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                   key={`desktop-${tab.id}`}
                   type="button"
                   onClick={() => {
+                    onScopeChange('all');
                     if (tab.id === 'action-needed') {
                       onStatusChange('all');
                       onActionChange('action-needed');
@@ -141,10 +142,10 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                     isActive
                       ? tab.urgent
                         ? 'text-status-action-needed'
-                        : 'text-white'
+                        : 'text-text-primary'
                       : tab.urgent
                       ? 'text-status-action-needed/80 hover:text-status-action-needed'
-                      : 'text-text-muted hover:text-white'
+                      : 'text-text-muted hover:text-text-primary'
                   }`}
                 >
                   {isActive && (
@@ -176,7 +177,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                         isActive
                           ? tab.urgent
                             ? 'border-status-action-needed/60 bg-status-action-needed/30 text-white'
-                            : 'border-white/30 bg-white/20 text-white'
+                            : 'border-accent-sapphire/40 bg-accent-sapphire/20 text-text-primary'
                           : 'border-border-subtle bg-surface-elevated/90 text-text-muted'
                       }`}
                     >
@@ -205,7 +206,7 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                   type="button"
                   onClick={() => onScopeChange(sc.id)}
                   className={`relative px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer select-none text-xs z-10 ${
-                    isSelected ? 'text-white' : 'text-text-muted hover:text-white'
+                    isSelected ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
                   }`}
                   title={`Filter repository scope: ${sc.label}`}
                 >
