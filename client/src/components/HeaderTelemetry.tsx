@@ -183,7 +183,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
           title="Manage linked GitHub and GitLab accounts"
         >
           <Key className="h-3 w-3 text-status-awaiting-reply shrink-0" />
-          <span className="hidden xl:inline">ACCOUNTS</span>
+          <span className="hidden 2xl:inline">ACCOUNTS</span>
           <span>({integrations.length})</span>
         </motion.button>
         <button
@@ -225,7 +225,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               v1.0
             </span>
             <span
-              className="hidden md:flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-border-subtle/80 bg-surface-card/60 text-[10px] font-mono text-text-muted select-none cursor-default ml-0.5"
+              className="hidden 2xl:flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-border-subtle/80 bg-surface-card/60 text-[10px] font-mono text-text-muted select-none cursor-default ml-0.5"
               title="Created by Sharvin"
             >
               <span className="text-[9px] uppercase font-bold text-text-muted/70">by</span>
@@ -252,7 +252,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               title="Poll upstream GitHub and GitLab APIs"
             >
               <RefreshCw className={`h-3 w-3 text-accent-glacial ${isSyncing ? 'animate-spin text-accent-sapphire' : ''}`} />
-              <span className="font-medium hidden xl:inline">{isSyncing ? 'SYNCING...' : `SYNC: ${formatTime(stats?.lastSync)}`}</span>
+              <span className="font-medium hidden 2xl:inline">{isSyncing ? 'SYNCING...' : `SYNC: ${formatTime(stats?.lastSync)}`}</span>
             </button>
 
             {/* Guide */}
@@ -278,7 +278,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
               title="About the Creator & System Architecture"
             >
               <UserIcon className="h-3 w-3 text-accent-sapphire" />
-              <span className="font-medium hidden xl:inline">ABOUT</span>
+              <span className="font-medium hidden 2xl:inline">ABOUT</span>
             </button>
 
             {/* Notifications */}
