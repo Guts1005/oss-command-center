@@ -91,9 +91,9 @@ export const FilterRail: React.FC<FilterRailProps> = ({
 
   return (
     <div className="border border-border-subtle chrome-surface rounded-xl select-none mb-3 px-3 py-2 md:px-4 md:py-2 w-full max-w-full relative z-20 overflow-visible">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 min-w-0 w-full flex-wrap">
+      <div className="flex items-center justify-between gap-3 min-w-0 w-full">
         {/* Left: Terminal Query Search Input */}
-        <div className="relative flex items-center w-full lg:w-[165px] xl:w-[200px] shrink-0">
+        <div className="relative flex items-center w-[165px] xl:w-[200px] shrink-0">
           <span className="absolute left-3 text-accent-sapphire text-xs font-mono font-bold">
             &gt;
           </span>
@@ -115,8 +115,8 @@ export const FilterRail: React.FC<FilterRailProps> = ({
           )}
         </div>
 
-        {/* Desktop / Tablet View (>= sm): Preserved Single Horizontal Flex Bar */}
-        <div className="hidden sm:flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar min-w-0 flex-1 max-w-max">
+        {/* Center: Preserved Single Horizontal Flex Bar */}
+        <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar min-w-0 flex-1 max-w-max">
           <div className="inline-flex items-center p-0.5 rounded-lg border border-border-subtle bg-base/80 shadow-inner gap-1 relative w-max">
             {tabs.map((tab) => {
               const isActive =
@@ -189,68 +189,8 @@ export const FilterRail: React.FC<FilterRailProps> = ({
           </div>
         </div>
 
-        {/* Mobile View (< sm): Responsive 3-Col x 2-Row Grid with STRICTLY ZERO Horizontal Scroll */}
-        <div className="sm:hidden grid grid-cols-3 gap-1.5 p-1 rounded-lg border border-border-subtle bg-base/80 shadow-inner w-full">
-          {tabs.map((tab) => {
-            const isActive =
-              tab.id === 'action-needed'
-                ? actionFilter !== 'all'
-                : actionFilter === 'all' && statusFilter === tab.id;
-
-            const mobileLabel =
-              tab.id === 'action-needed'
-                ? 'ACTION'
-                : tab.id === 'active'
-                ? 'REVIEW'
-                : tab.label;
-
-            return (
-              <button
-                key={`mobile-${tab.id}`}
-                type="button"
-                onClick={() => {
-                  if (tab.id === 'action-needed') {
-                    onStatusChange('all');
-                    onActionChange('action-needed');
-                  } else {
-                    onActionChange('all');
-                    onStatusChange(tab.id);
-                  }
-                }}
-                className={`flex items-center justify-center gap-1 py-1.5 px-1 rounded-md text-[11px] font-bold font-mono transition-colors text-center w-full relative select-none cursor-pointer ${
-                  isActive
-                    ? tab.urgent
-                      ? 'border border-status-action-needed/80 bg-status-action-needed/25 text-status-action-needed ring-1 ring-status-action-needed'
-                      : 'border border-accent-sapphire bg-accent-sapphire/25 text-white ring-1 ring-accent-sapphire'
-                    : tab.urgent
-                    ? 'border border-status-action-needed/40 bg-base text-status-action-needed/80 hover:text-status-action-needed'
-                    : 'border border-border-subtle/50 bg-base/60 text-text-muted hover:text-white'
-                }`}
-              >
-                {tab.urgent && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-status-action-needed animate-pulse shrink-0" />
-                )}
-                <span className="truncate">{mobileLabel}</span>
-                {tab.count !== null && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded border font-mono font-bold shrink-0 transition-all shadow-xs ${
-                      isActive
-                        ? tab.urgent
-                          ? 'border-status-action-needed/60 bg-status-action-needed/30 text-white'
-                          : 'border-white/30 bg-white/20 text-white'
-                        : 'border-border-subtle bg-surface-elevated/90 text-text-muted'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Right: Auxiliary Filters on Desktop / Tablet (>= sm) */}
-        <div className="hidden sm:flex items-center gap-1.5 shrink-0 ml-auto lg:ml-0 relative z-20">
+        {/* Right: Auxiliary Filters */}
+        <div className="flex items-center gap-1.5 shrink-0 relative z-20">
           {/* Scope Split: All / External / Own Repo */}
           <div className="inline-flex items-center h-8 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono relative">
             {[
@@ -299,67 +239,6 @@ export const FilterRail: React.FC<FilterRailProps> = ({
           />
         </div>
       </div>
-
-      {/* Mobile Collapsible Auxiliary Filters Tray (< sm) */}
-      <AnimatePresence>
-        {isMobileFiltersOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, marginTop: 0 }}
-            animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
-            exit={{ opacity: 0, height: 0, marginTop: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="sm:hidden border-t border-border-subtle/70 pt-2 flex flex-col gap-2 overflow-visible w-full"
-          >
-            {/* Row 1: Scope Split (Full Width Segmented Control) */}
-            <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg border border-border-subtle bg-base/80 text-xs font-mono w-full">
-              {[
-                { id: 'all', label: 'ALL' },
-                { id: 'external', label: 'EXT' },
-                { id: 'own', label: 'OWN' },
-              ].map((sc) => {
-                const isSelected = scopeFilter === sc.id;
-                return (
-                  <button
-                    key={`mob-scope-${sc.id}`}
-                    type="button"
-                    onClick={() => onScopeChange(sc.id)}
-                    className={`relative py-1.5 rounded-md font-bold transition-colors cursor-pointer select-none text-xs text-center z-10 ${
-                      isSelected ? 'text-white' : 'text-text-muted hover:text-white'
-                    }`}
-                  >
-                    {isSelected && (
-                      <motion.div
-                        layoutId="activeScopePillMobile"
-                        className="absolute inset-0 rounded-md bg-surface-elevated border border-accent-sapphire/60 shadow-sm"
-                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                      />
-                    )}
-                    <span className="relative z-10">{sc.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Row 2: Platform & Sort Controls in 2 Equal Columns */}
-            <div className="grid grid-cols-2 gap-2 w-full relative z-20">
-              <CustomDropdown
-                label="PLATFORM:"
-                value={platformFilter}
-                options={platformOptions}
-                onChange={onPlatformChange}
-                className="w-full"
-              />
-              <CustomDropdown
-                label="SORT:"
-                value={sortBy}
-                options={sortOptions}
-                onChange={onSortChange}
-                className="w-full"
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

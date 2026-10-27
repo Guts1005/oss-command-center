@@ -269,3 +269,10 @@ button, a, input, select {
   }
 }
 
+
+
+/* Minimum viewport boundary constraints (1280x720 floor) */
+html, body, #root {
+  min-width: 1280px;
+  min-height: 720px;
+}

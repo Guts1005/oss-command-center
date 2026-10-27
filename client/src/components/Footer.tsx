@@ -20,25 +20,25 @@ export const Footer: React.FC<FooterProps> = ({
   return (
     <footer
       role="contentinfo"
-      className={`border-t border-border-subtle select-none ${
-        isEditorial ? 'pt-10 pb-8 space-y-8' : 'mt-12 pt-8 pb-24 sm:pb-8 space-y-6'
+      className={`w-full border-t border-border-subtle select-none text-left ${
+        isEditorial ? 'pt-8 pb-8 space-y-6' : 'mt-auto pt-6 pb-20 sm:pb-6 space-y-4'
       } ${className}`}
     >
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-1.5">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 text-left w-full">
+        <div className="space-y-1 text-left">
           <h2
-            className={`font-extrabold font-sans text-text-primary tracking-tight ${
-              isEditorial ? 'text-3xl sm:text-5xl' : 'text-2xl sm:text-3xl'
+            className={`font-extrabold font-sans text-text-primary tracking-tight text-left ${
+              isEditorial ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'
             }`}
           >
             Sharvin
           </h2>
-          <p className="text-xs sm:text-sm font-mono text-text-muted">
+          <p className="text-xs sm:text-sm font-mono text-text-muted text-left">
             Systems & Full-Stack Infrastructure Engineer.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+        <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-left">
           <a
             href="https://github.com/Guts1005"
             target="_blank"
@@ -70,12 +70,12 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-5 border-t border-border-subtle text-xs font-mono text-text-muted">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-border-subtle/80 text-xs font-mono text-text-muted text-left w-full">
+        <div className="text-left">
           © 2026 Sharvin. All rights reserved.
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4 text-left">
           <button
             type="button"
             onClick={() => onNavigateView?.('security')}

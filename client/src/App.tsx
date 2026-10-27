@@ -611,11 +611,11 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen h-[100dvh] min-h-[100dvh] flex-col bg-base diffused-bg text-text-primary selection:bg-accent-sapphire selection:text-white antialiased overflow-hidden">
+    <div className="flex min-h-screen min-h-[100dvh] flex-col bg-base diffused-bg text-text-primary selection:bg-accent-sapphire selection:text-white antialiased min-w-[1280px] min-h-[720px]">
       {/* Offline Status / Reconnection Resilience Banner */}
       <OfflineBanner />
 
-      <div className="flex-1 flex flex-col min-h-0 w-full px-3 sm:px-6 lg:px-8 py-2 sm:py-3.5">
+      <div className="flex-1 flex flex-col w-full px-3 py-2 sm:py-2.5 mx-auto">
         {/* Compact Single-Tier Header */}
         <HeaderTelemetry
           stats={activeStats}

@@ -128,84 +128,84 @@ export const ContributionList: React.FC<ContributionListProps> = ({
 
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center p-2.5 sm:p-12 pb-28 sm:pb-8 bg-base text-center overflow-y-auto">
-        <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card my-auto">
-          <div className="flex items-center gap-3 border-b border-border-subtle pb-4 mb-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
-              <Lock className="h-5 w-5" />
+      <div className="flex flex-1 flex-col justify-between w-full h-full min-h-0 bg-base text-left">
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-8 w-full my-auto">
+          <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card">
+            <div className="flex items-center gap-3 border-b border-border-subtle pb-4 mb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-bold bg-base text-accent-sapphire">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white font-sans">
+                  Login or Register to start working
+                </h2>
+                <p className="text-xs sm:text-sm text-text-whisper mt-1 font-sans">
+                  Connect your GitHub or GitLab accounts to track your contributions in real time.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-white font-sans">
-                Login or Register to start working
-              </h2>
-              <p className="text-xs sm:text-sm text-text-whisper mt-1 font-sans">
-                Connect your GitHub or GitLab accounts to track your contributions in real time.
-              </p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+              {onOpenAuthModal && (
+                <button
+                  onClick={onOpenAuthModal}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all cursor-pointer shadow-sm font-sans"
+                >
+                  <span>Sign in or Register</span>
+                </button>
+              )}
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
-            {onOpenAuthModal && (
-              <button
-                onClick={onOpenAuthModal}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all cursor-pointer shadow-sm font-sans"
-              >
-                <span>Sign in or Register</span>
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-text-muted mt-5 pt-3 border-t border-border-subtle/50 font-mono">
-            <Shield className="h-3.5 w-3.5 text-status-merged shrink-0" />
-            <span>Encrypted</span>
+            <div className="flex items-center gap-1.5 text-xs text-text-muted mt-5 pt-3 border-t border-border-subtle/50 font-mono">
+              <Shield className="h-3.5 w-3.5 text-status-merged shrink-0" />
+              <span>Encrypted</span>
+            </div>
           </div>
         </div>
-        <div className="w-full max-w-4xl mx-auto mt-6">
-          <Footer
-            variant="dashboard"
-            onNavigateView={onNavigateView}
-            onOpenCookiePreferences={onOpenCookiePreferences}
-          />
-        </div>
+        <Footer
+          variant="dashboard"
+          onNavigateView={onNavigateView}
+          onOpenCookiePreferences={onOpenCookiePreferences}
+        />
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-between p-2.5 sm:p-12 pb-28 sm:pb-8 bg-base text-center overflow-y-auto">
-        <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card my-auto">
-          <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-3 text-sm">
-            <span className="text-white font-bold text-xs sm:text-base font-sans">No contributions found</span>
-            <span className="text-text-muted text-[11px] sm:text-xs font-mono">0 items</span>
-          </div>
-          <p className="text-xs sm:text-sm text-text-whisper mb-4 font-sans leading-relaxed">
-            No contributions matched the active filter criteria or query string. Reset the current filter or track a new contribution URL.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-            {onResetFilters && (
-              <button
-                onClick={onResetFilters}
-                className="w-full sm:w-auto border border-border-bold bg-surface-elevated px-4 py-2 rounded-md font-sans text-xs sm:text-sm font-semibold text-text-primary hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer text-center"
-              >
-                Reset Filters
-              </button>
-            )}
-            {onOpenTrackModal && (
-              <button
-                onClick={onOpenTrackModal}
-                className="w-full sm:w-auto border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-md font-sans text-xs sm:text-sm font-semibold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer text-center"
-              >
-                + Track Contribution
-              </button>
-            )}
+      <div className="flex flex-1 flex-col justify-between w-full h-full min-h-0 bg-base text-left">
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-8 w-full my-auto">
+          <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-3 text-sm">
+              <span className="text-white font-bold text-xs sm:text-base font-sans">No contributions found</span>
+              <span className="text-text-muted text-[11px] sm:text-xs font-mono">0 items</span>
+            </div>
+            <p className="text-xs sm:text-sm text-text-whisper mb-4 font-sans leading-relaxed">
+              No contributions matched the active filter criteria or query string. Reset the current filter or track a new contribution URL.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+              {onResetFilters && (
+                <button
+                  onClick={onResetFilters}
+                  className="w-full sm:w-auto border border-border-bold bg-surface-elevated px-4 py-2 rounded-md font-sans text-xs sm:text-sm font-semibold text-text-primary hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer text-center"
+                >
+                  Reset Filters
+                </button>
+              )}
+              {onOpenTrackModal && (
+                <button
+                  onClick={onOpenTrackModal}
+                  className="w-full sm:w-auto border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-md font-sans text-xs sm:text-sm font-semibold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer text-center"
+                >
+                  + Track Contribution
+                </button>
+              )}
+            </div>
           </div>
         </div>
-        <div className="w-full max-w-4xl mx-auto mt-6">
-          <Footer
-            variant="dashboard"
-            onNavigateView={onNavigateView}
-            onOpenCookiePreferences={onOpenCookiePreferences}
-          />
-        </div>
+        <Footer
+          variant="dashboard"
+          onNavigateView={onNavigateView}
+          onOpenCookiePreferences={onOpenCookiePreferences}
+        />
       </div>
     );
   }
