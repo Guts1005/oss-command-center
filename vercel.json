@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://logging-resumes-julie-adams.trycloudflare.com/api/:path*"
+      "destination": "https://grams-southern-pensions-heath.trycloudflare.com/api/:path*"
     },
     {
       "source": "/(.*)",
