@@ -90,7 +90,7 @@ export const MobileBottomDock: React.FC<MobileBottomDockProps> = ({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.93 }}
         onClick={onOpenTrackModal}
-        className="flex items-center gap-1 bg-accent-sapphire hover:bg-accent-sapphire/90 text-white px-3.5 py-1.5 min-h-[40px] rounded-full font-mono font-bold text-xs shadow-[0_0_16px_rgba(116,157,208,0.45)] cursor-pointer shrink-0"
+        className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 min-h-[40px] rounded-full font-mono font-bold text-xs shadow-md shadow-black/30 cursor-pointer shrink-0"
         title="Track upstream contribution URL"
       >
         <PlusCircle className="h-4 w-4" />

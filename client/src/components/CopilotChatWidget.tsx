@@ -246,15 +246,12 @@ export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen((prev) => !prev)}
-          className="flex items-center gap-2 h-11 px-3.5 sm:px-4 rounded-full bg-accent-sapphire hover:bg-accent-sapphire/90 text-white font-mono font-bold text-xs shadow-lg shadow-accent-sapphire/25 border border-white/15 cursor-pointer backdrop-blur-md transition-all"
+          className="flex items-center gap-2 h-11 px-3.5 sm:px-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold text-xs shadow-lg shadow-black/30 border border-white/15 cursor-pointer backdrop-blur-md transition-all"
           title="Open OSS Query Solver"
         >
-          <Sparkles className="h-4 w-4 shrink-0 text-white animate-pulse" />
+          <Sparkles className="h-4 w-4 shrink-0 text-white" />
           <span className="tracking-wide">QUERY SOLVER</span>
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-merged opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-status-merged" />
-          </span>
+          <span className="inline-flex rounded-full h-2 w-2 bg-status-merged" />
         </motion.button>
       </div>
 
@@ -336,7 +333,7 @@ export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
                   <div
                     className={`max-w-[85%] rounded-xl px-3.5 py-2.5 leading-relaxed text-xs shadow-xs ${
                       msg.sender === 'user'
-                        ? 'bg-accent-sapphire text-white rounded-br-xs font-medium'
+                        ? 'bg-blue-600 text-white rounded-br-xs font-medium'
                         : 'bg-surface-elevated text-text-primary border border-border-subtle rounded-bl-xs'
                     }`}
                   >
@@ -407,7 +404,7 @@ export const CopilotChatWidget: React.FC<CopilotChatWidgetProps> = ({
                   type="button"
                   onClick={() => handleSend()}
                   disabled={!query.trim() || isLoading}
-                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-sapphire hover:bg-accent-sapphire/90 text-white disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-40 transition-colors cursor-pointer shrink-0"
                   title="Send question (Enter)"
                 >
                   <Send className="h-3.5 w-3.5" />

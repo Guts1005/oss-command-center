@@ -534,7 +534,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                         whileTap={{ scale: 0.97 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                         disabled={isSubmitting}
-                        className="w-full border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 py-3.5 rounded-md font-sans font-semibold text-white disabled:opacity-50 transition-colors text-sm md:text-base cursor-pointer shadow-sm"
+                        className="w-full border border-blue-600 bg-blue-600 hover:bg-blue-500 py-3.5 rounded-md font-sans font-semibold text-white disabled:opacity-50 transition-colors text-sm md:text-base cursor-pointer shadow-sm"
                       >
                         {isSubmitting ? 'Connecting...' : `Save ${platform === 'github' ? 'GitHub' : 'GitLab'} Integration`}
                       </motion.button>

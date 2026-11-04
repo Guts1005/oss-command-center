@@ -130,7 +130,7 @@ export const DeveloperNotesModal: React.FC<DeveloperNotesModalProps> = ({ isOpen
                 <button
                   type="submit"
                   disabled={!newContent.trim() || isSubmitting}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-accent-sapphire hover:bg-accent-sapphire/90 text-white font-mono text-xs font-semibold disabled:opacity-40 cursor-pointer transition-all shrink-0"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-semibold disabled:opacity-40 cursor-pointer transition-all shrink-0"
                 >
                   {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                   <span>Add</span>

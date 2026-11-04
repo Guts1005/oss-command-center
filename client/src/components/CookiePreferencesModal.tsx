@@ -125,7 +125,7 @@ export const CookiePreferencesModal: React.FC<CookiePreferencesModalProps> = ({ 
               <button
                 type="button"
                 onClick={handleSave}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent-sapphire hover:bg-accent-sapphire/80 text-white font-mono font-bold text-xs transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold text-xs transition-all cursor-pointer shadow-sm"
               >
                 {saved ? (
                   <>

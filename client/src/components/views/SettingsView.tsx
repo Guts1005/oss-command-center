@@ -626,7 +626,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               saveSuccess
                 ? 'bg-status-merged text-white'
                 : hasUnsavedChanges
-                ? 'bg-accent-sapphire hover:bg-accent-sapphire/90 text-white ring-2 ring-accent-sapphire/30 animate-pulse'
+                ? 'bg-blue-600 hover:bg-blue-500 text-white ring-2 ring-blue-500/30'
                 : 'bg-surface-elevated text-text-muted hover:text-text-primary border border-border-subtle opacity-70 cursor-default'
             }`}
           >
@@ -796,7 +796,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           onClick={() => setDefaultView(view.id)}
                           className={`px-3 py-1 rounded-lg text-xs font-sans font-medium transition-all cursor-pointer ${
                             defaultView === view.id
-                              ? 'bg-accent-sapphire text-white shadow-sm font-semibold'
+                              ? 'bg-blue-600 text-white shadow-sm font-semibold'
                               : 'text-text-muted hover:text-text-primary'
                           }`}
                         >
@@ -827,7 +827,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           onClick={() => setCardDensity(density.id)}
                           className={`px-3 py-1 rounded-lg text-xs font-sans font-medium transition-all cursor-pointer ${
                             cardDensity === density.id
-                              ? 'bg-accent-sapphire text-white shadow-sm font-semibold'
+                              ? 'bg-blue-600 text-white shadow-sm font-semibold'
                               : 'text-text-muted hover:text-text-primary'
                           }`}
                         >
@@ -906,7 +906,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           }
                           className={`px-3 py-1 rounded-lg text-xs font-sans font-medium transition-all cursor-pointer ${
                             settings.sync_cadence_minutes === item.minutes
-                              ? 'bg-accent-sapphire text-white shadow-sm font-semibold'
+                              ? 'bg-blue-600 text-white shadow-sm font-semibold'
                               : 'text-text-muted hover:text-text-primary'
                           }`}
                         >
@@ -1042,7 +1042,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           onClick={() => setAlertThreshold(thresh.id)}
                           className={`px-3 py-1 rounded-lg text-xs font-sans font-medium transition-all cursor-pointer ${
                             alertThreshold === thresh.id
-                              ? 'bg-accent-sapphire text-white shadow-sm font-semibold'
+                              ? 'bg-blue-600 text-white shadow-sm font-semibold'
                               : 'text-text-muted hover:text-text-primary'
                           }`}
                         >
@@ -1172,7 +1172,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           }
                           className={`px-3 py-1 rounded-lg text-xs font-sans font-medium transition-all cursor-pointer ${
                             settings.email_digest_cadence === item.id
-                              ? 'bg-accent-sapphire text-white shadow-sm font-semibold'
+                              ? 'bg-blue-600 text-white shadow-sm font-semibold'
                               : 'text-text-muted hover:text-text-primary'
                           }`}
                         >

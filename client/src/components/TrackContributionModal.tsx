@@ -197,7 +197,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                   whileTap={{ scale: 0.96 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   disabled={isLoading}
-                  className="flex items-center gap-2 border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 px-5 py-2.5 rounded-md text-xs md:text-sm font-sans font-semibold text-white disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
+                  className="flex items-center gap-2 border border-blue-600 bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-md text-xs md:text-sm font-sans font-semibold text-white disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
                 >
                   {isLoading ? (
                     <>

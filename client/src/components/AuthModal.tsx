@@ -306,7 +306,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               whileTap={{ scale: 0.97 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               disabled={isLoading}
-              className="w-full border border-accent-sapphire bg-accent-sapphire py-3.5 rounded-md font-sans text-sm md:text-base font-semibold text-white hover:bg-accent-sapphire/90 disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
+              className="w-full border border-blue-600 bg-blue-600 py-3.5 rounded-md font-sans text-sm md:text-base font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition-colors cursor-pointer shadow-sm"
             >
               {isLoading ? 'Authenticating...' : isRegister ? 'Register User' : 'Sign In'}
             </motion.button>
