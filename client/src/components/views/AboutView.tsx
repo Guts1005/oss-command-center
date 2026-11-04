@@ -182,17 +182,11 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView, on
           {/* Section 1: Genuine Greeting Hero with Skill Pills */}
           <section className="space-y-6">
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-status-merged animate-pulse" />
-                <p className="text-xs font-mono uppercase tracking-widest text-accent-sapphire font-bold">
-                  COMPUTER ENGINEERING STUDENT & SYSTEMS ENTHUSIAST
-                </p>
-              </div>
               <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold font-sans text-text-primary tracking-tight leading-[1.1]">
-                Hi, I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-sapphire via-accent-glacial to-text-primary">Sharvin</span>.
+                Hi, I'm <span className="text-accent-sapphire font-black">Sharvin</span>.
               </h1>
               <p className="text-sm sm:text-base font-sans text-text-muted max-w-3xl leading-relaxed">
-                Undergraduate at NMIMS MPSTME, Mumbai (Integrated B.Tech + MBA, 2023–2028). I enjoy working close to the machine—focusing on operating systems, kernel internals, low-latency edge media pipelines, and quiet, useful open-source software.
+                Undergraduate at NMIMS MPSTME, Mumbai (Integrated B.Tech + MBA, 2023-2028). I enjoy working close to the machine—focusing on operating systems, kernel internals, low-latency edge media pipelines, and quiet, useful open-source software.
               </p>
             </div>
 

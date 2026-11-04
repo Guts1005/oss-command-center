@@ -158,7 +158,7 @@ export const HeaderTelemetry: React.FC<HeaderTelemetryProps> = ({
         whileTap={{ scale: 0.94 }}
         transition={{ type: 'spring', stiffness: 450, damping: 25 }}
         onClick={onOpenTrackModal}
-        className="flex items-center gap-1.5 h-8 bg-accent-sapphire hover:bg-accent-sapphire/90 !text-white px-2.5 rounded-lg font-mono font-bold text-xs shadow-sm cursor-pointer shrink-0"
+        className="flex items-center gap-1.5 h-8 bg-blue-600 hover:bg-blue-500 text-white px-3 rounded-lg font-mono font-bold text-xs shadow-sm cursor-pointer shrink-0"
         title="Track new contribution URL"
       >
         <PlusCircle className="h-3.5 w-3.5 shrink-0" />

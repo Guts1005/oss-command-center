@@ -9,3 +9,10 @@ node_modules/
 .vercel
 
 .agents/
+.codex/
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
+**/.impeccable/*.png
+**/.impeccable/review/
+**/.impeccable/questions/

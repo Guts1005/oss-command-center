@@ -2,6 +2,7 @@ import React from 'react';
 import { Stats, Contribution } from '../../types';
 import { FilterRail } from '../FilterRail';
 import { ContributionList } from '../ContributionList';
+import { HeroSection } from '../HeroSection';
 
 export interface StreamViewProps {
   stats: Stats;
@@ -68,6 +69,17 @@ export const StreamView: React.FC<StreamViewProps> = ({
 }) => {
   return (
     <div className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
+      {/* High-Impact Hero Cockpit */}
+      <HeroSection
+        isAuthenticated={isAuthenticated}
+        isDemoMode={isDemoMode}
+        onEnterDemoMode={onEnterDemoMode}
+        onOpenAuthModal={onOpenAuthModal}
+        onNavigateView={onNavigateView}
+        onOpenTrackModal={onOpenTrackModal}
+        itemCount={items.length}
+      />
+
       {/* Consolidated Query & KPI Filter Toolbar */}
       <FilterRail
         stats={stats}

@@ -20,7 +20,7 @@ export const Footer: React.FC<FooterProps> = ({
   return (
     <footer
       role="contentinfo"
-      className={`w-full border-t border-border-subtle select-none text-left ${
+      className={`w-full px-4 sm:px-6 lg:px-8 border-t border-border-subtle select-none text-left ${
         isEditorial ? 'pt-8 pb-8 space-y-6' : 'mt-auto pt-6 pb-20 sm:pb-6 space-y-4'
       } ${className}`}
     >

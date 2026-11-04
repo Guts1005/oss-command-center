@@ -232,7 +232,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
       blocks.push(
         <blockquote
           key={`quote_${blocks.length}`}
-          className="my-1.5 pl-3 border-l-2 border-accent-sapphire/60 text-text-muted italic bg-surface-elevated/30 py-1 rounded-r-md text-xs"
+          className="my-1.5 pl-3 border-l border-border-bold text-text-muted italic bg-surface-elevated/30 py-1 rounded-r-md text-xs"
         >
           {renderInline(trimmed.slice(2))}
         </blockquote>
