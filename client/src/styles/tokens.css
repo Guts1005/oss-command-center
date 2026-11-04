@@ -62,7 +62,7 @@
 
   /* Specular Elevation & Depth Shadows (Dark Theme) */
   --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.45), 0 4px 14px -2px rgba(0, 0, 0, 0.4), 0 14px 28px -4px rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  --shadow-card-hover: 0 2px 4px 0 rgba(0, 0, 0, 0.5), 0 8px 24px -4px rgba(0, 0, 0, 0.55), 0 22px 40px -6px rgba(0, 0, 0, 0.65), 0 0 22px 0 rgba(116, 157, 208, 0.16), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+  --shadow-card-hover: 0 2px 4px 0 rgba(0, 0, 0, 0.5), 0 8px 24px -4px rgba(0, 0, 0, 0.55), 0 22px 40px -6px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
   --shadow-elevated: 0 1px 2px 0 rgba(0, 0, 0, 0.45), 0 8px 24px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.09);
 }
 
@@ -302,44 +302,17 @@ button, a, input, select {
   background: var(--color-border-active);
 }
 
-/* Hardware-accelerated skeleton shimmer */
-@keyframes skeleton-shimmer {
-  0% {
-    transform: translateX(-100%);
+/* Calm skeleton loader state */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
   }
-  100% {
-    transform: translateX(100%);
+  50% {
+    opacity: 0.5;
   }
 }
 
 .skeleton-shimmer {
   position: relative;
-  overflow: hidden;
-}
-
-.skeleton-shimmer::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.04) 20%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 80%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  animation: skeleton-shimmer 1.8s infinite;
-}
-
-[data-theme="light"] .skeleton-shimmer::after {
-  background-image: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.03) 20%,
-    rgba(0, 0, 0, 0.06) 50%,
-    rgba(0, 0, 0, 0.03) 80%,
-    rgba(0, 0, 0, 0) 100%
-  );
+  animation: skeleton-pulse 2s ease-in-out infinite;
 }

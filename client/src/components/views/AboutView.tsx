@@ -442,7 +442,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView, on
                 href="https://github.com/Guts1005"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-sapphire hover:bg-accent-sapphire/80 text-white font-mono font-bold text-xs transition-all shadow-sm"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold text-xs transition-all shadow-sm"
               >
                 <Github className="h-4 w-4" />
                 <span>GITHUB: @Guts1005</span>

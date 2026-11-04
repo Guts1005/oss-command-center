@@ -658,7 +658,7 @@ const AppContent: React.FC = () => {
         {isDemoMode && !user && (
           <div className="mx-auto w-full max-w-full px-3 py-2 mb-2 rounded-xl border border-accent-sapphire/40 bg-accent-sapphire/10 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-accent-glacial select-none shadow-sm">
             <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-accent-sapphire animate-ping" />
+              <span className="flex h-2 w-2 rounded-full bg-accent-sapphire" />
               <span className="font-bold text-text-primary tracking-wide">INTERACTIVE DEMO SANDBOX:</span>
               <span className="text-text-whisper">Exploring live simulated telemetry across React, Linux &amp; Next.js.</span>
             </div>
@@ -666,7 +666,7 @@ const AppContent: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="px-3 py-1 rounded-lg bg-accent-sapphire hover:bg-accent-sapphire/90 text-white font-sans font-semibold text-xs transition-colors cursor-pointer shadow-xs"
+                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-sans font-semibold text-xs transition-colors cursor-pointer shadow-xs"
               >
                 Sign In &amp; Connect Accounts
               </button>

@@ -99,7 +99,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="flex items-center justify-between gap-3 pb-2 border-b border-border-subtle/80">
           <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono">
             <span className="flex items-center gap-1.5 font-bold text-text-primary">
-              <span className="w-2 h-2 rounded-full bg-status-merged animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-status-merged" />
               SYSTEM STATUS: READY
             </span>
             <span className="text-border-bold hidden sm:inline" aria-hidden="true">•</span>
@@ -191,7 +191,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           {isDemoMode && (
             <>
               <div className="px-3.5 py-1.5 rounded-xl border border-accent-sapphire/40 bg-accent-sapphire/10 text-xs font-mono font-bold text-accent-sapphire flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-accent-sapphire animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-accent-sapphire" />
                 <span>Simulating 7 Curated Open-Source PRs</span>
               </div>
               <button

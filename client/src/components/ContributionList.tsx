@@ -116,7 +116,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
               {onOpenAuthModal && (
                 <button
                   onClick={onOpenAuthModal}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 border border-accent-sapphire bg-accent-sapphire hover:bg-accent-sapphire/90 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all cursor-pointer shadow-sm font-sans"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 border border-blue-600 bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all cursor-pointer shadow-sm font-sans"
                 >
                   <span>Sign in or Register</span>
                 </button>
