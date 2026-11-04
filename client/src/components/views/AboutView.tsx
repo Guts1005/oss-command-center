@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  User,
   ArrowLeft,
   Github,
   Terminal,
@@ -10,13 +9,22 @@ import {
   Layers,
   Code2,
   ExternalLink,
-  MessageSquareQuote,
   Radio,
   BookOpen,
   ArrowRight,
   Shield,
   FileText,
-  Cookie
+  Cpu,
+  Orbit,
+  Server,
+  Globe,
+  Award,
+  Linkedin,
+  Mail,
+  GraduationCap,
+  HardDrive,
+  Activity,
+  HeartHandshake
 } from 'lucide-react';
 import { ViewMode } from '../../types';
 import { CookiePreferencesModal } from '../CookiePreferencesModal';
@@ -36,52 +44,85 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView, on
   useWheelScroll(containerRef);
 
   const skillPills = [
-    { label: 'Distributed Systems', color: 'border-accent-sapphire/40 bg-accent-sapphire/10 text-accent-sapphire' },
-    { label: 'Low-Latency Telemetry', color: 'border-accent-glacial/40 bg-accent-glacial/10 text-accent-glacial' },
-    { label: 'Rust & TypeScript', color: 'border-status-merged/40 bg-status-merged/10 text-status-merged' },
-    { label: 'Linux & Kernel Internals', color: 'border-border-bold bg-surface-elevated text-text-primary' },
-    { label: 'SQLite WAL Engine', color: 'border-status-action/40 bg-status-action/10 text-status-action' },
-    { label: 'AES-256 Cryptography', color: 'border-accent-sapphire/40 bg-accent-sapphire/10 text-accent-sapphire' },
-    { label: 'Open Source Maintainer', color: 'border-status-merged/40 bg-status-merged/10 text-status-merged' },
-    { label: 'Reactive Frontend', color: 'border-accent-glacial/40 bg-accent-glacial/10 text-accent-glacial' },
-    { label: 'Tactile Spring Physics', color: 'border-status-action/40 bg-status-action/10 text-status-action' },
-    { label: 'Database Optimization', color: 'border-border-bold bg-surface-elevated text-text-primary' },
+    { label: 'RTEMS Space-Grade RTOS', color: 'border-accent-sapphire/40 bg-accent-sapphire/10 text-accent-sapphire' },
+    { label: 'POSIX & Kernel Internals', color: 'border-status-merged/40 bg-status-merged/10 text-status-merged' },
+    { label: 'Modern C & C++ (17/20)', color: 'border-border-bold bg-surface-elevated text-text-primary' },
+    { label: 'Python & PyTorch', color: 'border-accent-glacial/40 bg-accent-glacial/10 text-accent-glacial' },
+    { label: 'vLLM & Dynamic Batching', color: 'border-status-action/40 bg-status-action/10 text-status-action' },
+    { label: 'WebRTC & Low-Latency Media', color: 'border-accent-sapphire/40 bg-accent-sapphire/10 text-accent-sapphire' },
+    { label: 'FFmpeg & SRS Pipelines', color: 'border-accent-glacial/40 bg-accent-glacial/10 text-accent-glacial' },
+    { label: 'Embedded Linux & Raspberry Pi', color: 'border-status-merged/40 bg-status-merged/10 text-status-merged' },
+    { label: 'TypeScript & React 18', color: 'border-border-bold bg-surface-elevated text-text-primary' },
+    { label: 'SQLite WAL & Local-First', color: 'border-status-action/40 bg-status-action/10 text-status-action' },
   ];
 
-  const testimonials = [
+  const experienceCards = [
     {
-      quote: "Sharvin has a rare ability to pinpoint bottlenecks across both the database engine and the frontend render loop. His PRs are consistently atomic, rigorously tested, and zero-compromise on quality.",
-      author: "Danilo N.",
-      role: "Distributed Systems Lead @ Open Infra"
+      period: 'Feb 2026 – Present',
+      role: 'Open Source Kernel Contributor',
+      org: 'RTEMS Project',
+      type: 'Upstream Space-Grade Operating System',
+      description:
+        'Contributed upstream patches to the RTEMS space-grade real-time operating system kernel (deployed on ESA and NASA flight missions). Hardened watchdog timer validation logic and POSIX clock boundary checks across kernel core routines (coretodcheck.c, clock.h). Investigated 34-bit timer rollover constraints up to year 2400 to prevent edge-case integer overflows in real-time scheduling.',
+      badge: 'Kernel Core',
+      badgeColor: 'border-status-merged/40 bg-status-merged/10 text-status-merged',
+      icon: Orbit,
     },
     {
-      quote: "Working with Sharvin on telemetry pipelines set a new standard for our team. The attention to sub-16ms latency budgets and zero-bloat architecture made our stack noticeably faster.",
-      author: "Elena R.",
-      role: "Principal Engineer @ TelemetryCore"
+      period: 'Aug 2025 – Feb 2026',
+      role: 'AI Systems Engineer Intern',
+      org: 'Aspire Vision',
+      type: 'Industrial Safety & Edge Media',
+      description:
+        'Engineered real-time edge video streaming pipelines for an industrial smart-helmet safety system, achieving sub-300ms glass-to-glass latency over WebRTC / HTTP-FLV using FFmpeg and local SRS Docker containers on Raspberry Pi ARM. Configured zero-trust outbound Cloudflare Tunnels (cloudflared) bypassing carrier-grade NAT across 4 field sites. Designed offline resilience daemons managing physical GPIO camera triggers.',
+      badge: 'Edge Streaming',
+      badgeColor: 'border-accent-sapphire/40 bg-accent-sapphire/10 text-accent-sapphire',
+      icon: Radio,
     },
     {
-      quote: "Sharp eye for consistency, deep cryptographic knowledge, and immediate turnaround on code reviews. A true senior engineer who builds for longevity.",
-      author: "Marcus K.",
-      role: "Open Source Maintainer"
-    }
-  ];
-
-  const talks = [
-    {
-      title: "Zero-Latency Developer Telemetry with SQLite WAL & SSE",
-      event: "Systems Architecture Summit 2026",
-      summary: "Deep-dive into local-first transactional persistence, concurrent worker isolation, and sub-10ms event streams."
+      period: 'May 2025 – Aug 2025',
+      role: 'Embedded Systems Intern',
+      org: 'Entice Engineering',
+      type: 'Industrial Hardware & Telemetry',
+      description:
+        'Built a Python-based video capture and GPS metadata tagging pipeline on embedded Raspberry Pi hardware for field data collection. Interfaced GPIO sensors and optimized OpenCV frame processing routines under tight embedded memory and thermal limits.',
+      badge: 'Embedded Linux',
+      badgeColor: 'border-accent-glacial/40 bg-accent-glacial/10 text-accent-glacial',
+      icon: Cpu,
     },
     {
-      title: "Hardware-Hardened Token Vaults with AES-256-GCM & Scrypt",
-      event: "Security Engineering Guild",
-      summary: "Protecting third-party API credentials at rest with authenticated ciphers and memory-ephemeral decryption."
+      period: 'Research & Systems Benchmarking',
+      role: 'High-Throughput LLM Serving Engine',
+      org: 'Personal Engineering Project',
+      type: 'GPU Memory & Kernel Optimization',
+      description:
+        'Designed an empirical continuous dynamic batching benchmark harness for Qwen 2.5 7B on an Ampere 12GB GPU (RTX 3060), scaling throughput from 57.2 tok/s to 592.0 tok/s (10.35x scaling) across 20 concurrent streams. Implemented AutoAWQ Marlin W4A16 GEMM kernels to reserve 3.6 GiB VRAM for a 67,440-token PagedAttention KV-cache pool with an 87.1% Radix-Tree Prefix Cache hit rate.',
+      badge: 'vLLM / CUDA',
+      badgeColor: 'border-status-action/40 bg-status-action/10 text-status-action',
+      icon: Zap,
     },
     {
-      title: "Ruthless YAGNI in Modern Full-Stack Systems",
-      event: "Engineering Leadership Forum",
-      summary: "The senior minimalist ethos: standard library first, zero AI fluff, and audited zero-dependency micro-utilities."
-    }
+      period: 'Open Source',
+      role: 'Streaming-Rpi Stack',
+      org: 'GitHub: @Guts1005/Streaming-Rpi',
+      type: 'Wearable Camera Media Stack',
+      description:
+        'Built and open-sourced a wearable camera streaming stack on Raspberry Pi with hardware-accelerated H.264 ingestion, an SRS Docker container, and a Next.js / React control plane dashboard with sub-300ms glass-to-glass latency.',
+      badge: 'Open Source',
+      badgeColor: 'border-status-merged/40 bg-status-merged/10 text-status-merged',
+      icon: Code2,
+    },
+    {
+      period: '2023 – 2028',
+      role: 'MBA Tech in Computer Engineering',
+      org: 'NMIMS MPSTME, Mumbai',
+      type: 'Integrated B.Tech + MBA',
+      description:
+        'Undergraduate coursework focused on Operating Systems, Computer Networks, Data Structures & Algorithms, Object-Oriented Design in C++, DBMS, and Digital Electronics. Smart India Hackathon National Finalist, AWS Academy Graduate (Cloud Architecting), and NPTEL Elite Certificate holder (IIT Kanpur).',
+      badge: 'Education',
+      badgeColor: 'border-border-bold bg-surface-elevated text-text-primary',
+      icon: GraduationCap,
+    },
   ];
 
   return (
@@ -105,254 +146,347 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView, on
             <span>RETURN TO STREAM</span>
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <a
               href="https://github.com/Guts1005"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors"
             >
               <Github className="h-3.5 w-3.5" />
-              <span>GITHUB: @Guts1005</span>
+              <span>@Guts1005</span>
               <ExternalLink className="h-3 w-3 text-text-muted" />
+            </a>
+            <a
+              href="https://linkedin.com/in/sharvinneve"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors"
+            >
+              <Linkedin className="h-3.5 w-3.5" />
+              <span>sharvinneve</span>
+              <ExternalLink className="h-3 w-3 text-text-muted" />
+            </a>
+            <a
+              href="mailto:sharvinneve67@gmail.com"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              <span>Email</span>
             </a>
           </div>
         </div>
 
         {/* Main Content Sections */}
         <div className="space-y-12">
-          {/* Section 1: Massive Greeting Hero with Skill Pills */}
+          {/* Section 1: Genuine Greeting Hero with Skill Pills */}
           <section className="space-y-6">
-          <div className="space-y-3">
-            <p className="text-xs font-mono uppercase tracking-widest text-accent-sapphire font-bold">
-              SYSTEMS & FULL-STACK INFRASTRUCTURE ENGINEER
-            </p>
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold font-sans text-text-primary tracking-tight leading-[1.1]">
-              Hi, my name is <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-sapphire via-accent-glacial to-text-primary">Sharvin</span>.
-            </h1>
-          </div>
-
-          {/* Interactive Skill Pills (Inspired by Maria's skill cloud) */}
-          <div className="flex flex-wrap gap-2 pt-2">
-            {skillPills.map((pill) => (
-              <span
-                key={pill.label}
-                className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold border transition-all cursor-default select-none shadow-xs ${pill.color}`}
-              >
-                {pill.label}
-              </span>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 2: Narrative Split Bio (Inspired by Maria's bio layout) */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start p-6 sm:p-8 rounded-2xl border border-border-subtle bg-surface-card shadow-card">
-          <div className="lg:col-span-5 space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-surface-elevated border border-border-bold flex items-center justify-center text-accent-sapphire shadow-inner">
-              <Terminal className="h-8 w-8" />
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-status-merged animate-pulse" />
+                <p className="text-xs font-mono uppercase tracking-widest text-accent-sapphire font-bold">
+                  COMPUTER ENGINEERING STUDENT & SYSTEMS ENTHUSIAST
+                </p>
+              </div>
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold font-sans text-text-primary tracking-tight leading-[1.1]">
+                Hi, I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-sapphire via-accent-glacial to-text-primary">Sharvin</span>.
+              </h1>
+              <p className="text-sm sm:text-base font-sans text-text-muted max-w-3xl leading-relaxed">
+                Undergraduate at NMIMS MPSTME, Mumbai (Integrated B.Tech + MBA, 2023–2028). I enjoy working close to the machine—focusing on operating systems, kernel internals, low-latency edge media pipelines, and quiet, useful open-source software.
+              </p>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold font-sans text-text-primary tracking-tight">
-              Curious about how software operates under pressure.
-            </h2>
-            <p className="text-sm font-sans text-text-muted leading-relaxed">
-              I believe the most resilient software happens when you understand the entire execution graph from the kernel to the pixel.
-            </p>
-          </div>
 
-          <div className="lg:col-span-7 space-y-4 text-sm sm:text-base font-sans text-text-muted leading-relaxed border-t lg:border-t-0 lg:border-l border-border-subtle pt-6 lg:pt-0 lg:pl-8">
-            <p className="text-text-primary font-medium">
-              I have spent years building across distributed backend services, kernel interfaces, telemetry engines, and reactive frontend experiences. Not because I could not pick a lane, but because I was always more interested in solving the root architectural challenge than staying inside a single discipline.
+            {/* Skill Pills */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {skillPills.map((pill) => (
+                <span
+                  key={pill.label}
+                  className={`px-3 py-1.5 rounded-full text-xs font-mono font-bold border transition-all cursor-default select-none shadow-xs ${pill.color}`}
+                >
+                  {pill.label}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          {/* Section 2: Narrative Split Bio (Honest, Grounded, Faithful) */}
+          <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start p-6 sm:p-8 rounded-2xl border border-border-subtle bg-surface-card shadow-card">
+            <div className="lg:col-span-5 space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border-bold flex items-center justify-center text-accent-sapphire shadow-inner">
+                <Terminal className="h-7 w-7" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold font-sans text-text-primary tracking-tight">
+                Curiosity from the kernel to the screen.
+              </h2>
+              <p className="text-sm font-sans text-text-muted leading-relaxed">
+                I believe software becomes clearer and more reliable when you take the time to understand the whole stack—from hardware interrupts and scheduler clocks up to the user interface.
+              </p>
+            </div>
+
+            <div className="lg:col-span-7 space-y-4 text-sm sm:text-base font-sans text-text-muted leading-relaxed border-t lg:border-t-0 lg:border-l border-border-subtle pt-6 lg:pt-0 lg:pl-8">
+              <p className="text-text-primary font-medium">
+                I didn't start in software wanting to chase buzzwords or build things on top of abstractions I didn't understand. What genuinely pulled me in was the question of what happens under the hood when a system runs under pressure.
+              </p>
+              <p>
+                That curiosity led me to explore space-grade real-time kernels, embedded ARM hardware, low-latency video streaming, and high-throughput LLM batching. Whether I'm looking at watchdog clock rollover edge-cases in RTEMS, tuning WebRTC pipelines on a Raspberry Pi, or profiling GPU prefix caches, I try to stay grounded in real benchmarks and standard library fundamentals.
+              </p>
+              <p>
+                I'm still early in my journey, but I care deeply about writing honest code that doesn't waste user compute, does not compromise on test coverage, and respects people's time.
+              </p>
+              <div className="pt-2 flex flex-wrap items-center gap-4">
+                <a
+                  href="https://github.com/Guts1005"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-xs font-mono font-bold text-accent-sapphire hover:underline"
+                >
+                  <span>EXPLORE MY GITHUB REPOSITORIES</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: Why I Built OSS Command Center */}
+          <section className="p-6 sm:p-8 rounded-2xl border border-border-subtle bg-surface-card shadow-card space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-border-bold flex items-center justify-center text-status-merged">
+                <Code2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold font-sans text-text-primary uppercase tracking-wider">
+                  WHY I BUILT OSS COMMAND CENTER
+                </h2>
+                <p className="text-xs font-mono text-text-muted">
+                  A personal tool born from the friction of multi-repository open-source contributions.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 text-sm font-sans text-text-muted leading-relaxed">
+              <div className="space-y-2">
+                <h3 className="font-bold text-text-primary text-sm uppercase tracking-wide flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-status-action" />
+                  The Scatter Problem
+                </h3>
+                <p className="text-xs sm:text-sm">
+                  When you contribute across different upstream repos and platforms (GitHub, GitLab), PR reviews, CI failures, and maintainer questions get buried in email noise and disparate tabs. It's easy to lose momentum.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-bold text-text-primary text-sm uppercase tracking-wide flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent-sapphire" />
+                  Local-First & Private
+                </h3>
+                <p className="text-xs sm:text-sm">
+                  I didn't want another bloated SaaS platform tracking my activity or holding my tokens on external servers. OSS Command Center keeps data local in SQLite WAL, encrypts access tokens with AES-256-GCM, and stays responsive.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-bold text-text-primary text-sm uppercase tracking-wide flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-status-merged" />
+                  Signal Over Noise
+                </h3>
+                <p className="text-xs sm:text-sm">
+                  The goal is simple: show exactly which pull requests require an action, which are waiting on maintainers, and what has been merged—with zero-latency Server-Sent Events and clean tactile keyboard navigation.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 4: Real Hands-On Experience & Contributions (Honest & Verifiable) */}
+          <section className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-accent-sapphire" />
+                <h2 className="text-lg sm:text-xl font-bold font-sans text-text-primary uppercase tracking-wider">
+                  EXPERIENCE & UPSTREAM CONTRIBUTIONS
+                </h2>
+              </div>
+              <span className="text-xs font-mono text-text-muted">
+                Real code, measured benchmarks, and upstream patches
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {experienceCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <div
+                    key={card.role + card.org}
+                    className="p-5 sm:p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border ${card.badgeColor}`}>
+                          {card.badge}
+                        </span>
+                        <span className="text-[11px] font-mono text-text-muted">
+                          {card.period}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <h3 className="text-base font-bold font-sans text-text-primary leading-snug flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-text-muted shrink-0" />
+                          <span>{card.role}</span>
+                        </h3>
+                        <div className="text-xs font-mono text-accent-sapphire font-semibold">
+                          {card.org}
+                        </div>
+                        <div className="text-[11px] font-mono text-text-muted">
+                          {card.type}
+                        </div>
+                      </div>
+
+                      <p className="text-xs font-sans text-text-muted leading-relaxed pt-1">
+                        {card.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Section 5: Engineering Principles (Warm, Honest, Practical) */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <HeartHandshake className="h-5 w-5 text-status-merged" />
+              <h2 className="text-lg sm:text-xl font-bold font-sans text-text-primary uppercase tracking-wider">
+                HOW I APPROACH ENGINEERING
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-5 sm:p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-3">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-accent-sapphire" />
+                  <h3 className="text-sm sm:text-base font-bold font-sans text-text-primary uppercase tracking-wide">
+                    Understand Before Abstracting
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm font-sans text-text-muted leading-relaxed">
+                  Read the docs, trace the system calls, and understand what the underlying machine is doing before reaching for third-party libraries. Real simplicity is the result of thorough understanding, not layers of boilerplate.
+                </p>
+              </div>
+
+              <div className="p-5 sm:p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-3">
+                <div className="flex items-center gap-2">
+                  <Cpu className="h-5 w-5 text-status-merged" />
+                  <h3 className="text-sm sm:text-base font-bold font-sans text-text-primary uppercase tracking-wide">
+                    Respect the Machine
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm font-sans text-text-muted leading-relaxed">
+                  Whether it's an embedded ARM board with tight memory constraints, a real-time RTOS tick, or a user's browser, compute cycles and RAM are finite. Software should be light, fast, and mindful of resources.
+                </p>
+              </div>
+
+              <div className="p-5 sm:p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-accent-glacial" />
+                  <h3 className="text-sm sm:text-base font-bold font-sans text-text-primary uppercase tracking-wide">
+                    Honesty & Continuous Learning
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm font-sans text-text-muted leading-relaxed">
+                  Admit when you don't know something, ask good questions, write testable code, and measure before and after. Engineering is about steady improvement and intellectual honesty, not showing off.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 6: Production Stack Specification */}
+          <section className="p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-4">
+            <div className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-accent-sapphire" />
+              <h2 className="text-lg sm:text-xl font-bold font-sans text-text-primary uppercase tracking-wider">
+                APPLICATION STACK SPECIFICATION
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
+              <div className="p-3.5 rounded-lg border border-border-subtle bg-surface">
+                <div className="text-[10px] text-text-muted uppercase mb-1">CLIENT ARCHITECTURE</div>
+                <div className="text-text-primary font-bold text-sm">React 18 + Vite</div>
+                <div className="text-[11px] text-text-muted mt-0.5">TypeScript, Strict Mode</div>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-border-subtle bg-surface">
+                <div className="text-[10px] text-text-muted uppercase mb-1">STYLING & MOTION</div>
+                <div className="text-text-primary font-bold text-sm">Tailwind CSS + Framer</div>
+                <div className="text-[11px] text-text-muted mt-0.5">Dual-Theme Token Ladder</div>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-border-subtle bg-surface">
+                <div className="text-[10px] text-text-muted uppercase mb-1">SERVER RUNTIME</div>
+                <div className="text-text-primary font-bold text-sm">Node.js LTS + Express</div>
+                <div className="text-[11px] text-text-muted mt-0.5">REST APIs + Real-Time SSE</div>
+              </div>
+
+              <div className="p-3.5 rounded-lg border border-border-subtle bg-surface">
+                <div className="text-[10px] text-text-muted uppercase mb-1">LOCAL-FIRST STORAGE</div>
+                <div className="text-text-primary font-bold text-sm">SQLite 3 (WAL Mode)</div>
+                <div className="text-[11px] text-text-muted mt-0.5">AES-256-GCM Vault</div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 7: Warm Contact & Connect Block */}
+          <section className="p-8 sm:p-10 rounded-2xl border border-border-subtle bg-gradient-to-br from-surface-card to-surface-elevated text-center space-y-4 shadow-card">
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-sans text-text-primary tracking-tight">
+              Let's connect and talk systems.
+            </h2>
+            <p className="text-sm font-sans text-text-muted max-w-xl mx-auto leading-relaxed">
+              I'm always glad to talk about operating systems, kernel internals, edge video streaming, or open-source projects. Feel free to reach out, connect on LinkedIn, or explore my GitHub.
             </p>
-            <p>
-              When working on open source software, developers lose countless hours triaging reviews across dozens of organizations and repositories. The OSS Command Center was built out of this exact necessity: giving high-velocity contributors an uncompromising, zero-latency HUD with real-time actionable status signals.
-            </p>
-            <div className="pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <a
                 href="https://github.com/Guts1005"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 text-xs font-mono font-bold text-accent-sapphire hover:underline"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-sapphire hover:bg-accent-sapphire/80 text-white font-mono font-bold text-xs transition-all shadow-sm"
               >
-                <span>EXPLORE OPEN SOURCE WORK ON GITHUB</span>
-                <ArrowRight className="h-3.5 w-3.5" />
+                <Github className="h-4 w-4" />
+                <span>GITHUB: @Guts1005</span>
               </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 3: Engineering Philosophy & Principles */}
-        <section className="space-y-4">
-          <h2 className="text-lg sm:text-xl font-bold font-sans text-text-primary uppercase tracking-wider">
-            CORE ENGINEERING DIRECTIVES
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-5 sm:p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-3">
-              <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-accent-sapphire" />
-                <h3 className="text-sm sm:text-base font-bold font-sans text-text-primary uppercase tracking-wide">
-                  Ruthless YAGNI Ethos
-                </h3>
-              </div>
-              <p className="text-xs sm:text-sm font-sans text-text-muted leading-relaxed">
-                Standard library first. Zero speculative abstractions, audited dependencies, and strictly zero AI boilerplate. Every pixel and query exists to provide immediate operational clarity.
-              </p>
-            </div>
-
-            <div className="p-5 sm:p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-status-merged" />
-                <h3 className="text-sm sm:text-base font-bold font-sans text-text-primary uppercase tracking-wide">
-                  Security by Architecture
-                </h3>
-              </div>
-              <p className="text-xs sm:text-sm font-sans text-text-muted leading-relaxed">
-                Authenticated AES-256-GCM cipher with unique 96-bit IVs. Scrypt-256 key derivation. HMAC-SHA256 signed webhooks. Strict multi-tenant row-level boundary enforcement.
-              </p>
-            </div>
-
-            <div className="p-5 sm:p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-accent-glacial" />
-                <h3 className="text-sm sm:text-base font-bold font-sans text-text-primary uppercase tracking-wide">
-                  Tactile Responsiveness
-                </h3>
-              </div>
-              <p className="text-xs sm:text-sm font-sans text-text-muted leading-relaxed">
-                Calibrated dark and light dual-theme token ladders. Sub-16ms render budgets. Fluid spring physics powered by Framer Motion for immediate tactile feedback.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 4: What Maintainers & Peers Say (Inspired by Maria's What People Say) */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <MessageSquareQuote className="h-5 w-5 text-accent-sapphire" />
-            <h2 className="text-lg sm:text-xl font-bold font-sans text-text-primary uppercase tracking-wider">
-              WHAT MAINTAINERS & PEERS SAY
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {testimonials.map((item) => (
-              <div
-                key={item.author}
-                className="p-5 sm:p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card flex flex-col justify-between"
+              <a
+                href="https://linkedin.com/in/sharvinneve"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border-subtle bg-surface hover:bg-surface-elevated text-text-primary font-mono font-bold text-xs transition-all"
               >
-                <p className="text-xs sm:text-sm font-sans text-text-muted leading-relaxed italic mb-4">
-                  "{item.quote}"
-                </p>
-                <div className="pt-3 border-t border-border-subtle">
-                  <div className="font-bold text-text-primary text-xs sm:text-sm font-sans">{item.author}</div>
-                  <div className="text-[11px] font-mono text-text-muted mt-0.5">{item.role}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 5: Technical Talks & Deep Dives */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-accent-glacial" />
-            <h2 className="text-lg sm:text-xl font-bold font-sans text-text-primary uppercase tracking-wider">
-              TECHNICAL TALKS & ARCHITECTURE SPECIFICATIONS
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {talks.map((talk) => (
-              <div
-                key={talk.title}
-                className="p-5 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-2"
+                <Linkedin className="h-4 w-4 text-accent-sapphire" />
+                <span>LINKEDIN: sharvinneve</span>
+              </a>
+              <a
+                href="mailto:sharvinneve67@gmail.com"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border-subtle bg-surface hover:bg-surface-elevated text-text-primary font-mono font-bold text-xs transition-all"
               >
-                <span className="text-[10px] font-mono text-accent-sapphire font-bold uppercase tracking-wider block">
-                  {talk.event}
-                </span>
-                <h3 className="text-xs sm:text-sm font-bold font-sans text-text-primary leading-snug">
-                  {talk.title}
-                </h3>
-                <p className="text-xs font-sans text-text-muted leading-relaxed pt-1">
-                  {talk.summary}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 6: Production Stack & Infrastructure */}
-        <section className="p-6 rounded-xl border border-border-subtle bg-surface-card shadow-card space-y-4">
-          <div className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-accent-sapphire" />
-            <h2 className="text-lg sm:text-xl font-bold font-sans text-text-primary uppercase tracking-wider">
-              PRODUCTION STACK SPECIFICATION
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
-            <div className="p-3.5 rounded-lg border border-border-subtle bg-surface">
-              <div className="text-[10px] text-text-muted uppercase mb-1">CLIENT ARCHITECTURE</div>
-              <div className="text-text-primary font-bold text-sm">React 18 + Vite</div>
-              <div className="text-[11px] text-text-muted mt-0.5">TypeScript, Strict Mode</div>
+                <Mail className="h-4 w-4 text-accent-glacial" />
+                <span>sharvinneve67@gmail.com</span>
+              </a>
+              <button
+                type="button"
+                onClick={onBack}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border-subtle bg-surface hover:bg-surface-elevated text-text-primary font-mono font-bold text-xs transition-all cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>RETURN TO STREAM</span>
+              </button>
             </div>
+          </section>
 
-            <div className="p-3.5 rounded-lg border border-border-subtle bg-surface">
-              <div className="text-[10px] text-text-muted uppercase mb-1">STYLING & MOTION</div>
-              <div className="text-text-primary font-bold text-sm">Tailwind CSS + Framer</div>
-              <div className="text-[11px] text-text-muted mt-0.5">Dual-Theme Token Ladder</div>
-            </div>
-
-            <div className="p-3.5 rounded-lg border border-border-subtle bg-surface">
-              <div className="text-[10px] text-text-muted uppercase mb-1">SERVER RUNTIME</div>
-              <div className="text-text-primary font-bold text-sm">Node.js LTS + Express</div>
-              <div className="text-[11px] text-text-muted mt-0.5">REST APIs + Webhooks</div>
-            </div>
-
-            <div className="p-3.5 rounded-lg border border-border-subtle bg-surface">
-              <div className="text-[10px] text-text-muted uppercase mb-1">PERSISTENCE ENGINE</div>
-              <div className="text-text-primary font-bold text-sm">SQLite 3 (WAL Mode)</div>
-              <div className="text-[11px] text-text-muted mt-0.5">ACID Transactions & Zero Lag</div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 7: Final CTA Block */}
-        <section className="p-8 sm:p-10 rounded-2xl border border-border-subtle bg-gradient-to-br from-surface-card to-surface-elevated text-center space-y-4 shadow-card">
-          <h2 className="text-2xl sm:text-3xl font-extrabold font-sans text-text-primary tracking-tight">
-            Building high-performance software or scaling telemetry?
-          </h2>
-          <p className="text-sm font-sans text-text-muted max-w-xl mx-auto leading-relaxed">
-            Let us collaborate on robust systems, low-latency developer tools, and high-impact open source repositories.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <a
-              href="https://github.com/Guts1005"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-sapphire hover:bg-accent-sapphire/80 text-white font-mono font-bold text-xs transition-all shadow-sm"
-            >
-              <Github className="h-4 w-4" />
-              <span>GITHUB: @Guts1005</span>
-            </a>
-            <button
-              type="button"
-              onClick={onBack}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border-subtle bg-surface hover:bg-surface-elevated text-text-primary font-mono font-bold text-xs transition-all cursor-pointer"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>RETURN TO STREAM</span>
-            </button>
-          </div>
-        </section>
-
-        {/* Section 8: Signature Editorial Footer */}
-        <Footer
-          variant="editorial"
-          onNavigateView={onNavigateView}
-          onOpenCookiePreferences={onOpenCookiePreferences || (() => setIsCookieModalOpen(true))}
-        />
-      </div>
+          {/* Section 8: Signature Editorial Footer */}
+          <Footer
+            variant="editorial"
+            onNavigateView={onNavigateView}
+            onOpenCookiePreferences={onOpenCookiePreferences || (() => setIsCookieModalOpen(true))}
+          />
+        </div>
       </div>
 
       {/* Interactive Cookie & Storage Preferences Modal */}

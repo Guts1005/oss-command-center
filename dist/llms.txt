@@ -17,5 +17,11 @@ OSS Command Center provides real-time Server-Sent Events (SSE), multi-tenant SQL
 - `GET /api/events`: Server-Sent Events (SSE) telemetry stream for authenticated live updates.
 - `GET /api/ai/status`: AI engine capability and routing metadata.
 
+## Author & Maintainer
+- **Sharvin Neve**: Computer Engineering student at NMIMS MPSTME, Mumbai (Integrated B.Tech + MBA, 2023–2028). Systems enthusiast and open-source contributor exploring kernel internals (RTEMS), edge media (WebRTC/FFmpeg), and local-first software.
+- GitHub: [Guts1005](https://github.com/Guts1005)
+- LinkedIn: [sharvinneve](https://linkedin.com/in/sharvinneve)
+- Email: [sharvinneve67@gmail.com](mailto:sharvinneve67@gmail.com)
+
 ## Optional
 - [Full LLM Specification](https://ossbysharvin.vercel.app/llms-full.txt): Deep technical specification and schema definitions.

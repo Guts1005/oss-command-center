@@ -34,7 +34,7 @@ export const Footer: React.FC<FooterProps> = ({
             Sharvin
           </h2>
           <p className="text-xs sm:text-sm font-mono text-text-muted text-left">
-            Systems & Full-Stack Infrastructure Engineer.
+            Computer Engineering student & systems enthusiast. Exploring kernel internals, edge media, and local-first tools.
           </p>
         </div>
 
@@ -51,7 +51,7 @@ export const Footer: React.FC<FooterProps> = ({
           </a>
           <span className="text-border-bold" aria-hidden="true">•</span>
           <a
-            href="https://linkedin.com/in/"
+            href="https://linkedin.com/in/sharvinneve"
             target="_blank"
             rel="noreferrer"
             className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5 font-bold"
@@ -61,11 +61,11 @@ export const Footer: React.FC<FooterProps> = ({
           </a>
           <span className="text-border-bold" aria-hidden="true">•</span>
           <a
-            href="mailto:contact@sharvin.dev"
+            href="mailto:sharvinneve67@gmail.com"
             className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5 font-bold"
           >
             <Mail className="h-3.5 w-3.5" />
-            <span>Email Contact</span>
+            <span>sharvinneve67@gmail.com</span>
           </a>
         </div>
       </div>

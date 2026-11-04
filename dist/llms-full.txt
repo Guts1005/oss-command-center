@@ -19,5 +19,11 @@ OSS Command Center is a high-density, local-first telemetry workstation for open
 5. **Security Policy (`/?view=security`)**: Security disclosure guidelines, threat boundaries, and cryptography specifications.
 6. **About (`/?view=about`)**: Platform philosophy, architectural diagrams, and license details.
 
+## Author & Maintainer
+- **Sharvin Neve**: Computer Engineering student at NMIMS MPSTME, Mumbai (Integrated B.Tech + MBA, 2023–2028). Systems enthusiast and open-source contributor exploring kernel internals (RTEMS), edge media (WebRTC/FFmpeg), and local-first software.
+- GitHub: [Guts1005](https://github.com/Guts1005)
+- LinkedIn: [sharvinneve](https://linkedin.com/in/sharvinneve)
+- Email: [sharvinneve67@gmail.com](mailto:sharvinneve67@gmail.com)
+
 ## Verification & Quality Standards
 All features are covered by automated integration test suites (`npm test`) covering routing, multi-tenant isolation, cryptographic primitives, inbound webhooks, and rate limiters.

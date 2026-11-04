@@ -14,6 +14,7 @@ import {
   Filter
 } from 'lucide-react';
 import { Contribution, ViewMode } from '../../types';
+import { DEMO_DATASET } from '../../data/demoDataset';
 import { Footer } from '../Footer';
 import { useWheelScroll } from '../../hooks/useWheelScroll';
 
@@ -64,7 +65,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
       const res = await axios.get<RepoEcosystemItem[]>('/api/repositories');
       if (Array.isArray(res.data) && res.data.length > 0) {
         setRepos(res.data);
-      } else {
+      } else if (contributions.length > 0) {
         // Fallback: aggregate from client-side contributions prop
         const map = new Map<string, RepoEcosystemItem>();
         contributions.forEach((c) => {
@@ -104,13 +105,16 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
           };
         });
         setRepos(derived);
+      } else {
+        setRepos(DEMO_DATASET.repositories as RepoEcosystemItem[]);
       }
     } catch (err) {
-      console.error('[RepositoriesView] Failed to load repositories:', err);
+      console.warn('[RepositoriesView] Failed to load repositories, using demo dataset:', err);
+      setRepos(DEMO_DATASET.repositories as RepoEcosystemItem[]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [contributions]);
 
   React.useEffect(() => {
     fetchRepositories();
