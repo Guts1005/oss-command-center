@@ -129,7 +129,6 @@ export const FilterRail: React.FC<FilterRailProps> = ({
                   key={`desktop-${tab.id}`}
                   type="button"
                   onClick={() => {
-                    onScopeChange('all');
                     if (tab.id === 'action-needed') {
                       onStatusChange('all');
                       onActionChange('action-needed');

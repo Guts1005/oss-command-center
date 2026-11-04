@@ -84,7 +84,7 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
               whileTap={{ scale: 0.9 }}
               transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               onClick={onClose}
-              className="absolute top-4 right-4 sm:top-5 sm:right-5 flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle text-text-muted hover:border-accent-sapphire hover:text-text-primary transition-colors cursor-pointer"
               title="Dismiss (Esc)"
             >
               <X className="h-4 w-4" />
@@ -155,22 +155,22 @@ export const TrackContributionModal: React.FC<TrackContributionModalProps> = ({
                 <div className="flex flex-wrap gap-2.5">
                   <motion.button
                     type="button"
-                    whileHover={{ scale: 1.03, borderColor: 'rgba(116,157,208,0.7)', color: '#ffffff' }}
+                    whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.96 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                     onClick={() => handleExampleClick('https://github.com/astral-sh/ruff/pull/28429')}
-                    className="flex items-center gap-1.5 border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-medium text-text-whisper hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer shadow-sm"
+                    className="flex items-center gap-1.5 border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-medium text-text-whisper hover:border-accent-sapphire hover:text-text-primary transition-colors cursor-pointer shadow-sm"
                   >
                     <GitHubLogo className="h-3 w-3 text-text-primary shrink-0" />
                     <span>astral-sh/ruff#28429</span>
                   </motion.button>
                   <motion.button
                     type="button"
-                    whileHover={{ scale: 1.03, borderColor: 'rgba(116,157,208,0.7)', color: '#ffffff' }}
+                    whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.96 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                     onClick={() => handleExampleClick('https://gitlab.rtems.org/rtems/rtos/rtems/-/merge_requests/1479')}
-                    className="flex items-center gap-1.5 border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-medium text-text-whisper hover:border-accent-sapphire hover:text-white transition-colors cursor-pointer shadow-sm"
+                    className="flex items-center gap-1.5 border border-border-subtle bg-surface-card px-3 py-1.5 rounded-md text-xs font-mono font-medium text-text-whisper hover:border-accent-sapphire hover:text-text-primary transition-colors cursor-pointer shadow-sm"
                   >
                     <GitLabLogo className="h-3 w-3 shrink-0" />
                     <span>rtems/rtos/rtems!1479</span>

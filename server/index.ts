@@ -132,8 +132,9 @@ app.get(['/health', '/api/health'], (_req, res) => {
 // 7. Mount Core API Sub-Routers
 app.use('/api', apiRouter);
 
-// 8. Serve Static Assets with Long-Term Cache Headers
+// 8. Serve Static Assets with Long-Term Cache Headers & Dotfile Allow for .well-known
 app.use(express.static(distPath, {
+  dotfiles: 'allow',
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) {
       res.setHeader('Cache-Control', 'no-cache');
@@ -143,9 +144,38 @@ app.use(express.static(distPath, {
   },
 }));
 
-// SPA Fallback for client-side routing
+// 8a. AI Agent Markdown Content Negotiation & /index.md endpoint
+app.get(['/index.md', '/llms.txt'], (_req, res) => {
+  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+  res.setHeader('Vary', 'Accept');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  const llmsPath = path.join(distPath, 'llms.txt');
+  return res.sendFile(llmsPath);
+});
+
+// Markdown content negotiation for agentic fetchers requesting text/markdown
+app.get('/', (req, res, next) => {
+  if (req.headers.accept?.includes('text/markdown')) {
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Vary', 'Accept');
+    return res.sendFile(path.join(distPath, 'llms.txt'));
+  }
+  return next();
+});
+
+// SPA Fallback for client-side routing with soft-404 defense
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next();
+
+  // Defense against Soft 404s: Return true 404 for unhandled file extensions or unhandled .well-known paths
+  const ext = path.extname(req.path);
+  if (ext || req.path.startsWith('/.well-known/')) {
+    return res.status(404).type('text/plain').send('404 Not Found');
+  }
+
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(distPath, 'index.html'));
 });
 

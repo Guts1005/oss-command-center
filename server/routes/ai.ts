@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { actionLimiter } from '../middleware/rate_limit.js';
-import { checkOllamaAvailable, triageContribution, suggestReply, askPlatformCopilot, getOllamaHost } from '../services/ai_engine.js';
+import { checkOllamaAvailable, triageContribution, suggestReply, askPlatformCopilot, streamPlatformCopilot, getOllamaHost } from '../services/ai_engine.js';
 import { z } from 'zod';
 
 export const aiRouter = Router();
@@ -61,5 +61,34 @@ aiRouter.post('/copilot', actionLimiter, async (req: AuthenticatedRequest, res) 
     return res.json({ answer });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+aiRouter.post('/copilot/stream', actionLimiter, async (req: AuthenticatedRequest, res) => {
+  try {
+    const parsed = copilotSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Valid question parameter is required' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    if (typeof (res as any).flushHeaders === 'function') {
+      (res as any).flushHeaders();
+    }
+
+    const userId = req.user?.id || 'e1fd3a8b-0fa3-47a6-bbf5-01b97b414cf4';
+    for await (const token of streamPlatformCopilot(parsed.data.question, userId, parsed.data.clientContext)) {
+      res.write(`data: ${JSON.stringify({ token })}\n\n`);
+    }
+    res.write('data: [DONE]\n\n');
+    res.end();
+  } catch (err: any) {
+    if (!res.headersSent) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    res.end();
   }
 });

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Contribution, ViewMode } from '../../types';
 import { Footer } from '../Footer';
+import { useWheelScroll } from '../../hooks/useWheelScroll';
 
 export interface RepoEcosystemItem {
   repo: string;
@@ -47,6 +48,8 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
 }) => {
   const [repos, setRepos] = React.useState<RepoEcosystemItem[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  useWheelScroll(containerRef);
   const [search, setSearch] = React.useState('');
   const [platformFilter, setPlatformFilter] = React.useState<'all' | 'github' | 'gitlab'>('all');
   const [responsivenessFilter, setResponsivenessFilter] = React.useState<'all' | 'Fast' | 'Moderate' | 'Slow' | 'Pending'>('all');
@@ -181,7 +184,7 @@ export const RepositoriesView: React.FC<RepositoriesViewProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar">
+    <div ref={containerRef} className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar w-full">
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-border-subtle">
         <div>

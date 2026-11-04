@@ -1,0 +1,23 @@
+# OSS Command Center // Full Technical Specification
+
+## Overview
+OSS Command Center is a high-density, local-first telemetry workstation for open-source contributors. It aggregates pull requests, issues, and code reviews across GitHub and GitLab into a unified, zero-latency dashboard.
+
+## Technical Architecture
+- **Frontend**: Vite 6, React 18, Tailwind CSS, Framer Motion, Lenis smooth scrolling, Lucide icons.
+- **Backend**: Node.js, Express, Better-SQLite3, Helmet, Compression, Zod schema validation.
+- **Data Layer**: SQLite with Write-Ahead Logging (WAL) mode, foreign key cascades, and multi-tenant query isolation (`WHERE user_id = ?`).
+- **Security**: AES-256-GCM authenticated encryption with unique random IVs per secret, scrypt password hashing, timing-safe equality comparisons, and Tiered IP rate limiting.
+- **Real-Time Delivery**: Server-Sent Events (SSE) with heartbeat keepalives, heartbeat timeouts, and automatic client reconnects.
+- **Integrations**: GitHub REST/GraphQL APIs, GitLab API v4, Discord Embed webhooks, Slack Block Kit webhooks, n8n automation pipelines, and SMTP email digests.
+
+## Navigation & Views
+1. **Stream (`/?view=stream`)**: Live triage deck with filtering by state (active, review-needed, stale, merged), difficulty, platform, and bounty status.
+2. **Analytics (`/?view=analytics`)**: 365-day activity telemetry heatmap, median time-to-merge, first-response latency, and platform ratios.
+3. **Repositories (`/?view=repos`)**: Health and responsiveness index of upstream repositories where contributions have landed.
+4. **Settings (`/?view=settings`)**: Integration credentials, sync frequencies, outbound webhooks, and raw JSON export.
+5. **Security Policy (`/?view=security`)**: Security disclosure guidelines, threat boundaries, and cryptography specifications.
+6. **About (`/?view=about`)**: Platform philosophy, architectural diagrams, and license details.
+
+## Verification & Quality Standards
+All features are covered by automated integration test suites (`npm test`) covering routing, multi-tenant isolation, cryptographic primitives, inbound webhooks, and rate limiters.

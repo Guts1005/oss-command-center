@@ -9,7 +9,12 @@ for (const f of [testDb, `${testDb}-wal`, `${testDb}-shm`]) {
   if (fs.existsSync(f)) fs.unlinkSync(f);
 }
 
-const env = { ...process.env, DB_PATH: 'test_isolated.db' };
+const node23Dir = 'E:\\OPEN SOURCE AUTOMATION\\node-v23.11.1-win-x64';
+const pathEnv = fs.existsSync(node23Dir)
+  ? `${node23Dir}${path.delimiter}${process.env.PATH || ''}`
+  : process.env.PATH;
+
+const env = { ...process.env, PATH: pathEnv, DB_PATH: 'test_isolated.db' };
 
 const testFiles = [
   'tests/routing.test.ts',
@@ -30,7 +35,8 @@ const testFiles = [
   'tests/email_digest.test.ts',
   'tests/demo_sandbox.test.ts',
   'tests/security_hardening_ratelimit.test.ts',
-  'tests/n8n_pipeline.test.ts'
+  'tests/n8n_pipeline.test.ts',
+  'tests/ai_stream.test.ts'
 ];
 
 let failed = false;

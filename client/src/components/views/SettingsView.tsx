@@ -34,6 +34,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { playNotificationSound } from '../../utils/notifications';
 import { ViewMode } from '../../types';
 import { Footer } from '../Footer';
+import { useWheelScroll } from '../../hooks/useWheelScroll';
 
 interface SettingsViewProps {
   onNavigateView?: (mode: ViewMode) => void;
@@ -150,6 +151,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [activeCategory, setActiveCategory] = React.useState<SettingsCategory>('general');
   const [searchQuery, setSearchQuery] = React.useState('');
 
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  useWheelScroll(containerRef);
   const [settings, setSettings] = React.useState<UserSettingsState>({
     audio_chime_enabled: true,
     sync_cadence_minutes: 30,
@@ -596,7 +599,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const currentCategoryMeta = CATEGORIES.find(c => c.id === activeCategory) || CATEGORIES[0];
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar w-full">
+    <div ref={containerRef} className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar w-full">
       {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-border-subtle">
         <div className="flex items-center gap-3">
@@ -2001,7 +2004,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <span>Compiling contribution digest...</span>
                 </div>
               ) : previewTab === 'html' ? (
-                <div className="rounded-xl overflow-hidden border border-border-subtle shadow-inner bg-[#0a0d14]">
+                <div className="rounded-xl overflow-hidden border border-border-subtle shadow-inner bg-base">
                   <iframe
                     title="Digest HTML Preview"
                     srcDoc={

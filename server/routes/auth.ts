@@ -254,7 +254,10 @@ authRouter.get('/github', async (req, res) => {
 
   if (!isGitHubOAuthConfigured()) {
     console.warn('[GitHub OAuth]: GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are not configured. Rejecting request.');
-    return res.status(400).redirect('/?error=oauth_not_configured&provider=github');
+    if (req.headers.accept?.includes('application/json') || req.xhr) {
+      return res.status(503).json({ error: 'GitHub OAuth is not configured on this server.' });
+    }
+    return res.redirect('/?error=oauth_not_configured&provider=github');
   }
 
   const state = createOAuthState('github', redirectPath);
@@ -335,7 +338,10 @@ authRouter.get('/gitlab', async (req, res) => {
 
   if (!isGitLabOAuthConfigured()) {
     console.warn('[GitLab OAuth]: GITLAB_CLIENT_ID and GITLAB_CLIENT_SECRET are not configured. Rejecting request.');
-    return res.status(400).redirect('/?error=oauth_not_configured&provider=gitlab');
+    if (req.headers.accept?.includes('application/json') || req.xhr) {
+      return res.status(503).json({ error: 'GitLab OAuth is not configured on this server.' });
+    }
+    return res.redirect('/?error=oauth_not_configured&provider=gitlab');
   }
 
   const state = createOAuthState('gitlab', redirectPath);

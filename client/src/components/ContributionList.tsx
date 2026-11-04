@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Lenis from 'lenis';
 import { Contribution, ViewMode } from '../types';
 import { ContributionRow } from './ContributionRow';
-import { PlusCircle, Search, Terminal, Shield, Lock } from 'lucide-react';
+import { ContributionStreamSkeleton } from './ContributionStreamSkeleton';
+import { Terminal, Shield, Lock, Sparkles } from 'lucide-react';
 import { Footer } from './Footer';
+import { useWheelScroll } from '../hooks/useWheelScroll';
 
 interface ContributionListProps {
   items: Contribution[];
@@ -15,7 +16,9 @@ interface ContributionListProps {
   onOpenTrackModal?: () => void;
   onResetFilters?: () => void;
   isAuthenticated?: boolean;
+  isDemoMode?: boolean;
   onOpenAuthModal?: () => void;
+  onEnterDemoMode?: () => void;
   onNavigateView?: (mode: ViewMode) => void;
   onOpenCookiePreferences?: () => void;
 }
@@ -29,54 +32,19 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   onOpenTrackModal,
   onResetFilters,
   isAuthenticated = true,
+  isDemoMode = false,
   onOpenAuthModal,
+  onEnterDemoMode,
   onNavigateView,
   onOpenCookiePreferences,
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // 60fps desktop-optimized smooth scrolling with Lenis
-  useEffect(() => {
-    // Only enable smooth scrolling on desktop fine pointers (mouse / trackpad)
-    // Coarse pointer devices (touchscreens / mobile) retain native momentum scrolling for zero overhead
-    const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
-    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
-    if (isTouch || prefersReducedMotion || !containerRef.current) {
-      return;
-    }
-
-    const container = containerRef.current;
-    let lenis: Lenis | null = null;
-    let rafId: number;
-
-    try {
-      lenis = new Lenis({
-        wrapper: container,
-        content: (container.firstElementChild as HTMLElement) || container,
-        duration: 0.9,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        orientation: 'vertical',
-        gestureOrientation: 'vertical',
-        smoothWheel: true,
-        touchMultiplier: 1,
-      });
-
-      function raf(time: number) {
-        lenis?.raf(time);
-        rafId = requestAnimationFrame(raf);
-      }
-      rafId = requestAnimationFrame(raf);
-    } catch (err) {
-      console.warn('Lenis smooth scroll failed to initialize:', err);
-    }
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      if (lenis) lenis.destroy();
-    };
-  }, []);
+  const unauthRef = useRef<HTMLDivElement>(null);
+  const emptyRef = useRef<HTMLDivElement>(null);
+  useWheelScroll(containerRef);
+  useWheelScroll(unauthRef);
+  useWheelScroll(emptyRef);
 
   // Synchronize highlighted index with selectedId or clamped index
   useEffect(() => {
@@ -114,21 +82,21 @@ export const ContributionList: React.FC<ContributionListProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [items, highlightedIndex, onSelectItem]);
 
-  if (isLoading) {
+  // Loading Segment: active during initial fetch or when switching filters while list is empty
+  if (isLoading || (isRefreshing && items.length === 0)) {
     return (
-      <div className="flex flex-1 items-center justify-center p-16 bg-base">
-        <div className="border border-border-subtle bg-surface p-6 rounded-lg font-mono text-sm text-text-whisper flex items-center gap-4 shadow-card">
-          <span className="inline-block h-3 w-3 bg-accent-sapphire rounded-full animate-ping" />
-          <span className="text-text-primary font-bold text-base">Syncing...</span>
-          <span>LOADING CONTRIBUTIONS...</span>
-        </div>
-      </div>
+      <ContributionStreamSkeleton
+        count={5}
+        onNavigateView={onNavigateView}
+        onOpenCookiePreferences={onOpenCookiePreferences}
+      />
     );
   }
 
-  if (!isAuthenticated) {
+  // Unauthenticated Call to Action (bypassed if interactive Demo Mode is active)
+  if (!isAuthenticated && !isDemoMode) {
     return (
-      <div className="flex flex-1 flex-col justify-between w-full h-full min-h-0 bg-base text-left">
+      <div ref={unauthRef} className="flex-1 flex flex-col justify-between w-full h-full min-h-0 overflow-y-auto custom-scrollbar bg-base text-left">
         <div className="flex-1 flex items-center justify-center p-4 sm:p-8 w-full my-auto">
           <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card">
             <div className="flex items-center gap-3 border-b border-border-subtle pb-4 mb-4">
@@ -153,6 +121,15 @@ export const ContributionList: React.FC<ContributionListProps> = ({
                   <span>Sign in or Register</span>
                 </button>
               )}
+              {onEnterDemoMode && (
+                <button
+                  onClick={onEnterDemoMode}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 border border-border-bold bg-surface-elevated hover:bg-surface-hover hover:border-accent-sapphire/50 px-5 py-2.5 rounded-lg text-sm font-semibold text-text-primary transition-all cursor-pointer shadow-sm font-sans group"
+                >
+                  <Sparkles className="h-4 w-4 text-accent-sapphire group-hover:scale-110 transition-transform" />
+                  <span>Explore Interactive Demo</span>
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-1.5 text-xs text-text-muted mt-5 pt-3 border-t border-border-subtle/50 font-mono">
               <Shield className="h-3.5 w-3.5 text-status-merged shrink-0" />
@@ -169,9 +146,10 @@ export const ContributionList: React.FC<ContributionListProps> = ({
     );
   }
 
+  // Empty State: ONLY rendered if not currently loading or refreshing and truly empty
   if (items.length === 0) {
     return (
-      <div className="flex flex-1 flex-col justify-between w-full h-full min-h-0 bg-base text-left">
+      <div ref={emptyRef} className="flex-1 flex flex-col justify-between w-full h-full min-h-0 overflow-y-auto custom-scrollbar bg-base text-left">
         <div className="flex-1 flex items-center justify-center p-4 sm:p-8 w-full my-auto">
           <div className="border border-border-subtle bg-surface p-5 sm:p-8 rounded-xl max-w-lg w-full text-left shadow-card">
             <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-3 text-sm">
@@ -185,7 +163,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
               {onResetFilters && (
                 <button
                   onClick={onResetFilters}
-                  className="w-full sm:w-auto border border-border-bold bg-surface-elevated px-4 py-2 rounded-md font-sans text-xs sm:text-sm font-semibold text-text-primary hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer text-center"
+                  className="w-full sm:w-auto border border-border-bold bg-surface-elevated px-4 py-2 rounded-lg font-sans text-xs sm:text-sm font-semibold text-text-primary hover:border-accent-sapphire hover:bg-surface-active transition-all cursor-pointer text-center shadow-xs"
                 >
                   Reset Filters
                 </button>
@@ -193,7 +171,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
               {onOpenTrackModal && (
                 <button
                   onClick={onOpenTrackModal}
-                  className="w-full sm:w-auto border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-md font-sans text-xs sm:text-sm font-semibold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer text-center"
+                  className="w-full sm:w-auto border border-accent-sapphire bg-accent-sapphire/20 px-4 py-2 rounded-lg font-sans text-xs sm:text-sm font-semibold text-text-whisper hover:bg-accent-sapphire/30 transition-all cursor-pointer text-center shadow-xs"
                 >
                   + Track Contribution
                 </button>
@@ -211,7 +189,7 @@ export const ContributionList: React.FC<ContributionListProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-base">
+    <div className="flex-1 flex flex-col min-h-0 w-full overflow-hidden bg-base">
       {/* Stream Section Header */}
       <div className="flex items-center justify-between px-1 pb-2 select-none">
         <div className="flex items-center gap-2 text-xs font-mono font-bold text-text-muted uppercase tracking-wider truncate">
@@ -225,45 +203,54 @@ export const ContributionList: React.FC<ContributionListProps> = ({
       </div>
 
       {/* Separated Card Rows with Stream Scroll Fade Mask */}
-      <div ref={containerRef} id="stream-feed-container" className="overflow-y-auto flex-1 px-1 pt-2 pb-28 sm:pb-4 stream-scroll-mask">
-        {isRefreshing && (
-          <div className="h-0.5 w-full bg-accent-sapphire/20 overflow-hidden mb-2 rounded-full">
-            <div className="h-full w-1/3 bg-accent-sapphire rounded-full animate-pulse" />
+      <div
+        ref={containerRef}
+        id="stream-feed-container"
+        className="overflow-y-auto flex-1 px-1 pt-2 pb-28 sm:pb-4 stream-scroll-mask custom-scrollbar"
+      >
+        <div
+          className={`stream-content-wrapper min-h-full transition-opacity duration-200 ${
+            isRefreshing ? 'opacity-65 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          {isRefreshing && (
+            <div className="h-0.5 w-full bg-accent-sapphire/20 overflow-hidden mb-2 rounded-full">
+              <div className="h-full w-1/3 bg-accent-sapphire rounded-full animate-pulse" />
+            </div>
+          )}
+
+          <div className="space-y-2.5">
+            {items.map((item, idx) => {
+              const isHighlighted = idx === highlightedIndex;
+              const isSelected = item.id === selectedId;
+
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className={isHighlighted && !isSelected ? 'ring-2 ring-accent-sapphire/70 rounded-xl sm:rounded-2xl' : ''}
+                >
+                  <ContributionRow
+                    item={item}
+                    isSelected={isSelected}
+                    onClick={() => {
+                      setHighlightedIndex(idx);
+                      onSelectItem(item.id);
+                    }}
+                  />
+                </motion.div>
+              );
+            })}
           </div>
-        )}
-        <AnimatePresence mode="popLayout" initial={false}>
-          {items.map((item, idx) => {
-            const isHighlighted = idx === highlightedIndex;
-            const isSelected = item.id === selectedId;
 
-            return (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                className={isHighlighted && !isSelected ? 'ring-2 ring-accent-sapphire/70 rounded-xl sm:rounded-2xl' : ''}
-              >
-                <ContributionRow
-                  item={item}
-                  isSelected={isSelected}
-                  onClick={() => {
-                    setHighlightedIndex(idx);
-                    onSelectItem(item.id);
-                  }}
-                />
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-
-        <Footer
-          variant="dashboard"
-          onNavigateView={onNavigateView}
-          onOpenCookiePreferences={onOpenCookiePreferences}
-        />
+          <Footer
+            variant="dashboard"
+            onNavigateView={onNavigateView}
+            onOpenCookiePreferences={onOpenCookiePreferences}
+          />
+        </div>
       </div>
     </div>
   );

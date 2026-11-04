@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Contribution, ActivityEvent } from '../types';
+import { DEMO_DATASET } from '../data/demoDataset';
 import { X, ExternalLink, MessageSquare, Check, AlertTriangle, CheckCircle2, Clock, Bot, User, Send, RefreshCw, GitPullRequest, Loader2, Sparkles } from 'lucide-react';
 import axios from 'axios';
+import { useWheelScroll } from '../hooks/useWheelScroll';
 
 function renderFormattedInline(content: string): React.ReactNode {
   const parts: React.ReactNode[] = [];
@@ -112,6 +114,8 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
   onClose,
   onItemUpdated,
 }) => {
+  const scrollContainerRef = React.useRef<HTMLDivElement | null>(null);
+  useWheelScroll(scrollContainerRef);
   const [data, setData] = useState<{ item: Contribution; events: ActivityEvent[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
@@ -155,7 +159,16 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
         setNotes(res.data.item.notes || '');
         setActionNeeded(res.data.item.action_needed || 'none');
       })
-      .catch((err) => console.error('Failed to load detail:', err))
+      .catch((err) => {
+        console.warn('API detail fetch failed, checking demo dataset:', err);
+        const demoItem = DEMO_DATASET.contributions.find((c) => c.id === itemId);
+        if (demoItem) {
+          const demoEvents = DEMO_DATASET.activityEvents.filter((e) => e.contribution_id === itemId);
+          setData({ item: demoItem, events: demoEvents as ActivityEvent[] });
+          setNotes(demoItem.notes || '');
+          setActionNeeded(demoItem.action_needed || 'none');
+        }
+      })
       .finally(() => setLoading(false));
   }, [itemId]);
 
@@ -367,7 +380,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 320, mass: 0.75 }}
-              className="flex w-full sm:w-screen max-w-full sm:max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-[-16px_0_40px_rgba(0,0,0,0.75)] [box-shadow:inset_1px_0_0_rgba(207,231,248,0.04),-16px_0_40px_rgba(0,0,0,0.75)] select-none pt-safe pb-safe"
+              className="flex w-full sm:w-screen max-w-full sm:max-w-xl xl:max-w-2xl flex-col border-l border-border-subtle bg-surface shadow-[-16px_0_40px_rgba(0,0,0,0.65)] select-none pt-safe pb-safe"
             >
               {/* Header Bar */}
               <div className="flex items-center justify-between border-b border-border-subtle bg-base px-4 py-3 sm:px-6 sm:py-4 gap-2">
@@ -409,7 +422,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
                   <span>Loading details...</span>
                 </div>
               ) : data ? (
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+                <div ref={scrollContainerRef} className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Spec-Sheet Header & Metadata Grid */}
           <div className="border border-border-subtle bg-surface-card p-5 rounded-lg shadow-card">
             <h2 className="text-lg md:text-xl font-bold text-text-primary leading-snug font-sans mb-4">
@@ -769,7 +782,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Log next steps, branch references, or review feedback..."
-                className="w-full border border-border-subtle bg-base p-3 rounded-md text-sm text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all"
+                className="w-full border border-border-subtle bg-base p-3 rounded-md text-sm text-text-primary placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all"
               />
             </div>
 
@@ -816,7 +829,7 @@ export const SlideOverDetail: React.FC<SlideOverDetailProps> = ({
                           ) : (
                             <User className="h-4 w-4 text-accent-sapphire" />
                           )}
-                          <span className="font-bold text-white font-mono">@{ev.actor}</span>
+                          <span className="font-bold text-text-primary font-mono">@{ev.actor}</span>
                           {bot && (
                             <span className="border border-border-subtle bg-surface-elevated px-1.5 py-0.5 rounded text-xs font-mono text-text-muted">
                               Bot

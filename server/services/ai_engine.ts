@@ -443,3 +443,99 @@ ${userQuestion}`;
 
   return answer;
 }
+
+
+export async function* streamOllama(prompt: string, systemPrompt?: string): AsyncGenerator<string, void, unknown> {
+  const isUp = await checkOllamaAvailable();
+  const host = getOllamaHost();
+  const model = getModelName();
+
+  if (!isUp) {
+    throw new Error(`Local AI engine (Ollama) is not running on ${host}.`);
+  }
+
+  const payload: any = {
+    model,
+    prompt,
+    stream: true,
+    options: {
+      temperature: 0.2,
+      top_p: 0.9,
+    },
+  };
+
+  if (systemPrompt) {
+    payload.system = systemPrompt;
+  }
+
+  const res = await fetch(`${host}/api/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(120000),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Ollama API error (${res.status}): ${errText}`);
+  }
+
+  if (!res.body) {
+    throw new Error('Response body is null');
+  }
+
+  const reader = (res.body as any).getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const json = JSON.parse(trimmed);
+        if (json.response) {
+          yield json.response;
+        }
+      } catch {
+        // ignore unparseable chunk
+      }
+    }
+  }
+
+  if (buffer.trim()) {
+    try {
+      const json = JSON.parse(buffer.trim());
+      if (json.response) yield json.response;
+    } catch {}
+  }
+}
+
+export async function* streamPlatformCopilot(
+  userQuestion: string,
+  userId?: string,
+  clientContext?: any
+): AsyncGenerator<string, void, unknown> {
+  const isUp = await checkOllamaAvailable();
+  if (!isUp) {
+    yield `Local AI engine (Ollama) is not currently connected at ${getOllamaHost()}.\n\nTo enable neural assistance, start Ollama locally or configure OLLAMA_HOST in your .env.`;
+    return;
+  }
+
+  try {
+    const fullAnswer = await askPlatformCopilot(userQuestion, userId, clientContext);
+    const words = fullAnswer.split(' ');
+    for (let i = 0; i < words.length; i += 3) {
+      const slice = words.slice(i, i + 3).join(' ') + (i + 3 < words.length ? ' ' : '');
+      yield slice;
+    }
+  } catch (err: any) {
+    yield `Error querying neural copilot: ${err.message || 'Unknown error'}`;
+  }
+}

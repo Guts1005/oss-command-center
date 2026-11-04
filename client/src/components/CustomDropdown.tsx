@@ -69,14 +69,14 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between gap-1.5 rounded-lg border border-border-subtle bg-base/80 hover:bg-surface-elevated hover:border-border-bold transition-all cursor-pointer font-sans shadow-xs ${heightClasses} ${
+        className={`w-full flex items-center justify-between gap-1.5 rounded-lg border border-border-subtle bg-base/80 hover:bg-surface-elevated hover:border-border-bold transition-all cursor-pointer font-mono shadow-xs ${heightClasses} ${
           isOpen ? 'border-accent-sapphire ring-1 ring-accent-sapphire/40 bg-surface-elevated' : ''
         }`}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-1.5 truncate">
-          <span className="text-text-muted text-[10px] font-bold tracking-wider uppercase font-sans">
+          <span className="text-text-muted text-[10px] font-bold tracking-wider uppercase font-mono">
             {label}
           </span>
           <span className="font-bold text-text-primary tracking-wide truncate">
@@ -113,7 +113,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                     onChange(opt.value);
                     setIsOpen(false);
                   }}
-                  className={`flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-xs font-sans font-semibold transition-colors cursor-pointer text-left ${
+                  className={`flex items-center justify-between w-full px-2.5 py-1.5 rounded-md text-xs font-mono font-semibold transition-colors cursor-pointer text-left ${
                     isSelected
                       ? 'bg-accent-sapphire/20 text-accent-sapphire font-bold border border-accent-sapphire/30'
                       : 'text-text-whisper hover:bg-surface-card hover:text-text-primary border border-transparent'

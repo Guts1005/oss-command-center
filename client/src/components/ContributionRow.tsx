@@ -177,7 +177,7 @@ export const ContributionRow: React.FC<ContributionRowProps> = ({ item, isSelect
               className={`px-2 py-0.5 font-sans text-[11px] font-bold uppercase tracking-wider border rounded-md shrink-0 flex items-center gap-1.5 shadow-xs ${
                 item.platform === 'github'
                   ? 'border-border-bold text-text-whisper bg-base'
-                  : 'border-[#fc6d26]/70 text-[#fc6d26] bg-[#fc6d26]/15'
+                  : 'border-platform-gitlab/70 text-platform-gitlab bg-platform-gitlab/15'
               }`}
             >
               {item.platform === 'github' ? (

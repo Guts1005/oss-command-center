@@ -1,0 +1,18 @@
+# OSS Command Center // Telemetry Console
+
+> Local-first telemetry console and PR triage command center for open-source contributors managing contributions across GitHub and GitLab.
+
+OSS Command Center provides real-time Server-Sent Events (SSE), multi-tenant SQLite isolation, zero-knowledge AES-256-GCM encrypted provider credentials, and maintainer SLA tracking.
+
+## Core Capabilities
+- [Contribution Stream](https://ossbysharvin.vercel.app/?view=stream): High-density live triage stream for PRs, issues, and maintainer review requests.
+- [Ecosystem Analytics](https://ossbysharvin.vercel.app/?view=analytics): 365-day contribution heatmaps, merge velocity metrics, and response latency SLAs.
+- [Repositories Deck](https://ossbysharvin.vercel.app/?view=repos): Health metrics and review velocity across tracked upstream repositories.
+- [Architecture & Design](https://ossbysharvin.vercel.app/?view=about): Technical architecture, local-first philosophy, and reactive SSE pipeline.
+- [Security Model](https://ossbysharvin.vercel.app/?view=security): Zero-trust multi-tenancy, scrypt password hashing, and authenticated AES-256-GCM vault.
+
+## API & Protocols
+- `GET /health` & `GET /api/health`: Health probe reporting database connectivity, uptime, and system status.
+- `GET /api/demo/dataset`: Public sandbox dataset containing curated open-source PR records across React, Linux, Inkscape, and Next.js.
+- `GET /api/events`: Server-Sent Events (SSE) telemetry stream for authenticated live updates.
+- `GET /api/ai/status`: AI engine capability and routing metadata.

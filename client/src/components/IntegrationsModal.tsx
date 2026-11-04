@@ -402,10 +402,10 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   onClick={() => handleOAuthConnect('gitlab')}
                   disabled={Boolean(oauthConnecting)}
-                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-text-primary text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-platform-gitlab text-text-primary text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
                 >
                   {oauthConnecting === 'gitlab' ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-[#fc6d26]" />
+                    <Loader2 className="h-4 w-4 animate-spin text-platform-gitlab" />
                   ) : (
                     <GitLabLogo className="h-4 w-4 group-hover:scale-110 transition-transform" />
                   )}
@@ -455,7 +455,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                         onClick={() => setPlatform('gitlab')}
                         className={`flex items-center justify-center gap-2 border py-2.5 rounded-md text-xs md:text-sm font-semibold transition-all cursor-pointer ${
                           platform === 'gitlab'
-                            ? 'border-[#fc6d26] bg-[#fc6d26]/20 text-[#fc6d26] shadow-sm'
+                            ? 'border-[#fc6d26] bg-[#fc6d26]/20 text-platform-gitlab shadow-sm'
                             : 'border-border-subtle bg-base text-text-muted hover:text-white'
                         }`}
                       >

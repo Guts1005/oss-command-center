@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { db, ContributionRecord } from '../db.js';
+import { db, runInTransaction, getCachedStatement, ContributionRecord } from '../db.js';
 import { verifyWebhookSignature } from '../security/crypto.js';
 import { sseManager } from '../sse.js';
 import { dispatchNotification } from '../notifications/dispatcher.js';
@@ -25,7 +25,7 @@ function getRawBody(req: Request): Buffer {
  */
 function resolveWebhookSecret(userId?: string): string | null {
   if (userId) {
-    const settings = db.prepare('SELECT webhook_secret FROM user_settings WHERE user_id = ?').get(userId) as any;
+    const settings = getCachedStatement('SELECT webhook_secret FROM user_settings WHERE user_id = ?').get(userId) as any;
     if (settings?.webhook_secret) return settings.webhook_secret;
   }
   return process.env.GITHUB_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || null;
@@ -36,7 +36,7 @@ function resolveWebhookSecret(userId?: string): string | null {
  */
 function resolveGitLabToken(userId?: string): string | null {
   if (userId) {
-    const settings = db.prepare('SELECT webhook_secret FROM user_settings WHERE user_id = ?').get(userId) as any;
+    const settings = getCachedStatement('SELECT webhook_secret FROM user_settings WHERE user_id = ?').get(userId) as any;
     if (settings?.webhook_secret) return settings.webhook_secret;
   }
   return process.env.GITLAB_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET || null;

@@ -6,9 +6,26 @@ const DB_PATH = process.env.DB_PATH
   : path.resolve(process.cwd(), 'contributions.db');
 export const db = new Database(DB_PATH);
 
-// Enable WAL mode for high-concurrency read/write transactions
+// Enable WAL mode and performance tuning for high-concurrency read/write transactions
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
+db.pragma('synchronous = NORMAL');
+db.pragma('cache_size = -64000'); // 64MB cache
+
+const statementCache = new Map<string, any>();
+
+export function getCachedStatement(sql: string) {
+  let stmt = statementCache.get(sql);
+  if (!stmt) {
+    stmt = db.prepare(sql);
+    statementCache.set(sql, stmt);
+  }
+  return stmt;
+}
+
+export function runInTransaction<T>(fn: () => T): T {
+  return db.transaction(fn)();
+}
 
 export function initDatabase() {
   // 1. Users table

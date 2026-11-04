@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Lenis from 'lenis';
 import {
   User,
   ArrowLeft,
@@ -23,6 +22,7 @@ import { ViewMode } from '../../types';
 import { CookiePreferencesModal } from '../CookiePreferencesModal';
 import { TopologicalBackdrop } from './TopologicalBackdrop';
 import { Footer } from '../Footer';
+import { useWheelScroll } from '../../hooks/useWheelScroll';
 
 interface AboutViewProps {
   onBack: () => void;
@@ -33,28 +33,7 @@ interface AboutViewProps {
 export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView, onOpenCookiePreferences }) => {
   const [isCookieModalOpen, setIsCookieModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<HTMLDivElement | null>(null);
-
-  // Initialize Lenis for smooth momentum scrolling
-  useEffect(() => {
-    const wrapper = containerRef.current;
-    const content = contentRef.current;
-    if (!wrapper || !content) return;
-
-    const lenis = new Lenis({
-      wrapper,
-      content,
-      autoRaf: true,
-      smoothWheel: true,
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      touchMultiplier: 1.5,
-    });
-
-    return () => {
-      lenis.destroy();
-    };
-  }, []);
+  useWheelScroll(containerRef);
 
   const skillPills = [
     { label: 'Distributed Systems', color: 'border-accent-sapphire/40 bg-accent-sapphire/10 text-accent-sapphire' },
@@ -114,7 +93,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBack, onNavigateView, on
       <TopologicalBackdrop scrollContainerRef={containerRef} opacity={0.36} />
 
       {/* Main Content Container wrapped for smooth momentum scrolling */}
-      <div ref={contentRef} className="relative z-10 w-full flex flex-col min-h-full">
+      <div className="relative z-10 w-full flex flex-col min-h-full">
         {/* Top Bar with Return Navigation */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-3 border-b border-border-subtle">
           <button

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { ViewMode } from '../../types';
 import { Footer } from '../Footer';
+import { useWheelScroll } from '../../hooks/useWheelScroll';
 
 interface SecurityPolicyViewProps {
   onBack: () => void;
@@ -34,10 +35,12 @@ export const SecurityPolicyView: React.FC<SecurityPolicyViewProps> = ({
   onNavigateView,
   onOpenCookiePreferences,
 }) => {
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  useWheelScroll(containerRef);
   const [activeTab, setActiveTab] = useState<PolicyTab>(initialTab);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar w-full">
+    <div ref={containerRef} className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar w-full">
       {/* View Header with Return Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5 pb-3 border-b border-border-subtle">
         <div className="flex items-center gap-3">

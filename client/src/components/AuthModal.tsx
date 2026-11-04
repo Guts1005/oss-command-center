@@ -156,10 +156,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     type="button"
                     onClick={() => handleOAuthLogin('gitlab')}
                     disabled={Boolean(oauthLoading)}
-                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-[#fc6d26] text-text-primary text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg border border-border-bold bg-base hover:bg-surface-elevated hover:border-platform-gitlab text-text-primary text-sm font-sans font-semibold transition-all shadow-sm cursor-pointer group disabled:opacity-50"
                   >
                     {oauthLoading === 'gitlab' ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-[#fc6d26]" />
+                      <Loader2 className="h-4 w-4 animate-spin text-platform-gitlab" />
                     ) : (
                       <GitLabLogo className="h-4 w-4 group-hover:scale-110 transition-transform" />
                     )}

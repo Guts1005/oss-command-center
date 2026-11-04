@@ -205,7 +205,7 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({
     };
 
     // Precompute mountain terrain contour polylines once
-    const contours = generateMountainTerrainContours(120, 200, 65);
+    const contours = generateMountainTerrainContours(80, 130, 28);
 
     // Geological elevation markers along the primary ridge and saddle
     const markers: ElevationMarker[] = [
@@ -417,14 +417,15 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({
         const py = v * spanHeight - parallaxY + flowWave2 + levelRipple;
 
         if (py >= -20 && py <= height + 20) {
-          ctx.save();
+          ctx.beginPath();
+          ctx.arc(px, py, isLight ? 3.5 : 4.0, 0, Math.PI * 2);
+          ctx.fillStyle = isLight ? 'rgba(37, 99, 235, 0.15)' : 'rgba(56, 189, 248, 0.18)';
+          ctx.fill();
+
           ctx.beginPath();
           ctx.arc(px, py, isLight ? 1.8 : 2.0, 0, Math.PI * 2);
-          ctx.fillStyle = isLight ? 'rgba(37, 99, 235, 0.45)' : 'rgba(56, 189, 248, 0.50)';
-          ctx.shadowColor = isLight ? 'rgba(37, 99, 235, 0.3)' : 'rgba(56, 189, 248, 0.4)';
-          ctx.shadowBlur = 6;
+          ctx.fillStyle = isLight ? 'rgba(37, 99, 235, 0.7)' : 'rgba(56, 189, 248, 0.8)';
           ctx.fill();
-          ctx.restore();
         }
       }
 
@@ -508,7 +509,7 @@ export const TopologicalBackdrop: React.FC<TopologicalBackdropProps> = ({
       style={{ opacity }}
       className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none transition-opacity duration-300"
     >
-      <canvas ref={canvasRef} className="block w-full h-full" />
+      <canvas ref={canvasRef} className="block w-full h-full pointer-events-none" />
     </div>,
     document.body
   );

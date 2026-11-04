@@ -18,11 +18,15 @@ import { MobileBottomDock } from './components/MobileBottomDock';
 import { OfflineBanner } from './components/OfflineBanner';
 import { useViewRouting } from './hooks/useViewRouting';
 import { useTheme } from './hooks/useTheme';
-import { AnalyticsView } from './components/views/AnalyticsView';
-import { RepositoriesView } from './components/views/RepositoriesView';
-import { SettingsView } from './components/views/SettingsView';
-import { SecurityPolicyView } from './components/views/SecurityPolicyView';
-import { AboutView } from './components/views/AboutView';
+import { StreamView } from './components/views/StreamView';
+import { DEMO_DATASET } from './data/demoDataset';
+
+// Lazy-loaded views for optimal code-splitting and rapid initial paint
+const AnalyticsView = React.lazy(() => import('./components/views/AnalyticsView').then(m => ({ default: m.AnalyticsView })));
+const RepositoriesView = React.lazy(() => import('./components/views/RepositoriesView').then(m => ({ default: m.RepositoriesView })));
+const SettingsView = React.lazy(() => import('./components/views/SettingsView').then(m => ({ default: m.SettingsView })));
+const SecurityPolicyView = React.lazy(() => import('./components/views/SecurityPolicyView').then(m => ({ default: m.SecurityPolicyView })));
+const AboutView = React.lazy(() => import('./components/views/AboutView').then(m => ({ default: m.AboutView })));
 import { CopilotChatWidget, QuerySolverAction } from './components/CopilotChatWidget';
 
 import { sendDesktopNotification } from './utils/notifications';
@@ -64,6 +68,13 @@ const AppContent: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState<boolean>(false);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      return p.get('demo') === '1' || p.get('demo') === 'true';
+    }
+    return false;
+  });
 
   // Filters state
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -90,7 +101,7 @@ const AppContent: React.FC = () => {
 
   
   const activeFilteredContributions = React.useMemo(() => {
-    const rawList = user ? contributions : [];
+    const rawList = user ? contributions : (isDemoMode ? DEMO_DATASET.contributions : []);
     if (!rawList.length) return [];
 
     return rawList
@@ -195,6 +206,9 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
+  const currentFilterKey = [statusFilter, platformFilter, timeframeFilter, actionFilter, scopeFilter, debouncedSearch, sortBy].join('|');
+  const lastFetchedFilterKey = React.useRef<string>('');
+
   // Fetch contributions matching current filters without unmounting the list
   const fetchContributions = useCallback(
     async (isInitial = false) => {
@@ -216,6 +230,7 @@ const AppContent: React.FC = () => {
           },
         });
         setContributions(Array.isArray(res.data) ? res.data : (res.data?.items || []));
+        lastFetchedFilterKey.current = [statusFilter, platformFilter, timeframeFilter, actionFilter, scopeFilter, debouncedSearch, sortBy].join('|');
       } catch (err) {
         console.error('Failed to fetch contributions:', err);
       } finally {
@@ -229,19 +244,26 @@ const AppContent: React.FC = () => {
     [statusFilter, platformFilter, timeframeFilter, actionFilter, scopeFilter, debouncedSearch, sortBy]
   );
 
+  const isFilterPending = Boolean(user && !isLoading && lastFetchedFilterKey.current && lastFetchedFilterKey.current !== currentFilterKey);
+
   // Initial load and filter change updates
   useEffect(() => {
     if (!user) {
-      setContributions([]);
-      setStats({
-        total: 0,
-        actionNeeded: 0,
-        awaitingMaintainer: 0,
-        merged: 0,
-        closed: 0,
-        unreadCount: 0,
-        lastSync: null,
-      });
+      if (isDemoMode) {
+        setContributions(DEMO_DATASET.contributions);
+        setStats(DEMO_DATASET.stats);
+      } else {
+        setContributions([]);
+        setStats({
+          total: 0,
+          actionNeeded: 0,
+          awaitingMaintainer: 0,
+          merged: 0,
+          closed: 0,
+          unreadCount: 0,
+          lastSync: null,
+        });
+      }
       setIsLoading(false);
       isInitialMount.current = true;
       return;
@@ -611,11 +633,11 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen min-h-[100dvh] w-full flex-col bg-base diffused-bg text-text-primary selection:bg-accent-sapphire selection:text-white antialiased">
+    <div className="flex h-screen h-[100dvh] max-h-screen max-h-[100dvh] w-full flex-col overflow-hidden bg-base diffused-bg text-text-primary selection:bg-accent-sapphire selection:text-white antialiased">
       {/* Offline Status / Reconnection Resilience Banner */}
       <OfflineBanner />
 
-      <div className="flex-1 flex flex-col w-full px-3 py-2 sm:py-2.5 mx-auto">
+      <div className="flex-1 flex flex-col w-full min-h-0 overflow-hidden px-3 py-2 sm:py-2.5 mx-auto">
         {/* Compact Single-Tier Header */}
         <HeaderTelemetry
           stats={activeStats}
@@ -633,21 +655,53 @@ const AppContent: React.FC = () => {
         />
 
         {/* Demo Mode Alert Banner */}
+        {isDemoMode && !user && (
+          <div className="mx-auto w-full max-w-full px-3 py-2 mb-2 rounded-xl border border-accent-sapphire/40 bg-accent-sapphire/10 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-accent-glacial select-none shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-accent-sapphire animate-ping" />
+              <span className="font-bold text-text-primary tracking-wide">INTERACTIVE DEMO SANDBOX:</span>
+              <span className="text-text-whisper">Exploring live simulated telemetry across React, Linux &amp; Next.js.</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                className="px-3 py-1 rounded-lg bg-accent-sapphire hover:bg-accent-sapphire/90 text-white font-sans font-semibold text-xs transition-colors cursor-pointer shadow-xs"
+              >
+                Sign In &amp; Connect Accounts
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsDemoMode(false)}
+                className="px-2.5 py-1 rounded-lg border border-border-subtle bg-surface hover:bg-surface-elevated text-text-muted hover:text-text-primary text-xs cursor-pointer transition-colors"
+                title="Exit Demo Sandbox"
+              >
+                Exit Demo
+              </button>
+            </div>
+          </div>
+        )}
         
 
         <AnimatePresence mode="wait">
           <motion.div
             key={viewMode}
-            initial={{ opacity: 0, y: 8, filter: 'blur(3px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -8, filter: 'blur(3px)' }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="flex-1 flex flex-col min-h-0 relative w-full"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="flex-1 flex flex-col min-h-0 relative w-full overflow-hidden"
           >
-            {viewMode === 'stream' && (
-              <>
-                {/* Consolidated Query & KPI Filter Toolbar */}
-                <FilterRail
+            <React.Suspense fallback={
+              <div className="flex-1 flex items-center justify-center min-h-[350px]">
+                <div className="flex flex-col items-center gap-3 text-text-muted">
+                  <div className="w-6 h-6 border-2 border-accent-sapphire/20 border-t-accent-sapphire rounded-full animate-spin" />
+                  <span className="text-xs font-mono tracking-wider uppercase">Loading View...</span>
+                </div>
+              </div>
+            }>
+              {viewMode === 'stream' && (
+                <StreamView
                   stats={activeStats}
                   statusFilter={statusFilter}
                   onStatusChange={setStatusFilter}
@@ -662,95 +716,77 @@ const AppContent: React.FC = () => {
                   sortBy={sortBy}
                   onSortChange={setSortBy}
                   isMobileFiltersOpen={isMobileFiltersOpen}
+                  timeframeFilter={timeframeFilter}
+                  onResetTimeframe={() => setTimeframeFilter('all')}
+                  items={activeFilteredContributions}
+                  selectedId={selectedId}
+                  onSelectItem={handleSelectItem}
+                  isLoading={isLoading}
+                  isRefreshing={isRefreshing || isFilterPending}
+                  onOpenTrackModal={() => setIsTrackModalOpen(true)}
+                  onResetFilters={handleResetFilters}
+                  isAuthenticated={Boolean(user)}
+                  isDemoMode={isDemoMode}
+                  onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                  onEnterDemoMode={() => setIsDemoMode(true)}
+                  onNavigateView={setViewMode}
+                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                 />
+              )}
 
-                {timeframeFilter !== 'all' && (
-                  <div className="flex items-center justify-between gap-2 px-3.5 py-2 mb-2 bg-accent-sapphire/15 border border-accent-sapphire/35 rounded-xl text-xs font-mono text-accent-sapphire shadow-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-2 w-2 rounded-full bg-accent-sapphire animate-ping" />
-                      <span>Timeframe Filter Active: <strong>{timeframeFilter.toUpperCase()}</strong></span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setTimeframeFilter('all')}
-                      className="px-2.5 py-1 rounded-md bg-surface-card hover:bg-surface-elevated border border-border-subtle text-[11px] text-text-primary hover:text-white cursor-pointer transition-colors"
-                    >
-                      Reset Timeframe
-                    </button>
-                  </div>
-                )}
-
-                {/* Main Scannable Contribution Stream */}
-                <main className="flex-1 flex flex-col min-h-0 relative">
-                  <ContributionList
-                    items={activeFilteredContributions}
-                    selectedId={selectedId}
-                    onSelectItem={handleSelectItem}
-                    isLoading={isLoading}
-                    isRefreshing={isRefreshing}
-                    onOpenTrackModal={() => setIsTrackModalOpen(true)}
-                    onResetFilters={handleResetFilters}
-                    isAuthenticated={Boolean(user)}
-                    onOpenAuthModal={() => setIsAuthModalOpen(true)}
+              {viewMode === 'analytics' && (
+                <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+                  <AnalyticsView
+                    stats={activeStats}
                     onNavigateView={setViewMode}
                     onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
                   />
                 </main>
-              </>
-            )}
+              )}
 
-            {viewMode === 'analytics' && (
-              <main className="flex-1 flex flex-col min-h-0 relative">
-                <AnalyticsView
-                  stats={activeStats}
-                  onNavigateView={setViewMode}
-                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
-                />
-              </main>
-            )}
+              {viewMode === 'repos' && (
+                <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+                  <RepositoriesView
+                    contributions={activeFilteredContributions}
+                    onSelectRepoFilter={(repo) => {
+                      setSearchQuery(repo);
+                      setViewMode('stream');
+                    }}
+                    onNavigateView={setViewMode}
+                    onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
+                  />
+                </main>
+              )}
 
-            {viewMode === 'repos' && (
-              <main className="flex-1 flex flex-col min-h-0 relative">
-                <RepositoriesView
-                  contributions={activeFilteredContributions}
-                  onSelectRepoFilter={(repo) => {
-                    setSearchQuery(repo);
-                    setViewMode('stream');
-                  }}
-                  onNavigateView={setViewMode}
-                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
-                />
-              </main>
-            )}
+              {viewMode === 'settings' && (
+                <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+                  <SettingsView
+                    onNavigateView={setViewMode}
+                    onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
+                  />
+                </main>
+              )}
 
-            {viewMode === 'settings' && (
-              <main className="flex-1 flex flex-col min-h-0 relative">
-                <SettingsView
-                  onNavigateView={setViewMode}
-                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
-                />
-              </main>
-            )}
+              {viewMode === 'security' && (
+                <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+                  <SecurityPolicyView
+                    onBack={() => setViewMode('stream')}
+                    onNavigateView={setViewMode}
+                    onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
+                  />
+                </main>
+              )}
 
-            {viewMode === 'security' && (
-              <main className="flex-1 flex flex-col min-h-0 relative">
-                <SecurityPolicyView
-                  onBack={() => setViewMode('stream')}
-                  onNavigateView={setViewMode}
-                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
-                />
-              </main>
-            )}
-
-            {viewMode === 'about' && (
-              <main className="flex-1 flex flex-col min-h-0 relative">
-                <AboutView
-                  onBack={() => setViewMode('stream')}
-                  onNavigateView={setViewMode}
-                  onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
-                />
-              </main>
-            )}
+              {viewMode === 'about' && (
+                <main className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+                  <AboutView
+                    onBack={() => setViewMode('stream')}
+                    onNavigateView={setViewMode}
+                    onOpenCookiePreferences={() => setIsCookieModalOpen(true)}
+                  />
+                </main>
+              )}
+            </React.Suspense>
           </motion.div>
         </AnimatePresence>
       </div>

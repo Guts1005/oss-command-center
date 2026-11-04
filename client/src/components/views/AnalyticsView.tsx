@@ -14,7 +14,9 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { ViewMode } from '../../types';
+import { DEMO_DATASET } from '../../data/demoDataset';
 import { Footer } from '../Footer';
+import { useWheelScroll } from '../../hooks/useWheelScroll';
 
 interface AnalyticsData {
   summary: {
@@ -66,6 +68,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 }) => {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  useWheelScroll(containerRef);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [hoveredDay, setHoveredDay] = useState<{ date: string; count: number } | null>(null);
 
@@ -75,9 +79,14 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       if (isInitial) setIsLoading(true);
       else setIsRefreshing(true);
       const res = await axios.get('/api/analytics');
-      setData(res.data);
+      if (res.data && res.data.summary && res.data.summary.total > 0) {
+        setData(res.data);
+      } else {
+        setData(DEMO_DATASET.analytics as any);
+      }
     } catch (err) {
-      console.error('Failed to load analytics:', err);
+      console.warn('Failed to load analytics from server, using demo analytics:', err);
+      setData(DEMO_DATASET.analytics as any);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -143,7 +152,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   const scope = data?.scopeBreakdown || { external: 0, own: 0 };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar">
+    <div ref={containerRef} className="flex-1 flex flex-col min-h-0 py-3 overflow-y-auto custom-scrollbar w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-border-subtle">
         <div>

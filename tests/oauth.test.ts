@@ -106,25 +106,26 @@ async function runOAuthTests() {
     // Test 5: Provision Brand New User via GitHub OAuth Identity
     // -------------------------------------------------------------
     {
+      const testSuffix = Date.now().toString();
       const mockProfile = {
-        id: 'gh_user_998877',
-        username: 'octo_tester',
+        id: `gh_user_${testSuffix}`,
+        username: `octo_tester_${testSuffix}`,
         displayName: 'Octo Developer',
-        email: 'octo.tester@github.com',
+        email: `octo.tester.${testSuffix}@github.com`,
         avatarUrl: 'https://avatars.githubusercontent.com/u/998877'
       };
       const mockAccessToken = 'gho_secretAccessToken1234567890';
 
       const { user, isNew } = await findOrCreateOAuthUser('github', mockProfile, mockAccessToken);
       assert.strictEqual(isNew, true);
-      assert.strictEqual(user.email, 'octo.tester@github.com');
+      assert.strictEqual(user.email, `octo.tester.${testSuffix}@github.com`);
       assert.strictEqual(user.display_name, 'Octo Developer');
-      assert.strictEqual(user.github_id, 'gh_user_998877');
+      assert.strictEqual(user.github_id, `gh_user_${testSuffix}`);
 
       // Verify user exists in SQLite
       const dbUser = db.prepare('SELECT id, email, password_hash, github_id FROM users WHERE id = ?').get(user.id) as any;
       assert(dbUser);
-      assert.strictEqual(dbUser.github_id, 'gh_user_998877');
+      assert.strictEqual(dbUser.github_id, `gh_user_${testSuffix}`);
       assert(dbUser.password_hash);
 
       // Verify user_settings created automatically
@@ -135,7 +136,7 @@ async function runOAuthTests() {
       // Verify integration created with AES-256-GCM encrypted token
       const integration = db.prepare('SELECT * FROM user_integrations WHERE user_id = ? AND platform = ?').get(user.id, 'github') as any;
       assert(integration);
-      assert.strictEqual(integration.username, 'octo_tester');
+      assert.strictEqual(integration.username, `octo_tester_${testSuffix}`);
       assert(integration.encrypted_token);
       assert(integration.token_iv);
       assert(integration.token_auth_tag);
@@ -151,10 +152,11 @@ async function runOAuthTests() {
     // Test 6: Existing User with Matching Verified Email Linked
     // -------------------------------------------------------------
     {
+      const linkSuffix = (Date.now() + 1).toString();
       // 1. Create a user via standard registration
       const regRes = await axios.post(`${baseUrl}/api/auth/register`, {
-        username: 'email_linked_dev',
-        email: 'linkme@example.org',
+        username: `email_linked_${linkSuffix}`,
+        email: `linkme_${linkSuffix}@example.org`,
         password: 'SuperSecretPassword123!'
       });
       assert.strictEqual(regRes.status, 201);
@@ -162,10 +164,10 @@ async function runOAuthTests() {
 
       // 2. Simulate GitLab OAuth profile with the same verified email
       const mockGitLabProfile = {
-        id: 'gl_user_554433',
-        username: 'gitlab_dev',
+        id: `gl_user_${linkSuffix}`,
+        username: `gitlab_dev_${linkSuffix}`,
         displayName: 'GitLab Developer',
-        email: 'linkme@example.org'
+        email: `linkme_${linkSuffix}@example.org`
       };
       const mockGitLabToken = 'glpat_testAccessToken987654';
 
@@ -175,7 +177,7 @@ async function runOAuthTests() {
 
       // Verify gitlab_id was linked in database
       const dbUser = db.prepare('SELECT id, email, gitlab_id FROM users WHERE id = ?').get(existingUserId) as any;
-      assert.strictEqual(dbUser.gitlab_id, 'gl_user_554433');
+      assert.strictEqual(dbUser.gitlab_id, `gl_user_${linkSuffix}`);
 
       // Verify integration stored
       const integration = db.prepare('SELECT * FROM user_integrations WHERE user_id = ? AND platform = ?').get(existingUserId, 'gitlab') as any;
