@@ -78,4 +78,31 @@ console.log('✔ Correct resolution of all valid view parameters (stream, analyt
   console.log('✔ URL parameter preservation across query transitions passed.');
 }
 
+import { shouldSkipInitialAuthCheck } from '../client/src/utils/authProviders.js';
+
+// Test 6: Demo auth bootstrap check skips /api/auth/me only when unauthenticated demo mode is active
+{
+  if (!shouldSkipInitialAuthCheck('?demo=1', false)) {
+    console.error('FAIL: Expected ?demo=1 without cached user to skip initial auth check');
+    process.exit(1);
+  }
+  if (!shouldSkipInitialAuthCheck('?demo=true&view=analytics', false)) {
+    console.error('FAIL: Expected ?demo=true without cached user to skip initial auth check');
+    process.exit(1);
+  }
+  if (shouldSkipInitialAuthCheck('?demo=1', true)) {
+    console.error('FAIL: Expected cached user in demo mode to still verify session');
+    process.exit(1);
+  }
+  if (shouldSkipInitialAuthCheck('?demo=1&oauth=success', false)) {
+    console.error('FAIL: Expected oauth callback in demo mode to verify session');
+    process.exit(1);
+  }
+  if (shouldSkipInitialAuthCheck('?view=stream', false)) {
+    console.error('FAIL: Expected normal landing view to check auth session');
+    process.exit(1);
+  }
+  console.log('✔ Demo initial auth check guard verified across URL and cache permutations.');
+}
+
 console.log('\nALL VIEW ROUTING & STATE SYNCHRONIZATION TESTS PASSED CLEANLY!\n');

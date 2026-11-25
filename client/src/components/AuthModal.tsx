@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useOAuthProviders } from '../utils/authProviders';
 import { Shield, Lock, User, Mail, KeyRound, AlertTriangle, Eye, EyeOff, X, Loader2 } from 'lucide-react';
 import { GitHubLogo, GitLabLogo } from './BrandLogos';
 
@@ -20,22 +20,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [providers, setProviders] = useState<{ github: boolean; gitlab: boolean }>({ github: false, gitlab: false });
+  const providers = useOAuthProviders(isOpen);
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const hasAnyOAuth = Boolean(providers.github || providers.gitlab);
-
-  useEffect(() => {
-    let isMounted = true;
-    axios.get('/api/auth/providers').then((res) => {
-      if (isMounted && res.data) {
-        setProviders({
-          github: Boolean(res.data.github),
-          gitlab: Boolean(res.data.gitlab)
-        });
-      }
-    }).catch(() => {});
-    return () => { isMounted = false; };
-  }, []);
 
   const handleOAuthLogin = (provider: 'github' | 'gitlab') => {
     if (!providers[provider]) {

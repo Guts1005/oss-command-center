@@ -176,9 +176,9 @@ const AppContent: React.FC = () => {
         }
         return new Date(b.last_activity_at).getTime() - new Date(a.last_activity_at).getTime();
       });
-  }, [user, contributions, platformFilter, timeframeFilter, statusFilter, actionFilter, debouncedSearch, sortBy]);
+  }, [user, isDemoMode, contributions, platformFilter, timeframeFilter, statusFilter, actionFilter, debouncedSearch, sortBy]);
 
-  const activeStats = user ? stats : {
+  const activeStats = (user || isDemoMode) ? stats : {
     total: 0,
     actionNeeded: 0,
     awaitingMaintainer: 0,
@@ -276,7 +276,7 @@ const AppContent: React.FC = () => {
     } else {
       fetchContributions(false);
     }
-  }, [fetchStats, fetchContributions, user]);
+  }, [fetchStats, fetchContributions, user, isDemoMode]);
 
   // Handle immediate state purge on logout
   useEffect(() => {

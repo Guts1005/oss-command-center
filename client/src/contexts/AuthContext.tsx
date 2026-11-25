@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { User, UserIntegration } from '../types';
+import { shouldSkipInitialAuthCheck } from '../utils/authProviders';
 
 interface AuthContextType {
   user: User | null;
@@ -94,6 +95,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      shouldSkipInitialAuthCheck(window.location.search, Boolean(localStorage.getItem('oss_user_cached')))
+    ) {
+      setIsLoading(false);
+      return;
+    }
     refreshUser();
   }, [refreshUser]);
 

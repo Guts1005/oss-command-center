@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useOAuthProviders } from '../utils/authProviders';
 import { Github, Gitlab, Key, CheckCircle, RefreshCw, Trash2, ExternalLink, X, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { GitHubLogo, GitLabLogo } from './BrandLogos';
 
@@ -31,20 +32,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
   const [oauthConnecting, setOauthConnecting] = useState<string | null>(null);
-  const [providers, setProviders] = useState<{ github: boolean; gitlab: boolean }>({ github: false, gitlab: false });
-
-  useEffect(() => {
-    let isMounted = true;
-    axios.get('/api/auth/providers').then((res) => {
-      if (isMounted && res.data) {
-        setProviders({
-          github: Boolean(res.data.github),
-          gitlab: Boolean(res.data.gitlab)
-        });
-      }
-    }).catch(() => {});
-    return () => { isMounted = false; };
-  }, []);
+  const providers = useOAuthProviders(isOpen);
 
   const handleOAuthConnect = (targetPlatform: 'github' | 'gitlab') => {
     if (!providers[targetPlatform]) {
