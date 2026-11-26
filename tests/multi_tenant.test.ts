@@ -1,3 +1,5 @@
+process.env.NODE_ENV = 'test';
+
 import axios from 'axios';
 import { db, initDatabase } from '../server/db.js';
 import express from 'express';

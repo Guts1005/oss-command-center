@@ -54,6 +54,7 @@ export interface UserIntegration {
   host?: string | null;
   sync_status: string;
   last_synced_at?: string | null;
+  sync_error?: string | null;
   last_error?: string | null;
   created_at: string;
   has_token: boolean;

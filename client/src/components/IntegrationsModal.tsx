@@ -54,6 +54,13 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
       setStatusMessage({ type: 'error', text: 'Username is required.' });
       return;
     }
+    if (!token.trim()) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Personal Access Token is required to verify account ownership.',
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     setStatusMessage(null);
@@ -62,7 +69,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
       await saveIntegration({
         platform,
         username: username.trim(),
-        token: token.trim() || undefined,
+        token: token.trim(),
         host: platform === 'gitlab' ? (gitlabHost.trim() || 'https://gitlab.com') : undefined,
       });
 
@@ -277,11 +284,21 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                               </div>
                               <div className="text-xs text-text-whisper flex flex-wrap items-center gap-3.5 mt-1.5 font-mono">
                                 {acc.host && <span>HOST: <span className="text-text-muted">{acc.host}</span></span>}
-                                <span>STATUS: <span className="text-status-merged font-bold uppercase">{acc.sync_status}</span></span>
+                                <span>
+                                  STATUS:{' '}
+                                  <span className={`font-bold uppercase ${acc.sync_status === 'failed' ? 'text-status-action-needed' : 'text-status-merged'}`}>
+                                    {acc.sync_status}
+                                  </span>
+                                </span>
                                 {acc.last_synced_at && (
                                   <span>LAST SYNC: <span className="text-text-muted">{new Date(acc.last_synced_at).toLocaleTimeString()}</span></span>
                                 )}
                               </div>
+                              {acc.sync_error && (
+                                <p className="mt-1.5 text-xs font-mono text-status-action-needed">
+                                  {acc.sync_error}
+                                </p>
+                              )}
                             </div>
                           </div>
                           <motion.button
@@ -487,7 +504,7 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-muted">
-                          Personal Access Token (Optional)
+                          Personal Access Token (Required)
                         </label>
                         <a
                           href={
@@ -505,13 +522,14 @@ export const IntegrationsModal: React.FC<IntegrationsModalProps> = ({
                       </div>
                       <input
                         type="password"
+                        required
                         value={token}
                         onChange={(e) => setToken(e.target.value)}
                         placeholder={platform === 'github' ? 'ghp_...' : 'glpat-...'}
                         className="w-full border border-border-subtle bg-base px-4 py-3 rounded-md text-base text-white placeholder:text-text-muted focus:border-accent-sapphire focus:ring-1 focus:ring-accent-sapphire focus:outline-none transition-all font-medium"
                       />
                       <p className="text-xs md:text-sm text-text-muted mt-1.5 font-sans">
-                        Tokens unlock 5,000 req/hr rate limits and private repository tracking.
+                        Verified against your profile to prove account ownership, unlock 5,000 req/hr limits, and fetch full PR history.
                       </p>
                     </div>
 

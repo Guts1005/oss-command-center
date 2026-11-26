@@ -174,7 +174,7 @@ export async function syncGitLab(
 
       // Insert primary creation event
       insertEvent.run({
-        id: `gl_created_${id}`,
+        id: `${userId}:${id}:init`,
         user_id: userId,
         contribution_id: id,
         actor: mr.author?.username || username,
@@ -189,7 +189,7 @@ export async function syncGitLab(
       if (status === 'merged') {
         const merger = detail?.merged_by?.name || detail?.merged_by?.username || 'Chris Johns (Maintainer)';
         insertEvent.run({
-          id: `gl_merged_${id}`,
+          id: `${userId}:${id}:merged`,
           user_id: userId,
           contribution_id: id,
           actor: merger,
@@ -204,7 +204,7 @@ export async function syncGitLab(
       // Insert maintainer discussion notes & reviews
       for (const note of fetchedNotes) {
         insertEvent.run({
-          id: note.id,
+          id: `${userId}:${id}:note:${note.id}`,
           user_id: userId,
           contribution_id: id,
           actor: note.actor,
@@ -222,4 +222,179 @@ export async function syncGitLab(
     console.error(`[GitLab Sync] Error for user ${userId}: ${err.message}`);
     throw err;
   }
+}
+
+/**
+ * Fetches a single GitLab MR or Issue using the user's token and hydrates full discussion timeline.
+ */
+export async function fetchAndHydrateGitLabUrl(
+  userId: string,
+  host: string,
+  projectPath: string,
+  rawType: 'merge_requests' | 'issues',
+  number: number,
+  token: string
+) {
+  const { UpstreamFetchError } = await import('./github.js');
+  const { assertPublicDnsResolution } = await import('./credentials.js');
+  const type: 'pr' | 'issue' = rawType === 'merge_requests' ? 'pr' : 'issue';
+  const id = `gl:${projectPath}!${number}`;
+  const now = new Date().toISOString();
+  const headers: Record<string, string> = { 'PRIVATE-TOKEN': token };
+  const encProject = encodeURIComponent(projectPath);
+
+  await assertPublicDnsResolution(host);
+
+  let mrData: any;
+  try {
+    const resp = await axios.get(`${host}/api/v4/projects/${encProject}/${rawType}/${number}`, {
+      headers,
+      timeout: 10000,
+      maxRedirects: 0,
+    });
+    mrData = resp.data;
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status === 401 || status === 403 || status === 429) {
+      throw new UpstreamFetchError(
+        status === 429 ? 429 : status,
+        'GitLab authentication, rate-limit, or permission error. Verify your PAT.'
+      );
+    }
+    if (status === 404) {
+      throw new UpstreamFetchError(404, `GitLab ${rawType === 'merge_requests' ? 'MR' : 'Issue'} ${projectPath}!${number} not found.`);
+    }
+    throw new UpstreamFetchError(502, `Failed to fetch ${projectPath}!${number} from GitLab: ${err.message}`);
+  }
+
+  if (
+    !mrData ||
+    typeof mrData !== 'object' ||
+    Array.isArray(mrData) ||
+    (mrData.iid === undefined && mrData.id === undefined)
+  ) {
+    throw new UpstreamFetchError(502, `Unexpected response format from GitLab for ${projectPath}!${number}.`);
+  }
+
+  let status = 'open';
+  if (mrData.state === 'merged') status = 'merged';
+  else if (mrData.state === 'closed') status = 'closed';
+  else if (mrData.draft || mrData.work_in_progress) status = 'draft';
+
+  const author = mrData.author?.username || 'gitlab-user';
+  const title = mrData.title || `${projectPath}!${number}`;
+  const createdAt = mrData.created_at || now;
+  let lastActivityAt = mrData.merged_at || mrData.updated_at || createdAt;
+  const body = mrData.description || '';
+
+  let notes: any[] = [];
+  try {
+    const notesResp = await axios.get(
+      `${host}/api/v4/projects/${encProject}/${rawType}/${number}/notes?per_page=50&sort=asc`,
+      { headers, timeout: 10000, maxRedirects: 0 }
+    );
+    if (Array.isArray(notesResp.data)) {
+      notes = notesResp.data.filter((n: any) => !n.system);
+    }
+  } catch (err: any) {
+    console.warn(`[GitLab Track URL] Could not fetch notes for ${id}: ${err.message}`);
+  }
+
+  let actionNeeded: 'reply' | 'push-changes' | 'none' = 'none';
+  if ((status === 'open' || status === 'draft') && notes.length > 0) {
+    const lastNote = notes[notes.length - 1];
+    lastActivityAt = lastNote.created_at || lastActivityAt;
+    if (lastNote.author?.username && lastNote.author.username.toLowerCase() !== author.toLowerCase()) {
+      actionNeeded = 'reply';
+    }
+  }
+
+  const existing = db.prepare('SELECT notes FROM contributions WHERE user_id = ? AND id = ?').get(userId, id) as any;
+
+  db.prepare(`
+    INSERT INTO contributions (
+      user_id, id, platform, repo, number, title, type, url, author, status,
+      action_needed, difficulty, bounty_amount, created_at, last_activity_at,
+      last_synced_at, unread, notes
+    ) VALUES (
+      @user_id, @id, 'gitlab', @repo, @number, @title, @type, @url, @author, @status,
+      @action_needed, 'medium', null, @createdAt, @lastActivityAt, @now, 1, @notes
+    )
+    ON CONFLICT(user_id, id) DO UPDATE SET
+      title = excluded.title,
+      author = excluded.author,
+      status = excluded.status,
+      action_needed = excluded.action_needed,
+      last_activity_at = excluded.last_activity_at,
+      last_synced_at = excluded.last_synced_at,
+      unread = 1
+  `).run({
+    user_id: userId,
+    id,
+    repo: projectPath,
+    number,
+    title,
+    type,
+    url: mrData.web_url || `${host}/${projectPath}/-/${rawType}/${number}`,
+    author,
+    status,
+    action_needed: actionNeeded,
+    createdAt,
+    lastActivityAt,
+    now,
+    notes: existing?.notes ?? null,
+  });
+
+  const insertEvent = db.prepare(`
+    INSERT OR REPLACE INTO activity_events (
+      id, user_id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
+    ) VALUES (
+      @id, @user_id, @contribution_id, @actor, @actor_avatar, @type, @review_state, @body_excerpt, @created_at
+    )
+  `);
+
+  insertEvent.run({
+    id: `${userId}:${id}:init`,
+    user_id: userId,
+    contribution_id: id,
+    actor: author,
+    actor_avatar: mrData.author?.avatar_url || null,
+    type: 'status-change',
+    review_state: null,
+    body_excerpt: body ? String(body).slice(0, 500) : `Opened: ${title}`,
+    created_at: createdAt,
+  });
+
+  for (const n of notes) {
+    insertEvent.run({
+      id: `${userId}:${id}:note:${n.id}`,
+      user_id: userId,
+      contribution_id: id,
+      actor: n.author?.username || 'reviewer',
+      actor_avatar: n.author?.avatar_url || null,
+      type: 'comment',
+      review_state: null,
+      body_excerpt: n.body ? String(n.body).slice(0, 500) : 'Comment posted',
+      created_at: n.created_at || createdAt,
+    });
+  }
+
+  if (status === 'merged' && mrData.merged_at) {
+    const merger = mrData.merged_by?.username || author;
+    insertEvent.run({
+      id: `${userId}:${id}:merged`,
+      user_id: userId,
+      contribution_id: id,
+      actor: merger,
+      actor_avatar: mrData.merged_by?.avatar_url || null,
+      type: 'status-change',
+      review_state: 'APPROVED',
+      body_excerpt: mrData.merged_by?.username
+        ? `Merge request merged by @${mrData.merged_by.username}`
+        : 'Merge request merged upstream',
+      created_at: mrData.merged_at,
+    });
+  }
+
+  return db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
 }

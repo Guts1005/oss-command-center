@@ -816,10 +816,11 @@ const AppContent: React.FC = () => {
       <TrackContributionModal
         isOpen={isTrackModalOpen}
         onClose={() => setIsTrackModalOpen(false)}
-        onSuccess={() => {
+        onSuccess={(id) => {
           if (user) {
             fetchStats();
             fetchContributions();
+            setSelectedId(id);
           }
         }}
         

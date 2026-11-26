@@ -61,7 +61,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <span className="text-text-muted hidden md:inline truncate">
             Local-first triage HUD across GitHub &amp; GitLab
           </span>
-          {isDemoMode && (
+          {!isAuthenticated && isDemoMode && (
             <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-accent-sapphire/20 border border-accent-sapphire/40 text-accent-sapphire">
               DEMO SANDBOX
             </span>

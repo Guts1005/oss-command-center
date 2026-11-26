@@ -1,7 +1,7 @@
 import { db } from '../db.js';
 import { syncGitHub } from './github.js';
 import { syncGitLab } from './gitlab.js';
-import { decryptSecret } from '../security/crypto.js';
+import { decryptIntegrationToken } from './credentials.js';
 
 let isGlobalSyncRunning = false;
 
@@ -23,25 +23,21 @@ export async function syncUser(userId: string): Promise<{ status: string; synced
   for (const integration of integrations) {
     db.prepare("UPDATE user_integrations SET sync_status = 'syncing' WHERE id = ?").run(integration.id);
 
-    let decryptedToken: string | undefined = undefined;
-    if (integration.encrypted_token && integration.token_iv && integration.token_auth_tag) {
-      try {
-        decryptedToken = decryptSecret(
-          integration.encrypted_token,
-          integration.token_iv,
-          integration.token_auth_tag
-        );
-      } catch (err: any) {
-        console.error(`[Sync Engine] Token decryption failed for integration ${integration.id}:`, err.message);
-        db.prepare("UPDATE user_integrations SET sync_status = 'failed', sync_error = 'Decryption failed' WHERE id = ?").run(integration.id);
-        errors.push(`Token decryption failed for ${integration.platform}`);
-        continue;
-      }
+    let decryptedToken: string | null = null;
+    try {
+      decryptedToken = decryptIntegrationToken(integration);
+    } catch (err: any) {
+      console.error(`[Sync Engine] Token decryption failed for integration ${integration.id}:`, err.message);
+      db.prepare("UPDATE user_integrations SET sync_status = 'failed', sync_error = 'Decryption failed' WHERE id = ?").run(integration.id);
+      errors.push(`Token decryption failed for ${integration.platform}`);
+      continue;
     }
 
-    // Fallback to GITHUB_TOKEN if no integration token is set
-    if (!decryptedToken && integration.platform === 'github' && process.env.GITHUB_TOKEN) {
-      decryptedToken = process.env.GITHUB_TOKEN;
+    if (!decryptedToken) {
+      const msg = 'Missing Personal Access Token. Reconnect this account with a valid PAT.';
+      db.prepare("UPDATE user_integrations SET sync_status = 'failed', sync_error = ? WHERE id = ?").run(msg, integration.id);
+      errors.push(`${integration.platform}: ${msg}`);
+      continue;
     }
 
     try {

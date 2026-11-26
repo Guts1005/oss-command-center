@@ -1,7 +1,9 @@
 import express from 'express';
-import axios from 'axios';
 import { db } from '../db.js';
 import { syncUser, getLastSyncTime } from '../sync/multi_engine.js';
+import { getDecryptedUserIntegration, HostValidationError, validateExternalHost } from '../sync/credentials.js';
+import { fetchAndHydrateGitHubUrl, UpstreamFetchError } from '../sync/github.js';
+import { fetchAndHydrateGitLabUrl } from '../sync/gitlab.js';
 import { authRouter } from './auth.js';
 import { integrationsRouter } from './integrations.js';
 import { settingsRouter } from './settings.js';
@@ -660,11 +662,23 @@ apiRouter.post('/track-url', actionLimiter, async (req: AuthenticatedRequest, re
 
   const trimmed = url.trim();
 
-  // GitHub Pattern: https://github.com/:owner/:repo/(pull|issues)/:number
-  const ghMatch = trimmed.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(pull|issues)\/(\d+)/i);
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(trimmed);
+  } catch {
+    return res.status(400).json({ error: 'A valid URL is required' });
+  }
 
-  // GitLab Pattern: https://:host/:namespace/:repo/-/(merge_requests|issues)/:number
-  const glMatch = trimmed.match(/^https?:\/\/([^\/]+)\/(.+?)\/-\/(merge_requests|issues)\/(\d+)/i);
+  const hostname = parsedUrl.hostname.toLowerCase();
+  const ghMatch =
+    (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') && hostname === 'github.com'
+      ? parsedUrl.pathname.match(/^\/([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)\/(pull|issues)\/(\d+)(?:\/.*)?$/i)
+      : null;
+
+  const glMatch =
+    parsedUrl.protocol === 'https:' && hostname !== 'github.com'
+      ? parsedUrl.pathname.match(/^\/(.+?)\/-\/(merge_requests|issues)\/(\d+)(?:\/.*)?$/i)
+      : null;
 
   if (!ghMatch && !glMatch) {
     return res.status(400).json({
@@ -672,187 +686,52 @@ apiRouter.post('/track-url', actionLimiter, async (req: AuthenticatedRequest, re
     });
   }
 
-  const now = new Date().toISOString();
-
-  if (ghMatch) {
-    const [, owner, repoName, rawType, rawNumber] = ghMatch;
-    const repo = `${owner}/${repoName}`;
-    const number = parseInt(rawNumber, 10);
-    const type: 'pr' | 'issue' = rawType.toLowerCase() === 'pull' ? 'pr' : 'issue';
-    const id = `gh:${repo}#${number}`;
-
-    let title = `${repo}#${number}`;
-    let author = owner;
-    let status = 'open';
-    let body = '';
-    let createdAt = now;
-    let updatedAt = now;
-
-    try {
-      const endpoint = type === 'pr'
-        ? `https://api.github.com/repos/${repo}/pulls/${number}`
-        : `https://api.github.com/repos/${repo}/issues/${number}`;
-
-      const headers: Record<string, string> = {
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'oss-command-center'
-      };
-      const token = process.env.GITHUB_TOKEN;
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const resp = await axios.get(endpoint, { headers, timeout: 8000 });
-      if (resp.data) {
-        title = resp.data.title || title;
-        author = resp.data.user?.login || author;
-        createdAt = resp.data.created_at || createdAt;
-        updatedAt = resp.data.updated_at || updatedAt;
-        body = resp.data.body || '';
-
-        if (resp.data.state === 'closed') {
-          status = resp.data.merged ? 'merged' : 'closed';
-        } else if (resp.data.draft) {
-          status = 'draft';
-        } else {
-          status = 'open';
-        }
+  try {
+    if (ghMatch) {
+      const [, owner, repoName, rawType, rawNumber] = ghMatch;
+      if (owner === '.' || owner === '..' || repoName === '.' || repoName === '..') {
+        return res.status(400).json({ error: 'Invalid GitHub repository path in URL.' });
       }
-    } catch (err: any) {
-      console.warn(`[Track URL] GitHub live fetch warning: ${err.message}`);
+      const repo = `${owner}/${repoName}`;
+      const number = parseInt(rawNumber, 10);
+      const type: 'pr' | 'issue' = rawType.toLowerCase() === 'pull' ? 'pr' : 'issue';
+
+      const creds = getDecryptedUserIntegration(userId, 'github');
+      if (!creds) {
+        return res.status(400).json({
+          error: 'Connect your GitHub account with a Personal Access Token in Linked Accounts first before tracking URLs.'
+        });
+      }
+
+      const item = await fetchAndHydrateGitHubUrl(userId, repo, number, type, creds.token);
+      return res.status(201).json({ success: true, item });
     }
 
-    db.prepare(`
-      INSERT INTO contributions (
-        user_id, id, platform, repo, number, title, type, url, author, status,
-        action_needed, difficulty, bounty_amount, created_at, last_activity_at,
-        last_synced_at, unread, notes
-      ) VALUES (
-        @user_id, @id, 'github', @repo, @number, @title, @type, @url, @author, @status,
-        'none', 'medium', null, @createdAt, @updatedAt, @now, 1, null
-      )
-      ON CONFLICT(user_id, id) DO UPDATE SET
-        title = excluded.title,
-        status = excluded.status,
-        last_activity_at = excluded.last_activity_at,
-        last_synced_at = excluded.last_synced_at,
-        unread = 1
-    `).run({
-      user_id: userId,
-      id,
-      repo,
-      number,
-      title,
-      type,
-      url: trimmed,
-      author,
-      status,
-      createdAt,
-      updatedAt,
-      now
-    });
+    if (glMatch) {
+      const [, projectPath, rawType, rawNumber] = glMatch;
+      const safeHost = validateExternalHost(parsedUrl.origin, 'gitlab');
+      const number = parseInt(rawNumber, 10);
+      const glType: 'merge_requests' | 'issues' =
+        rawType.toLowerCase() === 'merge_requests' ? 'merge_requests' : 'issues';
 
-    db.prepare(`
-      INSERT OR REPLACE INTO activity_events (
-        id, user_id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
-      ) VALUES (
-        @id, @user_id, @contribution_id, @actor, null, 'status-change', null, @body_excerpt, @created_at
-      )
-    `).run({
-      id: `init_${id}`,
-      user_id: userId,
-      contribution_id: id,
-      actor: author,
-      body_excerpt: body ? body.slice(0, 500) : `Tracked contribution: ${title}`,
-      created_at: createdAt
-    });
-
-    const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
-    return res.status(201).json({ success: true, item });
-  }
-
-  if (glMatch) {
-    const [, host, projectPath, rawType, rawNumber] = glMatch;
-    const number = parseInt(rawNumber, 10);
-    const type: 'pr' | 'issue' = rawType.toLowerCase() === 'merge_requests' ? 'pr' : 'issue';
-    const repo = projectPath;
-    const id = `gl:${repo}!${number}`;
-
-    let title = `${repo}!${number}`;
-    let author = 'GitLab User';
-    let status = 'open';
-    let body = '';
-    let createdAt = now;
-    let updatedAt = now;
-
-    try {
-      const endpoint = `https://${host}/api/v4/projects/${encodeURIComponent(projectPath)}/${rawType}/${number}`;
-      const resp = await axios.get(endpoint, { timeout: 8000 });
-      if (resp.data) {
-        title = resp.data.title || title;
-        author = resp.data.author?.username || author;
-        createdAt = resp.data.created_at || createdAt;
-        updatedAt = resp.data.updated_at || updatedAt;
-        body = resp.data.description || '';
-
-        if (resp.data.state === 'merged') {
-          status = 'merged';
-        } else if (resp.data.state === 'closed') {
-          status = 'closed';
-        } else if (resp.data.draft || resp.data.work_in_progress) {
-          status = 'draft';
-        } else {
-          status = 'open';
-        }
+      const creds = getDecryptedUserIntegration(userId, 'gitlab', safeHost);
+      if (!creds) {
+        return res.status(400).json({
+          error: `Connect a GitLab account for ${safeHost} with a Personal Access Token first before tracking URLs from that host.`
+        });
       }
-    } catch (err: any) {
-      console.warn(`[Track URL] GitLab live fetch warning: ${err.message}`);
+
+      const item = await fetchAndHydrateGitLabUrl(userId, safeHost, projectPath, glType, number, creds.token);
+      return res.status(201).json({ success: true, item });
     }
-
-    db.prepare(`
-      INSERT INTO contributions (
-        user_id, id, platform, repo, number, title, type, url, author, status,
-        action_needed, difficulty, bounty_amount, created_at, last_activity_at,
-        last_synced_at, unread, notes
-      ) VALUES (
-        @user_id, @id, 'gitlab', @repo, @number, @title, @type, @url, @author, @status,
-        'none', 'medium', null, @createdAt, @updatedAt, @now, 1, null
-      )
-      ON CONFLICT(user_id, id) DO UPDATE SET
-        title = excluded.title,
-        status = excluded.status,
-        last_activity_at = excluded.last_activity_at,
-        last_synced_at = excluded.last_synced_at,
-        unread = 1
-    `).run({
-      user_id: userId,
-      id,
-      repo,
-      number,
-      title,
-      type,
-      url: trimmed,
-      author,
-      status,
-      createdAt,
-      updatedAt,
-      now
-    });
-
-    db.prepare(`
-      INSERT OR REPLACE INTO activity_events (
-        id, user_id, contribution_id, actor, actor_avatar, type, review_state, body_excerpt, created_at
-      ) VALUES (
-        @id, @user_id, @contribution_id, @actor, null, 'status-change', null, @body_excerpt, @created_at
-      )
-    `).run({
-      id: `init_${id}`,
-      user_id: userId,
-      contribution_id: id,
-      actor: author,
-      body_excerpt: body ? body.slice(0, 500) : `Tracked contribution: ${title}`,
-      created_at: createdAt
-    });
-
-    const item = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, id);
-    return res.status(201).json({ success: true, item });
+  } catch (err: any) {
+    if (err instanceof HostValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err instanceof UpstreamFetchError) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
+    console.error('[Track URL error]:', err);
+    return res.status(500).json({ error: err.message || 'Failed to track upstream contribution URL.' });
   }
 });

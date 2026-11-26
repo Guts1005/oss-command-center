@@ -1,10 +1,12 @@
 import express, { Response } from 'express';
 import axios from 'axios';
-import { db, ContributionRecord, UserIntegrationRecord } from '../db.js';
-import { decryptSecret } from '../security/crypto.js';
+import { db, ContributionRecord } from '../db.js';
 import { AuthenticatedRequest, requireAuth } from '../middleware/auth.js';
 import { actionLimiter } from '../middleware/rate_limit.js';
 import { sseManager } from '../sse.js';
+import { getDecryptedUserIntegration, validateExternalHost } from '../sync/credentials.js';
+import { fetchAndHydrateGitHubUrl, UpstreamFetchError } from '../sync/github.js';
+import { fetchAndHydrateGitLabUrl } from '../sync/gitlab.js';
 
 export const actionsRouter = express.Router();
 
@@ -22,26 +24,16 @@ function getUserContribution(userId: string, id: string): ContributionRecord | n
   return item || null;
 }
 
-/**
- * Helper to fetch and decrypt a user integration token.
- */
-function getDecryptedToken(userId: string, platform: 'github' | 'gitlab'): { token: string; username: string; host: string } | null {
-  const integration = db.prepare(`
-    SELECT * FROM user_integrations 
-    WHERE user_id = ? AND platform = ?
-  `).get(userId, platform) as UserIntegrationRecord | undefined;
-
-  if (!integration || !integration.encrypted_token || !integration.token_iv || !integration.token_auth_tag) {
-    return null;
+function getIntegrationForContribution(userId: string, contrib: ContributionRecord) {
+  if (contrib.platform === 'gitlab' && contrib.url) {
+    try {
+      const safeHost = validateExternalHost(new URL(contrib.url).origin, 'gitlab');
+      return getDecryptedUserIntegration(userId, 'gitlab', safeHost);
+    } catch {
+      return null;
+    }
   }
-
-  try {
-    const token = decryptSecret(integration.encrypted_token, integration.token_iv, integration.token_auth_tag);
-    return { token, username: integration.username, host: integration.host || 'https://gitlab.com' };
-  } catch (err) {
-    console.error(`[Actions] Failed to decrypt ${platform} token for user ${userId}:`, err);
-    return null;
-  }
+  return getDecryptedUserIntegration(userId, contrib.platform);
 }
 
 /**
@@ -62,10 +54,10 @@ actionsRouter.post('/:id/actions/comment', requireAuth, async (req: Authenticate
     return res.status(404).json({ error: 'Contribution not found' });
   }
 
-  const creds = getDecryptedToken(userId, contrib.platform);
+  const creds = getIntegrationForContribution(userId, contrib);
   if (!creds) {
     return res.status(400).json({ 
-      error: `Missing connected ${contrib.platform} token. Please connect your account in Settings or Integrations.` 
+      error: `Missing connected ${contrib.platform} token matching this host. Please connect your account in Linked Accounts.` 
     });
   }
 
@@ -158,7 +150,7 @@ actionsRouter.post('/:id/actions/request-review', requireAuth, async (req: Authe
     return res.status(400).json({ error: 'Re-requesting review is currently supported on GitHub pull requests' });
   }
 
-  const creds = getDecryptedToken(userId, 'github');
+  const creds = getIntegrationForContribution(userId, contrib);
   if (!creds) {
     return res.status(400).json({ error: 'Missing connected GitHub integration token' });
   }
@@ -227,37 +219,26 @@ actionsRouter.post('/:id/actions/sync', requireAuth, async (req: AuthenticatedRe
     return res.status(404).json({ error: 'Contribution not found' });
   }
 
-  const creds = getDecryptedToken(userId, contrib.platform);
+  const creds = getIntegrationForContribution(userId, contrib);
   if (!creds) {
-    return res.status(400).json({ error: `Missing connected ${contrib.platform} token` });
+    return res.status(400).json({ error: `Missing connected ${contrib.platform} token matching this host` });
   }
 
   const now = new Date().toISOString();
 
   try {
+    let updated: any;
     if (contrib.platform === 'github') {
-      const prUrl = `https://api.github.com/repos/${contrib.repo}/pulls/${contrib.number}`;
-      const prRes = await axios.get(prUrl, {
-        headers: {
-          Authorization: `Bearer ${creds.token}`,
-          Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'OSS-Command-Center',
-        },
-      });
-
-      const pr = prRes.data;
-      let status = pr.state;
-      if (pr.merged) status = 'merged';
-
-      db.prepare(`
-        UPDATE contributions 
-        SET title = ?, status = ?, last_activity_at = ?, last_synced_at = ?
-        WHERE user_id = ? AND id = ?
-      `).run(pr.title, status, pr.updated_at || now, now, userId, contribId);
+      const itemType: 'pr' | 'issue' = contrib.type === 'issue' ? 'issue' : 'pr';
+      updated = await fetchAndHydrateGitHubUrl(userId, contrib.repo, contrib.number, itemType, creds.token);
+    } else if (contrib.platform === 'gitlab') {
+      const glType: 'merge_requests' | 'issues' = contrib.type === 'issue' ? 'issues' : 'merge_requests';
+      updated = await fetchAndHydrateGitLabUrl(userId, creds.host, contrib.repo, glType, contrib.number, creds.token);
+    } else {
+      updated = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, contribId);
     }
 
-    const updated = db.prepare('SELECT * FROM contributions WHERE user_id = ? AND id = ?').get(userId, contribId);
-    const events = db.prepare('SELECT * FROM activity_events WHERE user_id = ? AND contribution_id = ? ORDER BY created_at DESC').all(userId, contribId);
+    const events = db.prepare('SELECT * FROM activity_events WHERE user_id = ? AND contribution_id = ? ORDER BY created_at ASC').all(userId, contribId);
 
     return res.status(200).json({
       success: true,
@@ -267,6 +248,12 @@ actionsRouter.post('/:id/actions/sync', requireAuth, async (req: AuthenticatedRe
     });
   } catch (err: any) {
     console.error(`[Actions /sync error]:`, err.response?.data || err.message);
+    if (err instanceof UpstreamFetchError) {
+      return res.status(err.statusCode).json({
+        error: 'Failed to sync contribution from upstream',
+        details: err.message,
+      });
+    }
     return res.status(err.response?.status || 500).json({
       error: 'Failed to sync contribution from upstream',
       details: err.response?.data?.message || err.message,

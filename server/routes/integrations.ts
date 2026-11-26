@@ -5,6 +5,12 @@ import { db } from '../db.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { encryptSecret } from '../security/crypto.js';
 import { syncUser } from '../sync/multi_engine.js';
+import {
+  HostValidationError,
+  OwnershipVerificationError,
+  validateExternalHost,
+  verifyPlatformAccountOwnership
+} from '../sync/credentials.js';
 
 export const integrationsRouter = Router();
 
@@ -14,7 +20,7 @@ integrationsRouter.use(requireAuth);
 const IntegrationInputSchema = z.object({
   platform: z.enum(['github', 'gitlab']),
   username: z.string().min(1, 'Username is required').trim(),
-  token: z.string().trim().optional(),
+  token: z.string().trim().min(1, 'Personal Access Token is required to verify account ownership'),
   host: z.string().url('Invalid host URL').trim().optional()
 });
 
@@ -49,18 +55,33 @@ integrationsRouter.post('/', async (req: AuthenticatedRequest, res) => {
     }
 
     const userId = req.user!.id;
-    const { platform, username, token, host = (platform === 'gitlab' ? 'https://gitlab.com' : 'https://github.com') } = parseResult.data;
+    const { platform, username, token, host } = parseResult.data;
 
-    let ciphertext: string | null = null;
-    let iv: string | null = null;
-    let authTag: string | null = null;
-
-    if (token) {
-      const enc = encryptSecret(token);
-      ciphertext = enc.ciphertext;
-      iv = enc.iv;
-      authTag = enc.authTag;
+    let safeHost: string;
+    try {
+      safeHost = validateExternalHost(host, platform);
+    } catch (err: any) {
+      if (err instanceof HostValidationError) {
+        return res.status(400).json({ error: err.message });
+      }
+      throw err;
     }
+
+    let verifiedUsername = username;
+    try {
+      const verified = await verifyPlatformAccountOwnership(platform, safeHost, username, token);
+      verifiedUsername = verified.verifiedUsername;
+    } catch (err: any) {
+      if (err instanceof OwnershipVerificationError) {
+        return res.status(err.statusCode).json({ error: err.message });
+      }
+      throw err;
+    }
+
+    const enc = encryptSecret(token);
+    const ciphertext = enc.ciphertext;
+    const iv = enc.iv;
+    const authTag = enc.authTag;
 
     const now = new Date().toISOString();
     const integrationId = crypto.randomUUID();
@@ -75,19 +96,19 @@ integrationsRouter.post('/', async (req: AuthenticatedRequest, res) => {
         token_iv = excluded.token_iv,
         token_auth_tag = excluded.token_auth_tag,
         sync_error = NULL
-    `).run(integrationId, userId, platform, username, host, ciphertext, iv, authTag, now);
+    `).run(integrationId, userId, platform, verifiedUsername, safeHost, ciphertext, iv, authTag, now);
 
     // Trigger initial background sync for this user
     syncUser(userId).catch(err => console.error('[Initial Integration Sync Error]:', err));
 
     return res.status(201).json({
       success: true,
-      message: `${platform.toUpperCase()} integration connected securely. Background sync initiated.`,
+      message: `${platform.toUpperCase()} integration verified and connected securely. Background sync initiated.`,
       integration: {
         platform,
-        username,
-        host,
-        has_token: true
+        username: verifiedUsername,
+        host: safeHost,
+        has_token: Boolean(ciphertext)
       }
     });
   } catch (err: any) {

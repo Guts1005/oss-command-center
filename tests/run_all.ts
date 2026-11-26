@@ -14,7 +14,7 @@ const pathEnv = fs.existsSync(node23Dir)
   ? `${node23Dir}${path.delimiter}${process.env.PATH || ''}`
   : process.env.PATH;
 
-const env = { ...process.env, PATH: pathEnv, DB_PATH: 'test_isolated.db' };
+const env = { ...process.env, NODE_ENV: 'test', PATH: pathEnv, DB_PATH: 'test_isolated.db' };
 
 const testFiles = [
   'tests/routing.test.ts',
@@ -36,7 +36,8 @@ const testFiles = [
   'tests/demo_sandbox.test.ts',
   'tests/security_hardening_ratelimit.test.ts',
   'tests/n8n_pipeline.test.ts',
-  'tests/ai_stream.test.ts'
+  'tests/ai_stream.test.ts',
+  'tests/pr_tracking_and_security.test.ts'
 ];
 
 let failed = false;
